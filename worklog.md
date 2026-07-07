@@ -114,3 +114,21 @@ Stage Summary:
 - Redirection selon rôle opérationnelle : super_admin → /super-admin/dashboard, hotel_admin + staff → /app/dashboard
 - Middleware protège les routes /super-admin/* et /app/* (skip gracieux si Supabase non configuré)
 - Note : le mot de passe Super Admin "Ogou1987" fourni par l'utilisateur ne sera JAMAIS dans le code — il sera saisi directement dans le dashboard Supabase Auth lors de la création du compte (étape 4/6)
+
+---
+Task ID: 2b
+Agent: main-orchestrator
+Task: Réception et stockage sécurisé de l'ID Auth du Super Admin
+
+Work Log:
+- Reçu l'ID utilisateur Supabase Auth du Super Admin : 8ddc4ac8-060b-4c30-914c-91e496d09def
+- Compte email associé : ogouromain@gmail.com (configuré par l'utilisateur dans le dashboard Supabase Auth)
+- Stocké dans /home/z/my-project/local-super-admin-id.txt (fichier local git-ignored via pattern local-*)
+- Vérifié que git check-ignore confirme l'ignorance du fichier
+- Ce fichier NE SERA JAMAIS commité sur GitHub
+
+Stage Summary:
+- ID du Super Admin sauvegardé localement et en sécurité
+- Sera utilisé à l'étape 4 (création de la table `profiles` + seed du profil super_admin)
+- Le mot de passe "Ogou1987" n'a PAS été stocké — il vit uniquement dans Supabase Auth
+- Prêt pour l'étape 4 (base de données / schéma SQL Supabase) dès réception du prompt
