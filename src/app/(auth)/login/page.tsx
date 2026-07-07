@@ -1,13 +1,28 @@
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Hotel, ArrowLeft, ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { APP_NAME } from "@/lib/constants";
+import { Hotel, ArrowLeft, ShieldCheck, AlertCircle } from "lucide-react";
 
-export default function LoginPage() {
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { APP_NAME } from "@/lib/constants";
+import { getCurrentProfile } from "@/lib/auth";
+import { getRedirectPathForRole } from "@/lib/roles";
+import { LoginForm } from "@/components/auth/login-form";
+
+export default async function LoginPage() {
+  // Si l'utilisateur est déjà connecté avec un profil, on le redirige
+  // vers son espace selon son rôle.
+  const profile = await getCurrentProfile();
+  if (profile) {
+    redirect(getRedirectPathForRole(profile.role));
+  }
+
   return (
     <div className="w-full max-w-md space-y-6">
       {/* Logo */}
@@ -28,60 +43,29 @@ export default function LoginPage() {
             Accédez à votre espace de gestion
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Formulaire temporaire — pas d'action Supabase pour l'instant */}
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="vous@exemple.ci"
-              autoComplete="email"
-              disabled
-            />
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Mot de passe</Label>
-              <Link
-                href="/"
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                Mot de passe oublié ?
-              </Link>
-            </div>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              autoComplete="current-password"
-              disabled
-            />
-          </div>
-          <Button className="w-full" disabled>
-            Se connecter
-          </Button>
 
-          <div className="relative">
-            <Separator />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-              ou
-            </span>
-          </div>
-
-          <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-center text-xs text-muted-foreground">
-            <ShieldCheck className="mx-auto mb-1 h-4 w-4" />
-            Authentification Supabase — sera activée à l'étape 6.
-          </div>
-
-          <div className="text-center text-sm text-muted-foreground">
-            Pas encore de compte ?{" "}
-            <Link href="/#contact" className="font-medium text-primary hover:underline">
-              Demander une démo
-            </Link>
-          </div>
-        </CardContent>
+        {/* LoginForm utilise useSearchParams → doit être dans un Suspense */}
+        <Suspense fallback={null}>
+          <LoginForm />
+        </Suspense>
       </Card>
+
+      {/* Note d'information */}
+      <div className="rounded-md border border-dashed border-border bg-muted/30 p-4 text-center">
+        <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          <span>Connexion sécurisée via Supabase Auth</span>
+        </div>
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          Vous n'avez pas de compte ?{" "}
+          <Link
+            href="/#contact"
+            className="font-medium text-primary hover:underline"
+          >
+            Demander une démo
+          </Link>
+        </p>
+      </div>
 
       <div className="text-center">
         <Button asChild variant="ghost" size="sm">

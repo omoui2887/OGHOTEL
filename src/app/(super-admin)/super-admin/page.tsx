@@ -1,33 +1,8 @@
-import Link from "next/link";
-import { Construction, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { APP_NAME } from "@/lib/constants";
+import { redirect } from "next/navigation";
 
-export default function SuperAdminPlaceholder() {
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 px-4">
-      <Card className="max-w-md text-center shadow-lg">
-        <CardContent className="space-y-4 p-8">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Construction className="h-7 w-7" />
-          </div>
-          <h1 className="text-2xl font-bold">Espace Super Admin</h1>
-          <p className="text-sm text-muted-foreground">
-            Tableau de bord {APP_NAME} — gestion des prospects, paiements SaaS,
-            codes d'activation, clients et formules.
-          </p>
-          <p className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-            Ce module sera développé à l'étape 9 du plan de construction.
-          </p>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Retour à l'accueil
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
+/**
+ * /super-admin → redirige vers /super-admin/dashboard.
+ */
+export default function SuperAdminIndex() {
+  redirect("/super-admin/dashboard");
 }

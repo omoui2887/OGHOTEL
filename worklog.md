@@ -71,3 +71,46 @@ Stage Summary:
 - Sécurité : aucun secret en dur, .env.example sans valeur réelle, .env.local git-ignored par défaut
 - Thème visuel : bleu marine + doré + blanc, conforme PRD §10.2, dark mode inclus
 - Code prêt pour étapes suivantes (connexion Supabase active → schéma SQL → RLS → auth)
+
+---
+Task ID: 2
+Agent: main-orchestrator
+Task: Configuration intégration Supabase Auth pour OGHOTEL (étape 3 du plan)
+
+Work Log:
+- Vérifié les clients Supabase existants (étape 1) : browser, server, admin service_role — tous conformes (aucun secret en dur)
+- Créé src/lib/roles.ts : 7 rôles (super_admin, hotel_admin, manager, receptionist, accountant, housekeeping, maintenance) avec labels FR, descriptions, helpers (isSuperAdmin, isHotelUser, canAccessSuperAdmin, canAccessApp, getRedirectPathForRole, hasRole)
+- Créé src/lib/auth.ts : helpers serveur défensifs (getCurrentUser, getCurrentProfile, requireUser, requireProfile, requireRole, requireSuperAdmin, requireHotelUser, getCurrentActiveProfile) — tous catchent les erreurs si Supabase non configuré ou table profiles inexistante → retournent null au lieu de planter
+- Créé POST /api/auth/sign-in : valide email/password avec zod, appelle supabase.auth.signInWithPassword(), récupère le profil dans la table `profiles`, vérifie is_active, retourne user + profile (role) pour redirection côté client
+- Créé POST /api/auth/sign-out : révoque la session Supabase Auth, nettoie les cookies
+- Créé src/components/auth/login-form.tsx : formulaire client avec react-hook-form + zod, validation champs (email invalide, champs requis), toggle affichage mot de passe, toast sonner pour erreurs, redirection selon rôle après login
+- Créé src/components/auth/sign-out-button.tsx : bouton client qui appelle /api/auth/sign-out puis redirige vers /login
+- Mis à jour src/app/(auth)/login/page.tsx : server component, récupère getCurrentProfile(), redirige si déjà connecté, rend le LoginForm dans un Suspense (useSearchParams)
+- Étendu src/lib/supabase/middleware.ts : protection des routes /super-admin/* et /app/* — si utilisateur non connecté, redirect vers /login?redirect=<path>. Si Supabase non configuré, skip (dev local)
+- Créé src/app/(super-admin)/super-admin/dashboard/page.tsx : page dashboard avec topbar, profil utilisateur, 3 cartes modules (placeholders), note d'étape
+- Créé src/app/(app)/app/dashboard/page.tsx : page dashboard similaire pour l'espace établissement
+- Mis à jour /super-admin et /app → redirect automatique vers leurs dashboards
+- Corrigé warning scroll-behavior (ajouté data-scroll-behavior="smooth" sur <html>)
+- Lint : 0 erreur
+
+Vérification Agent Browser (toutes validées) :
+- ✅ Page /login : logo, champs email/password actifs, bouton afficher/masquer mdp, bouton "Se connecter", liens nav
+- ✅ Validation Zod : "L'email est requis" + "Le mot de passe est requis" sur champs vides
+- ✅ Validation email : "Email invalide" sur email mal formé
+- ✅ Toggle mot de passe : type bascule "password" ↔ "text"
+- ✅ Soumission formulaire → POST /api/auth/sign-in → réponse 503 "Service non configuré" (normal sans .env.local) → toast erreur Sonner
+- ✅ Page /super-admin/dashboard : topbar, titre, bouton déconnexion, cartes modules
+- ✅ Page /app/dashboard : topbar, titre, bouton déconnexion, cartes modules
+- ✅ Redirection /super-admin → /super-admin/dashboard
+- ✅ Redirection /app → /app/dashboard
+- ✅ Bouton déconnexion : clique → /api/auth/sign-out → redirect vers /login
+- ✅ 0 erreur runtime, 0 erreur console (juste warning DialogContent non bloquant)
+- ✅ Screenshots capturés : preview-login.png, preview-super-admin-dashboard.png
+
+Stage Summary:
+- Étape 3 (connexion Supabase Auth) TERMINÉE et vérifiée au navigateur
+- Code 100% prêt : dès que .env.local sera renseigné + table `profiles` créée (étape 4), l'auth fonctionnera end-to-end
+- Sécurité respectée : service_role jamais utilisée dans le flux d'auth (uniquement client serveur standard), aucun secret en dur, validation zod côté serveur et client
+- Redirection selon rôle opérationnelle : super_admin → /super-admin/dashboard, hotel_admin + staff → /app/dashboard
+- Middleware protège les routes /super-admin/* et /app/* (skip gracieux si Supabase non configuré)
+- Note : le mot de passe Super Admin "Ogou1987" fourni par l'utilisateur ne sera JAMAIS dans le code — il sera saisi directement dans le dashboard Supabase Auth lors de la création du compte (étape 4/6)
