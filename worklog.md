@@ -225,3 +225,33 @@ Stage Summary:
 - plans : SELECT public pour affichage tarifs
 - Actions critiques (activation, création établissement) à faire via service_role côté serveur (bypass RLS)
 - Prochaine étape : 004_seed_super_admin.sql (déjà créé à l'étape 4) puis test auth end-to-end
+
+---
+Task ID: 5
+Agent: main-orchestrator
+Task: Correction erreur SQL test RLS + création script de test autonome
+
+Work Log:
+- Reçu capture d'écran de l'utilisateur montrant l'erreur PostgreSQL 22P02
+- Analysé l'image avec VLM : "invalid input syntax for type uuid: <ETABLISSEMENT_2_UUID>"
+- Diagnostic : l'utilisateur a exécuté le SQL de test avec les placeholders <...> non remplacés
+- Créé supabase/migrations/005_test_rls_isolation.sql — script AUTONOME (290 lignes)
+  * Utilise \gset pour stocker les UUIDs générés dans des variables psql
+  * Crée 2 establishments + 2 room_types + 4 rooms + 2 profils hotel_admin (UUIDs générés)
+  * 7 tests d'isolation dans des blocs begin/commit avec set local request.jwt.claims
+    - Test 1 : User A ne voit QUE ses chambres (hotel_a = 2, hotel_b = 0)
+    - Test 2 : User B ne voit QUE ses chambres (hotel_b = 2, hotel_a = 0)
+    - Test 3 : User A tente insert room dans Hotel B → doit ÉCHOUER (RLS policy)
+    - Test 4 : User A tente select guests Hotel B → retourne 0
+    - Test 5 : anon tente select activation_codes → retourne 0 (sécurité critique)
+    - Test 6 : anon PEUT insert leads (landing page autorisée)
+    - Test 7 : super_admin voit TOUTES les chambres des 2 hôtels
+  * Nettoyage automatique à la fin (suppression de toutes les données TEST-RLS-*)
+  * Vérification finale : remaining_test_data doit être 0
+
+Stage Summary:
+- Erreur utilisateur diagnostiquée et résolue
+- Script de test RLS autonome créé : plus aucun placeholder à remplacer
+- Le script utilise \gset (variables psql) qui fonctionne dans Supabase SQL Editor
+- L'utilisateur peut maintenant copier-coller le script entier et cliquer Run
+- Les 7 tests valident l'isolation multi-tenant de bout en bout
