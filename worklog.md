@@ -171,3 +171,57 @@ Stage Summary:
 - L'ID du Super Admin est hardcodé dans 003 (c'est OK car ce n'est pas un secret, juste un identifiant)
 - Politiques RLS NON incluses (comme demandé) — seront ajoutées à l'étape 5
 - Prochaine étape naturelle : étape 5 (RLS policies) ou étape 6 (test auth end-to-end)
+
+---
+Task ID: 4
+Agent: main-orchestrator
+Task: Génération des politiques RLS Supabase pour OGHOTEL (étape 5 du plan)
+
+Work Log:
+- Renommé 003_seed_super_admin.sql → 004_seed_super_admin.sql pour libérer le slot 003 demandé par l'utilisateur
+- Créé supabase/migrations/003_rls_policies.sql (624 lignes)
+- Partie 1 : 4 fonctions helper SECURITY DEFINER + SET search_path=public
+  * get_current_user_role() — évite la récursion RLS sur profiles
+  * get_current_user_establishment_id()
+  * is_super_admin() — vérifie is_active=true en plus
+  * belongs_to_establishment(uuid) — vérifie is_active=true
+- Partie 2 : 9 fonctions de permission par rôle (PRD §5.4, §14.5)
+  * can_manage_rooms() — hotel_admin, manager, receptionist, housekeeping
+  * can_manage_reservations() — hotel_admin, manager, receptionist
+  * can_manage_stay_payments() — hotel_admin, manager, receptionist, accountant
+  * can_manage_invoices() — hotel_admin, manager, receptionist, accountant
+  * can_manage_expenses() — hotel_admin, manager, accountant
+  * can_manage_guests() — hotel_admin, manager, receptionist
+  * can_manage_housekeeping() — hotel_admin, manager, housekeeping
+  * can_manage_maintenance() — hotel_admin, manager, maintenance
+  * can_manage_staff() — hotel_admin uniquement
+  * can_manage_establishment() — hotel_admin uniquement
+- Partie 3 : ALTER TABLE ... ENABLE ROW LEVEL SECURITY sur les 16 tables
+- Partie 4 : 64 politiques CREATE POLICY (4 par table × 16 tables)
+  * profiles : SELECT propre/établissement/admin, INSERT admin, UPDATE propre/admin, DELETE admin
+  * plans : SELECT public (actifs), INSERT/UPDATE/DELETE admin
+  * leads : SELECT/UPDATE/DELETE admin, INSERT public (anon + authenticated) pour landing page
+  * establishments : SELECT propre/admin, INSERT admin, UPDATE hotel_admin/admin, DELETE admin
+  * subscription_payments : TOUT admin (super_admin uniquement)
+  * activation_codes : TOUT admin (JAMAIS public — sécurité critique)
+  * room_types, rooms : établissement + can_manage_rooms
+  * guests : établissement + can_manage_guests
+  * reservations : établissement + can_manage_reservations
+  * stay_payments : établissement + can_manage_stay_payments
+  * invoices : établissement + can_manage_invoices
+  * expenses : établissement + can_manage_expenses
+  * housekeeping_tasks : établissement + can_manage_housekeeping
+  * maintenance_tickets : établissement + can_manage_maintenance
+  * activity_logs : SELECT/INSERT établissement (tous rôles), UPDATE/DELETE admin uniquement (immutable)
+- Toutes les politiques utilisent drop policy if exists avant create (idempotent)
+- Requête de vérification finale : select tablename, policyname, cmd from pg_policies
+
+Stage Summary:
+- Étape 5 (RLS) TERMINÉE
+- 16 tables RLS activées, 64 politiques, 14 fonctions helper SECURITY DEFINER
+- Isolation multi-tenant garantie : appartient_to_establishment() vérifie establishment_id + is_active
+- Sécurité critique : activation_codes et subscription_payments accessibles UNIQUEMENT au super_admin
+- leads : INSERT public pour landing page, lecture réservée au super_admin
+- plans : SELECT public pour affichage tarifs
+- Actions critiques (activation, création établissement) à faire via service_role côté serveur (bypass RLS)
+- Prochaine étape : 004_seed_super_admin.sql (déjà créé à l'étape 4) puis test auth end-to-end
