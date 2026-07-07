@@ -1,0 +1,1637 @@
+     1→# PRD AMÉLIORÉ — OGHOTEL
+     2→
+     3→**Product Requirements Document**  
+     4→**SaaS de gestion d’hôtels et résidences meublées — Marché de Côte d’Ivoire**
+     5→
+     6→---
+     7→
+     8→## Informations générales
+     9→
+    10→| Élément | Détail |
+    11→|---|---|
+    12→| Nom du produit | **OGHOTEL** |
+    13→| Type de produit | SaaS web multi-tenant |
+    14→| Marché cible | Côte d’Ivoire |
+    15→| Langue principale | Français |
+    16→| Devise | FCFA |
+    17→| Porteur de projet / Super Admin | ogouromain@gmail.com |
+    18→| Contact WhatsApp commercial | +225 05 76 10 32 77 |
+    19→| Version du PRD | 2.0 améliorée |
+    20→| Date | Juillet 2026 |
+    21→| Stack technique cible | Frontend via GLM-5 / React ou Next.js · Supabase · GitHub · Vercel |
+    22→
+    23→> **Note de sécurité obligatoire**  
+    24→> Les clés Supabase, la clé `service_role`, les tokens personnels GitHub/Supabase et les mots de passe ne doivent jamais être placés dans le frontend, dans GitHub, dans un PRD public ou dans un fichier partagé. Ils doivent être stockés uniquement dans les variables d’environnement de Vercel/Supabase. Toute clé déjà exposée doit être régénérée avant la mise en production.
+    25→
+    26→---
+    27→
+    28→# 1. Résumé exécutif
+    29→
+    30→OGHOTEL est une plateforme SaaS multi-tenant destinée aux propriétaires, gérants et responsables d’hôtels, résidences meublées, auberges et autres structures d’hébergement en Côte d’Ivoire.
+    31→
+    32→L’application centralise dans une interface simple :
+    33→
+    34→- la gestion des chambres ;
+    35→- la gestion des réservations ;
+    36→- le calendrier de disponibilité ;
+    37→- les check-in et check-out ;
+    38→- les fiches clients ;
+    39→- les paiements ;
+    40→- les factures et reçus ;
+    41→- les dépenses ;
+    42→- le personnel ;
+    43→- le ménage ;
+    44→- la maintenance ;
+    45→- les rapports et statistiques.
+    46→
+    47→Le modèle commercial repose sur trois formules d’abonnement annuel :
+    48→
+    49→- **ESSENTIEL — 30 000 FCFA/an** ;
+    50→- **PRIVILÈGE — 50 000 FCFA/an** ;
+    51→- **PREMIUM — 75 000 FCFA/an**.
+    52→
+    53→Le processus de vente est volontairement semi-manuel au lancement :
+    54→
+    55→1. le prospect visite la landing page ;
+    56→2. il remplit un formulaire de demande ;
+    57→3. le Super Admin reçoit la demande dans son tableau de bord ;
+    58→4. le Super Admin contacte le prospect par WhatsApp ou appel ;
+    59→5. le prospect paie par Mobile Money ou autre moyen convenu ;
+    60→6. le Super Admin valide le paiement ;
+    61→7. le Super Admin génère un code d’activation unique ;
+    62→8. le client utilise ce code pour créer son compte administrateur d’hôtel/résidence.
+    63→
+    64→OGHOTEL doit être professionnel, mais suffisamment simple pour être utilisé par une personne peu habituée aux logiciels de gestion.
+    65→
+    66→---
+    67→
+    68→# 2. Contexte et problématique
+    69→
+    70→De nombreux hôtels et résidences en Côte d’Ivoire gèrent encore leurs activités avec :
+    71→
+    72→- des cahiers papier ;
+    73→- des fichiers Excel ;
+    74→- des conversations WhatsApp ;
+    75→- des appels téléphoniques ;
+    76→- des reçus manuels ;
+    77→- une mémoire humaine non centralisée.
+    78→
+    79→Cette organisation crée plusieurs difficultés :
+    80→
+    81→- risque de double réservation ;
+    82→- manque de visibilité sur les chambres disponibles ;
+    83→- erreurs dans les calculs de nuitées, acomptes et soldes ;
+    84→- absence d’historique fiable des clients ;
+    85→- difficulté à suivre les paiements en espèces et Mobile Money ;
+    86→- manque de statistiques sur le taux d’occupation ou le chiffre d’affaires ;
+    87→- contrôle limité sur les employés ;
+    88→- perte d’informations entre réception, ménage, comptabilité et direction ;
+    89→- facturation peu professionnelle ;
+    90→- absence d’outil local abordable et adapté aux usages ivoiriens.
+    91→
+    92→OGHOTEL apporte une réponse locale, simple et structurée à ces problèmes.
+    93→
+    94→---
+    95→
+    96→# 3. Vision produit
+    97→
+    98→## 3.1 Vision
+    99→
+   100→Faire d’OGHOTEL une solution locale de référence pour la gestion numérique des hôtels et résidences en Côte d’Ivoire, avec un produit simple, fiable, abordable et adapté aux réalités du terrain : Mobile Money, WhatsApp, FCFA, interface française et utilisation sur mobile.
+   101→
+   102→## 3.2 Proposition de valeur
+   103→
+   104→OGHOTEL permet à un établissement de :
+   105→
+   106→- connaître en temps réel les chambres libres, occupées, réservées, en nettoyage ou hors service ;
+   107→- éviter les doubles réservations ;
+   108→- créer des réservations rapidement ;
+   109→- suivre les paiements, acomptes, soldes et impayés ;
+   110→- générer des reçus et factures professionnels ;
+   111→- suivre les recettes, dépenses et performances ;
+   112→- organiser le ménage et la maintenance ;
+   113→- limiter les accès du personnel selon les rôles ;
+   114→- obtenir des rapports simples pour piloter son activité.
+   115→
+   116→## 3.3 Positionnement
+   117→
+   118→OGHOTEL n’est pas une application complexe réservée aux grands hôtels internationaux. C’est un outil local et accessible, conçu pour les petites et moyennes structures hôtelières, résidences meublées et établissements qui veulent professionnaliser leur gestion sans complexité.
+   119→
+   120→---
+   121→
+   122→# 4. Objectifs du produit
+   123→
+   124→| Objectif | Description |
+   125→|---|---|
+   126→| Simplicité | Interface intuitive, vocabulaire clair, parcours guidé, peu de champs obligatoires. |
+   127→| Fiabilité | Zéro double réservation, disponibilité en temps réel, calcul fiable des paiements. |
+   128→| Autonomie commerciale | Le Super Admin contrôle les prospects, paiements, abonnements, activations et renouvellements. |
+   129→| Adaptation locale | FCFA, WhatsApp, Mobile Money, usage mobile, langue française. |
+   130→| Évolutivité | Architecture multi-tenant permettant d’ajouter de nouveaux hôtels sans développement supplémentaire. |
+   131→| Sécurité | Isolation stricte des données entre établissements grâce à Supabase RLS. |
+   132→| Professionnalisme | Facturation, reçus, rapports, journal d’activité et tableaux de bord clairs. |
+   133→
+   134→---
+   135→
+   136→# 5. Personas et rôles
+   137→
+   138→## 5.1 Super Admin — éditeur de l’application
+   139→
+   140→Le Super Admin est le propriétaire/concepteur d’OGHOTEL. Il n’est pas un client hôtelier. Son compte est global et non lié à un établissement.
+   141→
+   142→### Responsabilités
+   143→
+   144→- gérer la plateforme OGHOTEL ;
+   145→- consulter les demandes venant de la landing page ;
+   146→- contacter les prospects ;
+   147→- enregistrer les paiements reçus ;
+   148→- générer les codes d’activation ;
+   149→- créer, activer, suspendre ou renouveler les comptes clients ;
+   150→- suivre les revenus SaaS ;
+   151→- gérer les formules et fonctionnalités ;
+   152→- consulter les statistiques globales ;
+   153→- exporter les données commerciales.
+   154→
+   155→## 5.2 Prospect / visiteur
+   156→
+   157→Personne intéressée par OGHOTEL. Elle visite la landing page, consulte les tarifs et remplit le formulaire de demande d’abonnement.
+   158→
+   159→## 5.3 Admin Hôtel — client final
+   160→
+   161→Propriétaire ou gérant d’un hôtel/résidence ayant souscrit à OGHOTEL. Il administre son propre établissement.
+   162→
+   163→### Responsabilités
+   164→
+   165→- configurer l’établissement ;
+   166→- créer les chambres et types de chambres ;
+   167→- gérer les réservations ;
+   168→- suivre les paiements ;
+   169→- créer des comptes employés selon la formule ;
+   170→- consulter les rapports ;
+   171→- renouveler son abonnement.
+   172→
+   173→## 5.4 Personnel hôtelier
+   174→
+   175→Comptes secondaires créés par l’Admin Hôtel, selon la formule souscrite.
+   176→
+   177→### Rôles possibles
+   178→
+   179→- **Manager** : supervision opérationnelle ;
+   180→- **Réceptionniste** : réservations, clients, check-in/check-out, paiements ;
+   181→- **Comptable** : paiements, dépenses, rapports ;
+   182→- **Ménage** : suivi de l’état des chambres ;
+   183→- **Maintenance** : incidents et réparations.
+   184→
+   185→---
+   186→
+   187→# 6. Parcours utilisateur global
+   188→
+   189→```text
+   190→[Landing Page OGHOTEL]
+   191→        │
+   192→        ▼
+   193→[Formulaire prospect : nom, structure, contact, formule souhaitée]
+   194→        │
+   195→        ▼
+   196→[Enregistrement en base + notification dashboard Super Admin]
+   197→        │
+   198→        ▼
+   199→[Super Admin contacte le prospect via WhatsApp / appel]
+   200→        │
+   201→        ▼
+   202→[Accord commercial conclu]
+   203→        │
+   204→        ▼
+   205→[Paiement Mobile Money direct au Super Admin]
+   206→        │
+   207→        ▼
+   208→[Super Admin valide le paiement dans son dashboard]
+   209→        │
+   210→        ▼
+   211→[Génération d’un code d’activation unique]
+   212→        │
+   213→        ▼
+   214→[Code envoyé au client]
+   215→        │
+   216→        ▼
+   217→[Client saisit le code sur la page d’activation]
+   218→        │
+   219→        ▼
+   220→[Création du compte Admin Hôtel + espace de gestion dédié]
+   221→        │
+   222→        ▼
+   223→[Client utilise OGHOTEL pour gérer son établissement]
+   224→```
+   225→
+   226→---
+   227→
+   228→# 7. Périmètre fonctionnel
+   229→
+   230→## 7.1 Inclus dans le MVP
+   231→
+   232→- Landing page publique ;
+   233→- formulaire prospect ;
+   234→- tableau de bord Super Admin ;
+   235→- gestion des prospects ;
+   236→- gestion des paiements SaaS manuels ;
+   237→- génération de codes d’activation ;
+   238→- activation client par code ;
+   239→- création du compte Admin Hôtel ;
+   240→- authentification Supabase ;
+   241→- espace établissement multi-tenant ;
+   242→- gestion des chambres ;
+   243→- gestion des types de chambres ;
+   244→- calendrier de disponibilité ;
+   245→- gestion des clients hébergés ;
+   246→- réservations ;
+   247→- check-in/check-out ;
+   248→- paiements séjour ;
+   249→- reçus/factures simples ;
+   250→- tableau de bord établissement ;
+   251→- dépenses ;
+   252→- rapports basiques ;
+   253→- gestion limitée des utilisateurs selon formule ;
+   254→- paramètres établissement ;
+   255→- alertes internes de base.
+   256→
+   257→## 7.2 À prévoir après le MVP
+   258→
+   259→- Paiement Mobile Money automatisé via agrégateur ;
+   260→- WhatsApp Business API ;
+   261→- notifications email automatiques ;
+   262→- réservation en ligne par les clients finaux des hôtels ;
+   263→- application mobile native ;
+   264→- export comptable avancé ;
+   265→- module restaurant/bar ;
+   266→- module stock ;
+   267→- channel manager Booking/Airbnb ;
+   268→- multi-pays ;
+   269→- intelligence artificielle pour prévisions et prix dynamiques.
+   270→
+   271→---
+   272→
+   273→# 8. Modules fonctionnels détaillés
+   274→
+   275→---
+   276→
+   277→## 8.1 Landing page publique
+   278→
+   279→### Objectif
+   280→
+   281→Présenter OGHOTEL, rassurer les prospects et générer des demandes qualifiées.
+   282→
+   283→### Pages/sections recommandées
+   284→
+   285→- Accueil ;
+   286→- présentation du problème ;
+   287→- présentation de la solution ;
+   288→- bénéfices clés ;
+   289→- fonctionnalités ;
+   290→- captures d’écran ou maquettes ;
+   291→- tarifs ;
+   292→- comparatif des formules ;
+   293→- témoignages ou section prévue pour témoignages ;
+   294→- FAQ ;
+   295→- contact ;
+   296→- mentions légales ;
+   297→- page “Activer mon compte”.
+   298→
+   299→### Contenu commercial recommandé
+   300→
+   301→- Slogan possible : **“Gérez votre hôtel ou résidence simplement, depuis une seule interface.”**
+   302→- Arguments principaux :
+   303→  - éviter les doubles réservations ;
+   304→  - suivre les chambres en temps réel ;
+   305→  - encaisser et suivre les paiements ;
+   306→  - générer des reçus professionnels ;
+   307→  - piloter l’activité grâce aux rapports ;
+   308→  - solution adaptée à la Côte d’Ivoire.
+   309→
+   310→### Formulaire prospect
+   311→
+   312→Champs :
+   313→
+   314→- nom complet ;
+   315→- nom de la structure ;
+   316→- ville/commune ;
+   317→- type d’établissement : hôtel, résidence, auberge, autre ;
+   318→- nombre de chambres ;
+   319→- numéro WhatsApp ;
+   320→- email ;
+   321→- formule souhaitée ;
+   322→- message complémentaire ;
+   323→- consentement à être contacté.
+   324→
+   325→### À la soumission
+   326→
+   327→- Enregistrement dans la table `leads` ou `prospects` ;
+   328→- statut initial : `new` ;
+   329→- affichage d’un message de confirmation ;
+   330→- notification interne dans le dashboard Super Admin ;
+   331→- option phase 2 : notification email automatique au Super Admin.
+   332→
+   333→### Critères d’acceptation
+   334→
+   335→- Un visiteur peut soumettre une demande valide ;
+   336→- les champs obligatoires sont vérifiés ;
+   337→- le Super Admin voit la demande sans intervention technique ;
+   338→- un bouton WhatsApp ouvre une discussion vers le contact commercial ;
+   339→- la landing page est responsive mobile.
+   340→
+   341→---
+   342→
+   343→## 8.2 Interface Super Admin
+   344→
+   345→### 8.2.1 Authentification
+   346→
+   347→- Connexion par email et mot de passe via Supabase Auth ;
+   348→- accès réservé au rôle `super_admin` ;
+   349→- compte initial configuré via script sécurisé ou variable d’environnement ;
+   350→- changement obligatoire du mot de passe à la première connexion ;
+   351→- réinitialisation de mot de passe ;
+   352→- déconnexion.
+   353→
+   354→> Le mot de passe initial ne doit pas être codé en dur dans le frontend ou dans GitHub.
+   355→
+   356→### 8.2.2 Tableau de bord Super Admin
+   357→
+   358→Indicateurs principaux :
+   359→
+   360→- nombre total de prospects ;
+   361→- nouveaux prospects en attente ;
+   362→- prospects contactés ;
+   363→- prospects convertis ;
+   364→- prospects perdus ;
+   365→- clients actifs ;
+   366→- clients expirés ;
+   367→- clients suspendus ;
+   368→- revenus cumulés ;
+   369→- revenus du mois ;
+   370→- revenus par formule ;
+   371→- codes générés ;
+   372→- codes utilisés ;
+   373→- codes expirés ;
+   374→- abonnements proches expiration.
+   375→
+   376→### 8.2.3 Gestion des prospects
+   377→
+   378→Fonctions :
+   379→
+   380→- liste paginée des prospects ;
+   381→- recherche par nom, établissement, téléphone ou email ;
+   382→- filtres par statut, ville, formule, date ;
+   383→- fiche prospect ;
+   384→- modification du statut : `new`, `contacted`, `negotiating`, `won`, `lost` ;
+   385→- notes internes ;
+   386→- bouton WhatsApp avec message prérempli ;
+   387→- bouton appel téléphonique ;
+   388→- conversion en client après validation paiement ;
+   389→- historique des interactions.
+   390→
+   391→### 8.2.4 Gestion des clients / établissements
+   392→
+   393→Fonctions :
+   394→
+   395→- liste de tous les établissements abonnés ;
+   396→- détail client ;
+   397→- coordonnées ;
+   398→- formule active ;
+   399→- date de souscription ;
+   400→- date d’expiration ;
+   401→- statut : `active`, `expired`, `suspended`, `trial` si besoin ;
+   402→- nombre d’utilisateurs autorisés ;
+   403→- nombre d’établissements autorisés ;
+   404→- historique des paiements ;
+   405→- historique des codes ;
+   406→- suspension / réactivation ;
+   407→- changement de formule ;
+   408→- renouvellement manuel ;
+   409→- prolongation de la date d’expiration.
+   410→
+   411→### 8.2.5 Gestion des paiements SaaS
+   412→
+   413→Au lancement, les paiements sont validés manuellement.
+   414→
+   415→Champs :
+   416→
+   417→- prospect ou client lié ;
+   418→- formule ;
+   419→- montant ;
+   420→- moyen de paiement : Orange Money, MTN Mobile Money, Moov Money, Wave, espèces, virement ;
+   421→- référence de transaction ;
+   422→- date de paiement ;
+   423→- statut : `pending`, `validated`, `rejected`, `refunded` ;
+   424→- validé par ;
+   425→- note interne.
+   426→
+   427→Fonctions :
+   428→
+   429→- enregistrer un paiement ;
+   430→- valider un paiement ;
+   431→- rejeter un paiement ;
+   432→- générer un code après validation ;
+   433→- exporter les paiements en CSV ;
+   434→- visualiser les revenus par mois/année/formule.
+   435→
+   436→### 8.2.6 Gestion des codes d’activation
+   437→
+   438→Règles :
+   439→
+   440→- code unique ;
+   441→- usage unique ;
+   442→- durée de validité limitée ;
+   443→- lié à une formule ;
+   444→- lié à un prospect ou un client ;
+   445→- utilisable seulement si statut valide ;
+   446→- devient `used` après activation.
+   447→
+   448→Format recommandé :
+   449→
+   450→```text
+   451→OGH-2026-XXXXXX
+   452→```
+   453→
+   454→Statuts :
+   455→
+   456→- `generated` ;
+   457→- `sent` ;
+   458→- `used` ;
+   459→- `expired` ;
+   460→- `cancelled`.
+   461→
+   462→Fonctions :
+   463→
+   464→- générer ;
+   465→- copier ;
+   466→- marquer comme envoyé ;
+   467→- annuler ;
+   468→- voir l’historique ;
+   469→- relier à un paiement ;
+   470→- relier à une formule ;
+   471→- afficher la date d’expiration.
+   472→
+   473→### 8.2.7 Gestion des formules et fonctionnalités
+   474→
+   475→Le Super Admin peut gérer les plans sans modifier le code.
+   476→
+   477→Fonctions :
+   478→
+   479→- modifier le prix annuel ;
+   480→- modifier la description ;
+   481→- activer/désactiver une formule ;
+   482→- gérer les limites : utilisateurs, établissements, modules, exports ;
+   483→- gérer les fonctionnalités incluses sous forme de configuration JSON.
+   484→
+   485→### 8.2.8 Gestion financière Super Admin
+   486→
+   487→Fonctions :
+   488→
+   489→- revenus par période ;
+   490→- revenus par formule ;
+   491→- revenus par moyen de paiement ;
+   492→- liste des paiements validés ;
+   493→- export CSV ;
+   494→- indicateur de renouvellements à venir ;
+   495→- indicateur d’abonnements expirés.
+   496→
+   497→### 8.2.9 Paramètres Super Admin
+   498→
+   499→- gestion du profil ;
+   500→- changement de mot de passe ;
+   501→- configuration du contact commercial ;
+   502→- configuration du texte WhatsApp par défaut ;
+   503→- configuration des plans ;
+   504→- sécurité du compte.
+   505→
+   506→### 8.2.10 Journal d’activité Super Admin
+   507→
+   508→Tracer :
+   509→
+   510→- connexions ;
+   511→- création/modification de prospects ;
+   512→- validation de paiements ;
+   513→- génération de codes ;
+   514→- suspension/réactivation de comptes ;
+   515→- modification des plans ;
+   516→- renouvellement d’abonnements.
+   517→
+   518→---
+   519→
+   520→## 8.3 Processus d’onboarding client
+   521→
+   522→### Objectif
+   523→
+   524→Permettre à un client ayant payé de créer son espace hôtel/résidence grâce au code d’activation fourni par le Super Admin.
+   525→
+   526→### Étapes
+   527→
+   528→1. Le client va sur la page “Activer mon compte”.
+   529→2. Il saisit son code d’activation.
+   530→3. Le système vérifie :
+   531→   - existence du code ;
+   532→   - statut valide ;
+   533→   - non-utilisation ;
+   534→   - non-expiration ;
+   535→   - formule associée.
+   536→4. Si le code est valide, le formulaire d’inscription s’ouvre.
+   537→5. Le client renseigne :
+   538→   - nom du gérant ;
+   539→   - nom de l’établissement ;
+   540→   - type d’établissement ;
+   541→   - adresse ;
+   542→   - ville ;
+   543→   - téléphone ;
+   544→   - email ;
+   545→   - mot de passe ;
+   546→   - logo optionnel.
+   547→6. Le système crée :
+   548→   - le tenant / établissement ;
+   549→   - le compte Admin Hôtel ;
+   550→   - le profil utilisateur ;
+   551→   - l’abonnement actif ;
+   552→   - les paramètres par défaut.
+   553→7. Le code passe au statut `used`.
+   554→8. L’utilisateur est redirigé vers son tableau de bord.
+   555→
+   556→### Critères d’acceptation
+   557→
+   558→- un code invalide affiche un message clair ;
+   559→- un code expiré ne peut pas être utilisé ;
+   560→- un code déjà utilisé ne peut pas être réutilisé ;
+   561→- un espace établissement est automatiquement isolé ;
+   562→- l’Admin Hôtel accède uniquement à ses données.
+   563→
+   564→---
+   565→
+   566→## 8.4 Interface Admin Hôtel — cœur de l’application
+   567→
+   568→### 8.4.1 Tableau de bord établissement
+   569→
+   570→Indicateurs :
+   571→
+   572→- chambres disponibles ;
+   573→- chambres occupées ;
+   574→- chambres réservées ;
+   575→- chambres en nettoyage ;
+   576→- chambres hors service ;
+   577→- arrivées du jour ;
+   578→- départs du jour ;
+   579→- réservations en attente ;
+   580→- paiements partiels ;
+   581→- impayés ;
+   582→- recettes du jour ;
+   583→- recettes du mois ;
+   584→- dépenses du mois ;
+   585→- résultat net simplifié ;
+   586→- taux d’occupation ;
+   587→- alertes ménage ;
+   588→- alertes maintenance ;
+   589→- expiration prochaine de l’abonnement OGHOTEL.
+   590→
+   591→### 8.4.2 Gestion des types de chambres
+   592→
+   593→Fonctions :
+   594→
+   595→- créer un type : Simple, Double, Suite, Studio, Appartement, Villa, VIP, etc. ;
+   596→- définir un prix par défaut ;
+   597→- définir une capacité ;
+   598→- ajouter une description ;
+   599→- ajouter des photos ;
+   600→- activer/désactiver un type.
+   601→
+   602→### 8.4.3 Gestion des chambres
+   603→
+   604→Champs :
+   605→
+   606→- numéro ou nom ;
+   607→- type de chambre ;
+   608→- étage/bâtiment ;
+   609→- capacité ;
+   610→- prix par nuit ;
+   611→- prix demi-journée optionnel ;
+   612→- équipements : climatisation, TV, Wi-Fi, cuisine, douche, parking, etc. ;
+   613→- statut ;
+   614→- notes ;
+   615→- photos optionnelles.
+   616→
+   617→Statuts :
+   618→
+   619→- `available` : libre ;
+   620→- `reserved` : réservée ;
+   621→- `occupied` : occupée ;
+   622→- `cleaning` : en nettoyage ;
+   623→- `maintenance` : hors service / maintenance ;
+   624→- `inactive` : désactivée.
+   625→
+   626→### 8.4.4 Calendrier de disponibilité
+   627→
+   628→Fonctions :
+   629→
+   630→- vue jour ;
+   631→- vue semaine ;
+   632→- vue mois ;
+   633→- vue par chambre ;
+   634→- couleurs par statut ;
+   635→- création rapide d’une réservation ;
+   636→- détection automatique des conflits ;
+   637→- filtre par type de chambre ;
+   638→- affichage des arrivées et départs.
+   639→
+   640→### 8.4.5 Réservations
+   641→
+   642→Champs :
+   643→
+   644→- client ;
+   645→- chambre ;
+   646→- date d’arrivée ;
+   647→- date de départ ;
+   648→- nombre de nuits ;
+   649→- nombre d’adultes ;
+   650→- nombre d’enfants ;
+   651→- tarif appliqué ;
+   652→- remise éventuelle ;
+   653→- montant total ;
+   654→- acompte ;
+   655→- solde ;
+   656→- source : direct, téléphone, WhatsApp, agence, autre ;
+   657→- statut ;
+   658→- notes.
+   659→
+   660→Statuts :
+   661→
+   662→- `pending` : en attente ;
+   663→- `confirmed` : confirmée ;
+   664→- `checked_in` : client arrivé ;
+   665→- `checked_out` : séjour terminé ;
+   666→- `cancelled` : annulée ;
+   667→- `no_show` : client non présenté.
+   668→
+   669→Fonctions :
+   670→
+   671→- créer ;
+   672→- modifier ;
+   673→- annuler ;
+   674→- rechercher ;
+   675→- filtrer par date/statut/chambre ;
+   676→- check-in en un clic ;
+   677→- check-out en un clic ;
+   678→- paiement partiel ou total ;
+   679→- génération de reçu/facture ;
+   680→- impression ou export PDF.
+   681→
+   682→### 8.4.6 Check-in
+   683→
+   684→Actions :
+   685→
+   686→- sélectionner une réservation confirmée ;
+   687→- vérifier ou créer la fiche client ;
+   688→- attribuer la chambre ;
+   689→- enregistrer l’acompte ou paiement ;
+   690→- passer la chambre en `occupied` ;
+   691→- passer la réservation en `checked_in` ;
+   692→- générer une fiche d’arrivée si nécessaire.
+   693→
+   694→### 8.4.7 Check-out
+   695→
+   696→Actions :
+   697→
+   698→- calculer le montant final ;
+   699→- ajouter frais supplémentaires si besoin ;
+   700→- afficher le solde restant ;
+   701→- encaisser le solde ;
+   702→- générer reçu/facture ;
+   703→- passer la réservation en `checked_out` ;
+   704→- passer la chambre en `cleaning`.
+   705→
+   706→### 8.4.8 Gestion des clients hébergés / CRM basique
+   707→
+   708→Champs :
+   709→
+   710→- nom complet ;
+   711→- téléphone ;
+   712→- email ;
+   713→- nationalité ;
+   714→- type de pièce : CNI, passeport, permis, autre ;
+   715→- numéro de pièce ;
+   716→- adresse ;
+   717→- notes ;
+   718→- historique des séjours.
+   719→
+   720→Fonctions :
+   721→
+   722→- créer une fiche ;
+   723→- rechercher rapidement ;
+   724→- réutiliser un client existant lors d’une réservation ;
+   725→- consulter l’historique ;
+   726→- voir les paiements liés.
+   727→
+   728→### 8.4.9 Facturation, reçus et paiements
+   729→
+   730→Fonctions :
+   731→
+   732→- enregistrer paiement total ou partiel ;
+   733→- gérer plusieurs paiements par réservation ;
+   734→- moyens : espèces, Orange Money, MTN Money, Moov Money, Wave, virement, carte ;
+   735→- statut : payé, partiel, impayé ;
+   736→- référence transaction ;
+   737→- reçu simple ;
+   738→- facture simple ;
+   739→- export PDF ;
+   740→- impression navigateur ;
+   741→- historique des transactions ;
+   742→- rapport des impayés.
+   743→
+   744→### 8.4.10 Dépenses
+   745→
+   746→Champs :
+   747→
+   748→- catégorie : salaire, électricité, eau, internet, maintenance, fournitures, carburant, nettoyage, autre ;
+   749→- montant ;
+   750→- date ;
+   751→- description ;
+   752→- responsable ;
+   753→- pièce jointe optionnelle ;
+   754→- moyen de paiement.
+   755→
+   756→Rapports :
+   757→
+   758→- dépenses par période ;
+   759→- dépenses par catégorie ;
+   760→- recettes moins dépenses ;
+   761→- résultat net simplifié.
+   762→
+   763→### 8.4.11 Gestion du ménage
+   764→
+   765→Fonctions :
+   766→
+   767→- liste des chambres à nettoyer ;
+   768→- statut : sale, en cours, propre, inspectée ;
+   769→- attribution à un employé ;
+   770→- notes ;
+   771→- historique ;
+   772→- passage automatique en nettoyage après check-out.
+   773→
+   774→### 8.4.12 Gestion de la maintenance
+   775→
+   776→Fonctions :
+   777→
+   778→- déclarer un incident ;
+   779→- chambre concernée ou incident général ;
+   780→- titre ;
+   781→- description ;
+   782→- priorité : faible, normale, urgente ;
+   783→- statut : ouvert, en cours, résolu ;
+   784→- coût ;
+   785→- responsable ;
+   786→- date de résolution ;
+   787→- passage de la chambre en maintenance si nécessaire.
+   788→
+   789→### 8.4.13 Gestion du personnel
+   790→
+   791→Disponible selon la formule.
+   792→
+   793→Rôles :
+   794→
+   795→- `hotel_admin` ;
+   796→- `manager` ;
+   797→- `receptionist` ;
+   798→- `accountant` ;
+   799→- `housekeeping` ;
+   800→- `maintenance`.
+   801→
+   802→Fonctions :
+   803→
+   804→- créer un utilisateur ;
+   805→- assigner un rôle ;
+   806→- activer/désactiver un compte ;
+   807→- réinitialiser un mot de passe ;
+   808→- consulter les actions d’un utilisateur ;
+   809→- limiter les permissions.
+   810→
+   811→### 8.4.14 Rapports et statistiques
+   812→
+   813→Rapports MVP :
+   814→
+   815→- taux d’occupation ;
+   816→- chiffre d’affaires par jour/semaine/mois/année ;
+   817→- chiffre d’affaires par type de chambre ;
+   818→- réservations par statut ;
+   819→- paiements reçus ;
+   820→- paiements partiels ;
+   821→- impayés ;
+   822→- dépenses ;
+   823→- résultat net simplifié ;
+   824→- top chambres utilisées ;
+   825→- clients fréquents.
+   826→
+   827→Exports :
+   828→
+   829→- CSV pour le MVP ;
+   830→- PDF pour les rapports importants ;
+   831→- export comptable avancé pour Premium en phase 2.
+   832→
+   833→### 8.4.15 Notifications internes
+   834→
+   835→MVP :
+   836→
+   837→- arrivées du jour ;
+   838→- départs du jour ;
+   839→- réservations en attente ;
+   840→- chambres à nettoyer ;
+   841→- chambres en maintenance ;
+   842→- paiements impayés ;
+   843→- abonnement expirant bientôt.
+   844→
+   845→Phase 2 :
+   846→
+   847→- email automatique ;
+   848→- WhatsApp Business API ;
+   849→- SMS ;
+   850→- rappels de renouvellement.
+   851→
+   852→### 8.4.16 Multi-établissement
+   853→
+   854→Fonction prévue principalement pour la formule Premium.
+   855→
+   856→Principe :
+   857→
+   858→- un même Admin peut gérer plusieurs établissements ;
+   859→- chaque établissement garde ses chambres, réservations, clients et rapports ;
+   860→- l’Admin peut basculer d’un établissement à l’autre ;
+   861→- un tableau consolidé peut afficher les performances globales.
+   862→
+   863→### 8.4.17 Paramètres établissement
+   864→
+   865→- nom ;
+   866→- logo ;
+   867→- adresse ;
+   868→- ville ;
+   869→- téléphone ;
+   870→- email ;
+   871→- devise : FCFA ;
+   872→- fuseau horaire ;
+   873→- heure standard check-in ;
+   874→- heure standard check-out ;
+   875→- texte des reçus/factures ;
+   876→- informations fiscales si nécessaires ;
+   877→- affichage de la formule active ;
+   878→- date d’expiration ;
+   879→- bouton contacter le Super Admin pour renouveler.
+   880→
+   881→---
+   882→
+   883→# 9. Formules tarifaires et limitations
+   884→
+   885→| Formule | Prix | Public cible | Limites et fonctionnalités indicatives |
+   886→|---|---:|---|---|
+   887→| **ESSENTIEL** | **30 000 FCFA/an** | Petite résidence, auberge, petit hôtel | 1 établissement · 1 utilisateur Admin · chambres · réservations · clients · paiements · facturation simple · statistiques de base |
+   888→| **PRIVILÈGE** | **50 000 FCFA/an** | Hôtel/résidence de taille moyenne | Tout Essentiel · jusqu’à 3 comptes personnel · rapports avancés · dépenses · ménage · maintenance · exports CSV/PDF · support prioritaire |
+   889→| **PREMIUM** | **75 000 FCFA/an** | Groupe, grande résidence, multi-sites | Tout Privilège · multi-établissements · utilisateurs illimités ou limite configurable · exports comptables avancés · assistance dédiée |
+   890→
+   891→> La répartition exacte des fonctionnalités doit être modifiable depuis l’interface Super Admin, afin de pouvoir ajuster l’offre commerciale sans redéployer l’application.
+   892→
+   893→## 9.1 Feature gating recommandé
+   894→
+   895→| Module | Essentiel | Privilège | Premium |
+   896→|---|---:|---:|---:|
+   897→| Chambres | Oui | Oui | Oui |
+   898→| Réservations | Oui | Oui | Oui |
+   899→| Clients hébergés | Oui | Oui | Oui |
+   900→| Paiements | Oui | Oui | Oui |
+   901→| Facture/reçu simple | Oui | Oui | Oui |
+   902→| Rapports de base | Oui | Oui | Oui |
+   903→| Dépenses | Limité | Oui | Oui |
+   904→| Personnel | Non ou limité | Jusqu’à 3 | Illimité/configurable |
+   905→| Ménage | Non ou limité | Oui | Oui |
+   906→| Maintenance | Non ou limité | Oui | Oui |
+   907→| Export CSV | Non ou limité | Oui | Oui |
+   908→| Export PDF | Non ou limité | Oui | Oui |
+   909→| Multi-établissement | Non | Non ou option | Oui |
+   910→| Support prioritaire | Non | Oui | Oui |
+   911→| Assistance dédiée | Non | Non | Oui |
+   912→
+   913→---
+   914→
+   915→# 10. Exigences UX/UI
+   916→
+   917→## 10.1 Principes
+   918→
+   919→- Interface moderne, claire et épurée ;
+   920→- parcours guidés ;
+   921→- vocabulaire simple ;
+   922→- boutons explicites ;
+   923→- actions fréquentes accessibles rapidement ;
+   924→- tableaux avec filtres et recherche ;
+   925→- badges de statut colorés ;
+   926→- peu de champs obligatoires ;
+   927→- messages d’erreur compréhensibles ;
+   928→- responsive mobile/tablette/ordinateur.
+   929→
+   930→## 10.2 Style recommandé
+   931→
+   932→- Couleurs principales : bleu foncé, doré/orange, blanc, gris clair ;
+   933→- typographie lisible ;
+   934→- icônes simples ;
+   935→- cartes statistiques ;
+   936→- tableaux propres ;
+   937→- calendrier visuel ;
+   938→- design professionnel adapté à un produit SaaS.
+   939→
+   940→## 10.3 Accessibilité
+   941→
+   942→- contraste suffisant ;
+   943→- tailles de texte lisibles ;
+   944→- navigation clavier basique ;
+   945→- labels de formulaire ;
+   946→- messages d’erreur sous les champs ;
+   947→- confirmation visible après action.
+   948→
+   949→---
+   950→
+   951→# 11. Exigences non fonctionnelles
+   952→
+   953→| Exigence | Détail |
+   954→|---|---|
+   955→| Performance | Chargement rapide même sur connexion mobile moyenne. |
+   956→| Responsive | Utilisable sur smartphone, tablette et ordinateur. |
+   957→| Langue | Français uniquement en V1. |
+   958→| Devise | FCFA uniquement en V1. |
+   959→| Disponibilité | Hébergement Vercel + Supabase avec objectif de disponibilité élevée. |
+   960→| Sécurité | RLS obligatoire, séparation stricte des données. |
+   961→| Simplicité | Interface compréhensible par un utilisateur non technophile. |
+   962→| Maintenabilité | Code modulaire, composants réutilisables, variables d’environnement. |
+   963→| Scalabilité | Multi-tenant, ajout de clients sans modification du code. |
+   964→| Traçabilité | Journal d’activité pour les actions sensibles. |
+   965→| Sauvegarde | Prévoir stratégie de sauvegarde Supabase. |
+   966→
+   967→---
+   968→
+   969→# 12. Architecture technique recommandée
+   970→
+   971→## 12.1 Stack
+   972→
+   973→- **Frontend** : Next.js recommandé, ou React + Vite ;
+   974→- **UI** : Tailwind CSS ou CSS moderne ;
+   975→- **Backend** : Supabase ;
+   976→- **Base de données** : PostgreSQL ;
+   977→- **Authentification** : Supabase Auth ;
+   978→- **Fichiers** : Supabase Storage ;
+   979→- **Fonctions serveur** : Next.js API Routes, Server Actions ou Supabase Edge Functions ;
+   980→- **Déploiement** : Vercel ;
+   981→- **Versioning** : GitHub privé recommandé.
+   982→
+   983→## 12.2 Variables d’environnement
+   984→
+   985→Exemple de variables à prévoir :
+   986→
+   987→```env
+   988→NEXT_PUBLIC_SUPABASE_URL=...
+   989→NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+   990→SUPABASE_SERVICE_ROLE_KEY=...
+   991→SUPER_ADMIN_EMAIL=...
+   992→APP_URL=...
+   993→WHATSAPP_CONTACT=...
+   994→```
+   995→
+   996→Règles :
+   997→
+   998→- `NEXT_PUBLIC_SUPABASE_URL` peut être côté client ;
+   999→- `NEXT_PUBLIC_SUPABASE_ANON_KEY` peut être côté client uniquement avec RLS bien configuré ;
+  1000→- `SUPABASE_SERVICE_ROLE_KEY` doit rester uniquement côté serveur ;
+  1001→- aucun secret ne doit être commité dans GitHub ;
+  1002→- utiliser `.env.local` en local et variables Vercel en production.
+  1003→
+  1004→## 12.3 Principe multi-tenant
+  1005→
+  1006→Chaque table métier doit contenir un identifiant d’établissement :
+  1007→
+  1008→- `establishment_id`, `hotel_id` ou `tenant_id`.
+  1009→
+  1010→Le nom recommandé pour garder un vocabulaire général est :
+  1011→
+  1012→```text
+  1013→establishment_id
+  1014→```
+  1015→
+  1016→Règles :
+  1017→
+  1018→- un utilisateur hôtelier ne voit que les données liées à son établissement ;
+  1019→- le Super Admin peut voir les données globales nécessaires à l’administration SaaS ;
+  1020→- les politiques RLS doivent être testées avant production ;
+  1021→- les requêtes frontend ne doivent jamais contourner la sécurité.
+  1022→
+  1023→## 12.4 Sécurité
+  1024→
+  1025→- Supabase Auth pour tous les utilisateurs ;
+  1026→- rôles dans une table `profiles` ;
+  1027→- RLS activé sur toutes les tables sensibles ;
+  1028→- fonctions serveur pour actions critiques : création utilisateur, activation code, génération code ;
+  1029→- audit log ;
+  1030→- changement obligatoire du mot de passe initial ;
+  1031→- rotation des clés exposées ;
+  1032→- validation côté client et côté serveur.
+  1033→
+  1034→---
+  1035→
+  1036→# 13. Modèle de données recommandé
+  1037→
+  1038→> Les noms ci-dessous sont recommandés pour un projet clair. Si le développeur préfère `hotels` au lieu de `establishments`, il faut rester cohérent dans tout le code.
+  1039→
+  1040→## 13.1 `profiles`
+  1041→
+  1042→Profil utilisateur lié à Supabase Auth.
+  1043→
+  1044→| Champ | Type | Description |
+  1045→|---|---|---|
+  1046→| id | uuid | Identifiant utilisateur, lié à `auth.users.id` |
+  1047→| full_name | text | Nom complet |
+  1048→| phone | text | Téléphone |
+  1049→| role | text | `super_admin`, `hotel_admin`, `manager`, `receptionist`, `accountant`, `housekeeping`, `maintenance` |
+  1050→| establishment_id | uuid nullable | Établissement lié, null pour Super Admin |
+  1051→| must_change_password | boolean | Obligation de changer le mot de passe |
+  1052→| is_active | boolean | Compte actif ou désactivé |
+  1053→| created_at | timestamptz | Date création |
+  1054→
+  1055→## 13.2 `plans`
+  1056→
+  1057→| Champ | Type | Description |
+  1058→|---|---|---|
+  1059→| id | uuid | ID formule |
+  1060→| name | text | ESSENTIEL, PRIVILEGE, PREMIUM |
+  1061→| price_fcfa | integer | Prix annuel |
+  1062→| duration_days | integer | 365 |
+  1063→| max_users | integer nullable | Limite utilisateurs |
+  1064→| max_establishments | integer nullable | Limite établissements |
+  1065→| features | jsonb | Fonctionnalités activées |
+  1066→| description | text | Description publique |
+  1067→| is_active | boolean | Formule active |
+  1068→| created_at | timestamptz | Date création |
+  1069→
+  1070→## 13.3 `leads`
+  1071→
+  1072→| Champ | Type | Description |
+  1073→|---|---|---|
+  1074→| id | uuid | ID prospect |
+  1075→| full_name | text | Nom du prospect |
+  1076→| business_name | text | Nom de la structure |
+  1077→| business_type | text | Hôtel, résidence, auberge, autre |
+  1078→| city | text | Ville |
+  1079→| rooms_count | integer | Nombre de chambres |
+  1080→| phone | text | WhatsApp |
+  1081→| email | text | Email |
+  1082→| desired_plan_id | uuid | Formule souhaitée |
+  1083→| message | text | Message |
+  1084→| status | text | `new`, `contacted`, `negotiating`, `won`, `lost` |
+  1085→| internal_notes | text | Notes Super Admin |
+  1086→| created_at | timestamptz | Date demande |
+  1087→
+  1088→## 13.4 `establishments`
+  1089→
+  1090→| Champ | Type | Description |
+  1091→|---|---|---|
+  1092→| id | uuid | ID établissement |
+  1093→| name | text | Nom établissement |
+  1094→| type | text | Hôtel, résidence, auberge, autre |
+  1095→| owner_name | text | Nom du gérant/propriétaire |
+  1096→| email | text | Email |
+  1097→| phone | text | Téléphone |
+  1098→| city | text | Ville |
+  1099→| address | text | Adresse |
+  1100→| logo_url | text | Logo |
+  1101→| plan_id | uuid | Formule active |
+  1102→| subscription_status | text | `active`, `expiring`, `expired`, `suspended` |
+  1103→| subscription_start | date | Début abonnement |
+  1104→| subscription_end | date | Fin abonnement |
+  1105→| timezone | text | Fuseau horaire |
+  1106→| currency | text | FCFA |
+  1107→| created_at | timestamptz | Date création |
+  1108→
+  1109→## 13.5 `activation_codes`
+  1110→
+  1111→| Champ | Type | Description |
+  1112→|---|---|---|
+  1113→| id | uuid | ID |
+  1114→| code | text unique | Code activation |
+  1115→| lead_id | uuid nullable | Prospect lié |
+  1116→| establishment_id | uuid nullable | Établissement créé après activation |
+  1117→| plan_id | uuid | Formule |
+  1118→| payment_id | uuid nullable | Paiement lié |
+  1119→| amount_fcfa | integer | Montant |
+  1120→| status | text | `generated`, `sent`, `used`, `expired`, `cancelled` |
+  1121→| expires_at | timestamptz | Expiration du code |
+  1122→| used_at | timestamptz nullable | Date utilisation |
+  1123→| created_by | uuid | Super Admin |
+  1124→| created_at | timestamptz | Date création |
+  1125→
+  1126→## 13.6 `subscription_payments`
+  1127→
+  1128→| Champ | Type | Description |
+  1129→|---|---|---|
+  1130→| id | uuid | ID paiement SaaS |
+  1131→| lead_id | uuid nullable | Prospect |
+  1132→| establishment_id | uuid nullable | Établissement |
+  1133→| plan_id | uuid | Formule |
+  1134→| amount_fcfa | integer | Montant |
+  1135→| payment_method | text | Orange, MTN, Moov, Wave, cash, transfer |
+  1136→| transaction_reference | text | Référence transaction |
+  1137→| status | text | `pending`, `validated`, `rejected`, `refunded` |
+  1138→| paid_at | timestamptz | Date paiement |
+  1139→| validated_by | uuid | Super Admin |
+  1140→| created_at | timestamptz | Date création |
+  1141→
+  1142→## 13.7 `room_types`
+  1143→
+  1144→| Champ | Type | Description |
+  1145→|---|---|---|
+  1146→| id | uuid | ID type |
+  1147→| establishment_id | uuid | Établissement |
+  1148→| name | text | Nom type |
+  1149→| default_price | integer | Prix par défaut |
+  1150→| capacity | integer | Capacité |
+  1151→| description | text | Description |
+  1152→| photos | jsonb | URLs photos |
+  1153→| is_active | boolean | Actif |
+  1154→
+  1155→## 13.8 `rooms`
+  1156→
+  1157→| Champ | Type | Description |
+  1158→|---|---|---|
+  1159→| id | uuid | ID chambre |
+  1160→| establishment_id | uuid | Établissement |
+  1161→| room_type_id | uuid | Type de chambre |
+  1162→| room_number | text | Numéro/nom |
+  1163→| floor | text | Étage/bâtiment |
+  1164→| capacity | integer | Capacité |
+  1165→| price_per_night | integer | Prix nuit |
+  1166→| half_day_price | integer nullable | Prix demi-journée |
+  1167→| status | text | `available`, `reserved`, `occupied`, `cleaning`, `maintenance`, `inactive` |
+  1168→| amenities | jsonb | Équipements |
+  1169→| photos | jsonb | Photos |
+  1170→| notes | text | Notes |
+  1171→| created_at | timestamptz | Date création |
+  1172→
+  1173→## 13.9 `guests`
+  1174→
+  1175→| Champ | Type | Description |
+  1176→|---|---|---|
+  1177→| id | uuid | ID client hébergé |
+  1178→| establishment_id | uuid | Établissement |
+  1179→| full_name | text | Nom complet |
+  1180→| phone | text | Téléphone |
+  1181→| email | text | Email |
+  1182→| nationality | text | Nationalité |
+  1183→| id_type | text | Type pièce |
+  1184→| id_number | text | Numéro pièce |
+  1185→| address | text | Adresse |
+  1186→| notes | text | Notes |
+  1187→| created_at | timestamptz | Date création |
+  1188→
+  1189→## 13.10 `reservations`
+  1190→
+  1191→| Champ | Type | Description |
+  1192→|---|---|---|
+  1193→| id | uuid | ID réservation |
+  1194→| establishment_id | uuid | Établissement |
+  1195→| guest_id | uuid | Client |
+  1196→| room_id | uuid | Chambre |
+  1197→| check_in_date | date | Arrivée |
+  1198→| check_out_date | date | Départ |
+  1199→| nights | integer | Nuits |
+  1200→| adults | integer | Adultes |
+  1201→| children | integer | Enfants |
+  1202→| rate_amount | integer | Tarif appliqué |
+  1203→| discount_amount | integer | Remise |
+  1204→| total_amount | integer | Total |
+  1205→| paid_amount | integer | Payé |
+  1206→| balance_amount | integer | Solde |
+  1207→| status | text | `pending`, `confirmed`, `checked_in`, `checked_out`, `cancelled`, `no_show` |
+  1208→| source | text | direct, phone, whatsapp, agency, other |
+  1209→| notes | text | Notes |
+  1210→| created_by | uuid | Utilisateur |
+  1211→| created_at | timestamptz | Date création |
+  1212→
+  1213→## 13.11 `stay_payments`
+  1214→
+  1215→| Champ | Type | Description |
+  1216→|---|---|---|
+  1217→| id | uuid | ID paiement séjour |
+  1218→| establishment_id | uuid | Établissement |
+  1219→| reservation_id | uuid | Réservation |
+  1220→| amount | integer | Montant |
+  1221→| method | text | cash, orange, mtn, moov, wave, card, transfer |
+  1222→| reference | text | Référence |
+  1223→| payment_date | timestamptz | Date paiement |
+  1224→| received_by | uuid | Utilisateur |
+  1225→| notes | text | Notes |
+  1226→
+  1227→## 13.12 `invoices`
+  1228→
+  1229→| Champ | Type | Description |
+  1230→|---|---|---|
+  1231→| id | uuid | ID facture/reçu |
+  1232→| establishment_id | uuid | Établissement |
+  1233→| reservation_id | uuid | Réservation |
+  1234→| guest_id | uuid | Client |
+  1235→| invoice_number | text | Numéro unique |
+  1236→| type | text | `invoice`, `receipt` |
+  1237→| amount | integer | Montant |
+  1238→| status | text | `draft`, `issued`, `paid`, `cancelled` |
+  1239→| pdf_url | text nullable | URL PDF |
+  1240→| issued_at | timestamptz | Date émission |
+  1241→| created_by | uuid | Utilisateur |
+  1242→
+  1243→## 13.13 `expenses`
+  1244→
+  1245→| Champ | Type | Description |
+  1246→|---|---|---|
+  1247→| id | uuid | ID dépense |
+  1248→| establishment_id | uuid | Établissement |
+  1249→| category | text | Catégorie |
+  1250→| amount | integer | Montant |
+  1251→| expense_date | date | Date |
+  1252→| payment_method | text | Moyen paiement |
+  1253→| description | text | Description |
+  1254→| attachment_url | text nullable | Pièce jointe |
+  1255→| created_by | uuid | Utilisateur |
+  1256→| created_at | timestamptz | Date création |
+  1257→
+  1258→## 13.14 `housekeeping_tasks`
+  1259→
+  1260→| Champ | Type | Description |
+  1261→|---|---|---|
+  1262→| id | uuid | ID tâche |
+  1263→| establishment_id | uuid | Établissement |
+  1264→| room_id | uuid | Chambre |
+  1265→| assigned_to | uuid nullable | Employé |
+  1266→| status | text | `dirty`, `in_progress`, `clean`, `inspected` |
+  1267→| notes | text | Notes |
+  1268→| created_at | timestamptz | Date création |
+  1269→| completed_at | timestamptz | Date fin |
+  1270→
+  1271→## 13.15 `maintenance_tickets`
+  1272→
+  1273→| Champ | Type | Description |
+  1274→|---|---|---|
+  1275→| id | uuid | ID ticket |
+  1276→| establishment_id | uuid | Établissement |
+  1277→| room_id | uuid nullable | Chambre |
+  1278→| title | text | Titre |
+  1279→| description | text | Description |
+  1280→| priority | text | `low`, `normal`, `urgent` |
+  1281→| status | text | `open`, `in_progress`, `resolved` |
+  1282→| cost | integer | Coût |
+  1283→| assigned_to | uuid nullable | Responsable |
+  1284→| created_by | uuid | Créateur |
+  1285→| resolved_at | timestamptz | Date résolution |
+  1286→
+  1287→## 13.16 `activity_logs`
+  1288→
+  1289→| Champ | Type | Description |
+  1290→|---|---|---|
+  1291→| id | uuid | ID log |
+  1292→| establishment_id | uuid nullable | Établissement |
+  1293→| user_id | uuid | Utilisateur |
+  1294→| action | text | Action |
+  1295→| entity_type | text | Type objet |
+  1296→| entity_id | uuid nullable | ID objet |
+  1297→| metadata | jsonb | Données complémentaires |
+  1298→| created_at | timestamptz | Date |
+  1299→
+  1300→---
+  1301→
+  1302→# 14. Règles métier principales
+  1303→
+  1304→## 14.1 Abonnement et activation
+  1305→
+  1306→- un prospect peut être converti en client seulement après paiement validé ;
+  1307→- un code d’activation doit être unique ;
+  1308→- un code d’activation ne peut être utilisé qu’une seule fois ;
+  1309→- un code expiré ne peut pas être utilisé ;
+  1310→- l’abonnement démarre à l’activation ou à une date définie par le Super Admin ;
+  1311→- la date de fin = date de début + durée du plan ;
+  1312→- un compte expiré peut être limité, suspendu ou mis en lecture seule selon choix produit ;
+  1313→- le Super Admin peut renouveler manuellement.
+  1314→
+  1315→## 14.2 Réservations
+  1316→
+  1317→- une chambre ne peut pas avoir deux réservations confirmées sur la même période ;
+  1318→- une réservation annulée ne bloque plus la chambre ;
+  1319→- une réservation `checked_out` ne peut plus être modifiée sauf par rôle autorisé ;
+  1320→- le check-in passe la chambre en occupée ;
+  1321→- le check-out passe la chambre en nettoyage ;
+  1322→- les conflits de date doivent être vérifiés côté serveur.
+  1323→
+  1324→## 14.3 Paiements séjour
+  1325→
+  1326→- le solde = montant total - total paiements ;
+  1327→- les paiements doivent garder une référence utilisateur ;
+  1328→- un paiement supérieur au solde doit être bloqué ou demander confirmation Admin ;
+  1329→- tous les paiements doivent apparaître dans l’historique.
+  1330→
+  1331→## 14.4 Facturation
+  1332→
+  1333→- chaque reçu/facture doit avoir un numéro unique par établissement ;
+  1334→- un reçu est lié à un paiement ou une réservation ;
+  1335→- une facture/reçu annulé doit rester dans l’historique ;
+  1336→- les PDF doivent être stockés dans Supabase Storage si générés.
+  1337→
+  1338→## 14.5 Permissions
+  1339→
+  1340→- le Super Admin n’est pas rattaché à un établissement ;
+  1341→- chaque Admin Hôtel est rattaché à un ou plusieurs établissements selon formule ;
+  1342→- les utilisateurs secondaires sont rattachés à un établissement ;
+  1343→- les utilisateurs secondaires n’ont accès qu’aux modules autorisés par leur rôle et leur formule.
+  1344→
+  1345→---
+  1346→
+  1347→# 15. Pages et routes recommandées
+  1348→
+  1349→## 15.1 Pages publiques
+  1350→
+  1351→- `/` : landing page ;
+  1352→- `/tarifs` : tarifs ou section intégrée ;
+  1353→- `/contact` : contact ;
+  1354→- `/faq` : questions fréquentes ;
+  1355→- `/mentions-legales` : mentions ;
+  1356→- `/activation` : saisie du code ;
+  1357→- `/register` : inscription après code valide ;
+  1358→- `/login` : connexion.
+  1359→
+  1360→## 15.2 Super Admin
+  1361→
+  1362→- `/super-admin/dashboard` ;
+  1363→- `/super-admin/leads` ;
+  1364→- `/super-admin/leads/[id]` ;
+  1365→- `/super-admin/clients` ;
+  1366→- `/super-admin/clients/[id]` ;
+  1367→- `/super-admin/payments` ;
+  1368→- `/super-admin/activation-codes` ;
+  1369→- `/super-admin/plans` ;
+  1370→- `/super-admin/reports` ;
+  1371→- `/super-admin/logs` ;
+  1372→- `/super-admin/settings`.
+  1373→
+  1374→## 15.3 Application établissement
+  1375→
+  1376→- `/app/dashboard` ;
+  1377→- `/app/rooms` ;
+  1378→- `/app/room-types` ;
+  1379→- `/app/calendar` ;
+  1380→- `/app/reservations` ;
+  1381→- `/app/reservations/new` ;
+  1382→- `/app/check-in` ;
+  1383→- `/app/check-out` ;
+  1384→- `/app/guests` ;
+  1385→- `/app/payments` ;
+  1386→- `/app/invoices` ;
+  1387→- `/app/expenses` ;
+  1388→- `/app/housekeeping` ;
+  1389→- `/app/maintenance` ;
+  1390→- `/app/reports` ;
+  1391→- `/app/users` ;
+  1392→- `/app/settings`.
+  1393→
+  1394→---
+  1395→
+  1396→# 16. Critères d’acceptation MVP
+  1397→
+  1398→Le MVP est considéré comme réussi si :
+  1399→
+  1400→1. un prospect peut envoyer une demande depuis la landing page ;
+  1401→2. la demande apparaît dans le dashboard Super Admin ;
+  1402→3. le Super Admin peut changer le statut du prospect ;
+  1403→4. le Super Admin peut enregistrer et valider un paiement SaaS ;
+  1404→5. le Super Admin peut générer un code d’activation unique ;
+  1405→6. le client peut activer son compte avec ce code ;
+  1406→7. le système crée automatiquement l’établissement et l’Admin Hôtel ;
+  1407→8. l’Admin Hôtel peut se connecter ;
+  1408→9. l’Admin Hôtel peut créer des types de chambres ;
+  1409→10. l’Admin Hôtel peut créer des chambres ;
+  1410→11. l’Admin Hôtel peut créer une fiche client ;
+  1411→12. l’Admin Hôtel ou réceptionniste peut créer une réservation ;
+  1412→13. le système empêche les conflits de réservation ;
+  1413→14. le check-in fonctionne ;
+  1414→15. le check-out fonctionne ;
+  1415→16. un paiement séjour peut être enregistré ;
+  1416→17. un reçu ou une facture simple peut être généré/imprimé ;
+  1417→18. le tableau de bord affiche les indicateurs essentiels ;
+  1418→19. les données d’un établissement ne sont pas visibles par un autre ;
+  1419→20. les rôles limitent les accès ;
+  1420→21. les abonnements expirés sont visibles ;
+  1421→22. l’application est utilisable sur mobile.
+  1422→
+  1423→---
+  1424→
+  1425→# 17. Roadmap recommandée
+  1426→
+  1427→## Phase 1 — Fondations SaaS
+  1428→
+  1429→- Initialisation projet Next.js/React ;
+  1430→- intégration Supabase ;
+  1431→- authentification ;
+  1432→- tables principales ;
+  1433→- RLS ;
+  1434→- layout public et app ;
+  1435→- landing page ;
+  1436→- formulaire prospect.
+  1437→
+  1438→## Phase 2 — Super Admin
+  1439→
+  1440→- dashboard Super Admin ;
+  1441→- gestion prospects ;
+  1442→- gestion paiements SaaS ;
+  1443→- génération codes ;
+  1444→- gestion clients ;
+  1445→- gestion plans ;
+  1446→- exports CSV.
+  1447→
+  1448→## Phase 3 — Onboarding client
+  1449→
+  1450→- page activation ;
+  1451→- validation code ;
+  1452→- création établissement ;
+  1453→- création compte Admin Hôtel ;
+  1454→- redirection dashboard ;
+  1455→- paramètres par défaut.
+  1456→
+  1457→## Phase 4 — Gestion hôtelière MVP
+  1458→
+  1459→- types de chambres ;
+  1460→- chambres ;
+  1461→- clients hébergés ;
+  1462→- réservations ;
+  1463→- calendrier ;
+  1464→- check-in/check-out ;
+  1465→- paiements séjour ;
+  1466→- reçus/factures simples.
+  1467→
+  1468→## Phase 5 — Finances et opérations
+  1469→
+  1470→- dépenses ;
+  1471→- rapports ;
+  1472→- ménage ;
+  1473→- maintenance ;
+  1474→- gestion du personnel ;
+  1475→- journal d’activité.
+  1476→
+  1477→## Phase 6 — Optimisation et automatisation
+  1478→
+  1479→- notifications email ;
+  1480→- WhatsApp API ;
+  1481→- paiement Mobile Money automatisé ;
+  1482→- exports PDF avancés ;
+  1483→- multi-établissement Premium ;
+  1484→- réservation en ligne publique ;
+  1485→- amélioration UX.
+  1486→
+  1487→---
+  1488→
+  1489→# 18. KPIs — indicateurs de succès
+  1490→
+  1491→- nombre de visiteurs landing page ;
+  1492→- nombre de prospects générés par mois ;
+  1493→- taux de conversion prospect → client payant ;
+  1494→- revenu mensuel encaissé ;
+  1495→- revenu annuel encaissé ;
+  1496→- répartition des clients par formule ;
+  1497→- taux de renouvellement annuel ;
+  1498→- nombre d’établissements actifs ;
+  1499→- nombre moyen de réservations par établissement ;
+  1500→- taux d’utilisation des modules ;
+  1501→- nombre de tickets/support WhatsApp ;
+  1502→- satisfaction client ;
+  1503→- taux d’expiration non renouvelée.
+  1504→
+  1505→---
+  1506→
+  1507→# 19. Risques et mitigations
+  1508→
+  1509→| Risque | Impact | Mitigation |
+  1510→|---|---|---|
+  1511→| Vente manuelle difficile à scaler | Temps important pour le Super Admin | Automatiser progressivement paiement et notifications. |
+  1512→| Mauvaise séparation Super Admin/Admin Hôtel | Fuite de données ou confusion UX | Rôles stricts, routes séparées, RLS testée. |
+  1513→| Exposition des clés Supabase | Risque critique de sécurité | Régénérer les clés exposées, variables d’environnement uniquement. |
+  1514→| Utilisateurs peu technophiles | Faible adoption | Interface simple, onboarding guidé, vocabulaire clair. |
+  1515→| Double réservation | Perte de confiance | Vérification serveur des conflits de dates. |
+  1516→| Connexion mobile lente | Frustration utilisateur | Interface légère, chargements progressifs, optimisation. |
+  1517→| Données financières incorrectes | Perte de crédibilité | Calculs centralisés, validations, tests. |
+  1518→| Abonnement expiré non géré | Perte de revenus | Alertes expiration et statut visible. |
+  1519→
+  1520→---
+  1521→
+  1522→# 20. Recommandations de sécurité prioritaires
+  1523→
+  1524→1. Régénérer toutes les clés et tokens déjà partagés avant production.
+  1525→2. Ne jamais utiliser la clé `service_role` dans le frontend.
+  1526→3. Activer RLS sur toutes les tables métier.
+  1527→4. Tester les politiques RLS avec plusieurs comptes hôtels.
+  1528→5. Séparer clairement les routes Super Admin et établissement.
+  1529→6. Créer le Super Admin via script sécurisé ou Supabase dashboard.
+  1530→7. Forcer le changement du mot de passe initial.
+  1531→8. Protéger les fonctions serveur sensibles.
+  1532→9. Ne jamais commiter `.env`, tokens ou mots de passe dans GitHub.
+  1533→10. Mettre en place un journal d’activité pour les actions importantes.
+  1534→
+  1535→---
+  1536→
+  1537→# 21. Prompt maître amélioré pour GLM-5
+  1538→
+  1539→```text
+  1540→Tu es un expert senior en développement SaaS multi-tenant, React/Next.js, Supabase, PostgreSQL, Row Level Security, UX/UI et logiciels de gestion hôtelière.
+  1541→
+  1542→Je veux créer une application SaaS appelée OGHOTEL pour la gestion des hôtels, résidences meublées, auberges et structures d’hébergement en Côte d’Ivoire.
+  1543→
+  1544→Stack : Next.js ou React, Supabase pour Auth/PostgreSQL/Storage, GitHub, Vercel. Langue : français. Devise : FCFA. L’application doit être responsive, simple, professionnelle et utilisable par des personnes peu technophiles.
+  1545→
+  1546→Le produit comprend :
+  1547→1. Une landing page avec présentation du produit, tarifs, FAQ, contact et formulaire prospect.
+  1548→2. Une interface Super Admin pour l’éditeur OGHOTEL, permettant de gérer prospects, clients, paiements SaaS, codes d’activation, abonnements, plans, revenus et exports.
+  1549→3. Un processus d’activation par code après paiement Mobile Money manuel.
+  1550→4. Une interface Admin Hôtel multi-tenant pour gérer chambres, types de chambres, calendrier, réservations, check-in/check-out, clients, paiements, factures/reçus, dépenses, ménage, maintenance, rapports, utilisateurs et paramètres.
+  1551→5. Trois formules : ESSENTIEL 30 000 FCFA/an, PRIVILÈGE 50 000 FCFA/an, PREMIUM 75 000 FCFA/an, avec fonctionnalités configurables par formule.
+  1552→
+  1553→Contraintes critiques :
+  1554→- Ne jamais exposer la clé service_role dans le frontend.
+  1555→- Utiliser les variables d’environnement.
+  1556→- Activer RLS sur toutes les tables sensibles.
+  1557→- Isoler toutes les données métier par establishment_id.
+  1558→- Le Super Admin voit la plateforme globale, chaque hôtel ne voit que ses données.
+  1559→- Les codes d’activation sont uniques, à usage unique, avec expiration.
+  1560→- Vérifier les conflits de réservation côté serveur.
+  1561→- L’interface doit être très simple pour un débutant.
+  1562→
+  1563→Commence par générer :
+  1564→1. l’architecture du projet ;
+  1565→2. les routes ;
+  1566→3. les composants principaux ;
+  1567→4. le schéma SQL Supabase ;
+  1568→5. les politiques RLS ;
+  1569→6. les données seed des plans ;
+  1570→7. le workflow d’activation ;
+  1571→8. puis développe progressivement chaque module selon le PRD.
+  1572→```
+  1573→
+  1574→---
+  1575→
+  1576→# 22. Prompts modulaires recommandés pour le vibe coding
+  1577→
+  1578→## 22.1 Prompt Landing page
+  1579→
+  1580→```text
+  1581→Crée la landing page responsive de OGHOTEL en français. Elle doit présenter le SaaS de gestion d’hôtels et résidences en Côte d’Ivoire, avec hero section, bénéfices, fonctionnalités, tarifs, FAQ, contact WhatsApp, formulaire prospect connecté à Supabase et design moderne bleu foncé/doré/blanc. Le formulaire doit enregistrer dans la table leads.
+  1582→```
+  1583→
+  1584→## 22.2 Prompt Super Admin
+  1585→
+  1586→```text
+  1587→Crée le dashboard Super Admin de OGHOTEL avec authentification Supabase, accès réservé au rôle super_admin, statistiques globales, gestion des prospects, clients, paiements SaaS, codes d’activation, plans, exports CSV et journal d’activité. Ne jamais utiliser la clé service_role côté client.
+  1588→```
+  1589→
+  1590→## 22.3 Prompt Activation client
+  1591→
+  1592→```text
+  1593→Crée le workflow d’activation OGHOTEL : page de saisie du code, vérification du code dans Supabase, contrôle statut/expiration/usage unique, puis formulaire de création établissement et compte Admin Hôtel. À la validation, créer establishment, profile hotel_admin, abonnement actif et marquer le code comme used.
+  1594→```
+  1595→
+  1596→## 22.4 Prompt Gestion hôtelière
+  1597→
+  1598→```text
+  1599→Crée l’interface Admin Hôtel de OGHOTEL : dashboard, chambres, types de chambres, calendrier, clients, réservations, check-in/check-out, paiements, factures/reçus, dépenses, ménage, maintenance, rapports, utilisateurs et paramètres. Toutes les données doivent être filtrées par establishment_id avec RLS Supabase.
+  1600→```
+  1601→
+  1602→## 22.5 Prompt RLS Supabase
+  1603→
+  1604→```text
+  1605→Génère les politiques Row Level Security Supabase pour OGHOTEL. Toutes les tables métier doivent être isolées par establishment_id. Les utilisateurs hotel_admin et staff ne peuvent accéder qu’aux données de leur établissement. Le rôle super_admin peut accéder aux données globales nécessaires. Les actions critiques doivent être contrôlées par des fonctions serveur.
+  1606→```
+  1607→
+  1608→---
+  1609→
+  1610→# 23. Annexe — Informations de configuration non sensibles
+  1611→
+  1612→| Élément | Valeur |
+  1613→|---|---|
+  1614→| Nom du produit | OGHOTEL |
+  1615→| Email Super Admin | ogouromain@gmail.com |
+  1616→| WhatsApp Super Admin | +225 05 76 10 32 77 |
+  1617→| URL Supabase | https://gnhwejyjjlugzyppbfze.supabase.co |
+  1618→| Formule Essentiel | 30 000 FCFA/an |
+  1619→| Formule Privilège | 50 000 FCFA/an |
+  1620→| Formule Premium | 75 000 FCFA/an |
+  1621→
+  1622→> Les clés API, la clé `service_role`, les tokens d’accès personnels et mots de passe ne doivent pas figurer dans ce document en version partagée ou versionnée.
+  1623→
+  1624→---
+  1625→
+  1626→# 24. Conclusion
+  1627→
+  1628→OGHOTEL doit être conçu comme un SaaS local, professionnel et très simple à prendre en main. Le produit doit d’abord réussir trois choses :
+  1629→
+  1630→1. convertir les prospects grâce à une landing page claire ;
+  1631→2. permettre au Super Admin de gérer facilement les abonnements, paiements et activations ;
+  1632→3. offrir aux hôtels et résidences un outil fiable pour gérer chambres, réservations, clients, paiements et rapports.
+  1633→
+  1634→La priorité absolue du développement est la sécurité multi-tenant : aucun établissement ne doit pouvoir voir ou modifier les données d’un autre. La deuxième priorité est la simplicité d’usage. La troisième est la robustesse du flux commercial : prospect → paiement → code d’activation → compte client.
+  1635→
+  1636→Ce PRD peut maintenant servir de base directe pour rédiger des prompts de développement destinés à GLM-5, module par module.
+  1637→
