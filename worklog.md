@@ -132,3 +132,42 @@ Stage Summary:
 - Sera utilisé à l'étape 4 (création de la table `profiles` + seed du profil super_admin)
 - Le mot de passe "Ogou1987" n'a PAS été stocké — il vit uniquement dans Supabase Auth
 - Prêt pour l'étape 4 (base de données / schéma SQL Supabase) dès réception du prompt
+
+---
+Task ID: 3
+Agent: main-orchestrator
+Task: Génération du schéma SQL Supabase initial pour OGHOTEL (étape 4 du plan)
+
+Work Log:
+- Créé supabase/migrations/001_initial_schema.sql (462 lignes)
+  * Extensions : pgcrypto + uuid-ossp
+  * 16 tables : profiles, plans, leads, establishments, subscription_payments, activation_codes, room_types, rooms, guests, reservations, stay_payments, invoices, expenses, housekeeping_tasks, maintenance_tickets, activity_logs
+  * 39 foreign keys (dont profiles.establishment_id ajoutée via ALTER après création de establishments)
+  * 44 contraintes CHECK : rôles (7), statuts réservation (6), statuts chambre (6), statuts code (5), statuts paiement SaaS (4), statuts paiement séjour (7), statuts invoice (4), statuts housekeeping (4), statuts maintenance (3), priorités (3), sources réservation (5), types business (4), types pièce (4), catégories dépense (9), vérifications montants >= 0, capacités > 0, nights > 0, dates check_out > check_in
+  * 43 index de performance sur establishment_id, plan_id, lead_id, dates réservation, statuts, etc.
+  * 2 index uniques : rooms(establishment_id, room_number) et invoices(establishment_id, invoice_number)
+  * Trigger handle_updated_at() + boucle DO créant set_updated_at sur 10 tables
+  * Commentaires sur toutes les tables
+- Créé supabase/migrations/002_seed_plans.sql (123 lignes)
+  * 3 plans : ESSENTIEL 30000 FCFA, PRIVILEGE 50000 FCFA, PREMIUM 75000 FCFA
+  * Drapeaux features JSON pour feature gating (PRD §9.1)
+  * max_users : Essentiel=1, Privilège=3, Premium=null (illimité)
+  * max_establishments : Essentiel=1, Privilège=1, Premium=null (illimité)
+  * Idempotent : on conflict (name) do nothing
+  * Select de vérification à la fin
+- Créé supabase/migrations/003_seed_super_admin.sql (48 lignes) — BONUS
+  * Profil super_admin pour l'ID 8ddc4ac8-060b-4c30-914c-91e496d09def
+  * Email associé : ogouromain@gmail.com (créé par l'utilisateur dans Supabase Auth)
+  * must_change_password = true (PRD §8.2.1)
+  * establishment_id = null (PRD §5.1)
+  * Idempotent : on conflict (id) do nothing
+- Lint : 0 erreur (les fichiers SQL ne sont pas vérifiés par ESLint mais les TSX autour sont OK)
+- Vérifié : 16 tables créées, 39 FK, 43 index, 44 CHECK, 10 triggers updated_at
+
+Stage Summary:
+- Étape 4 (schéma SQL) TERMINÉE
+- 3 fichiers SQL prêts à exécuter dans Supabase SQL Editor ou via CLI
+- Le mot de passe "Ogou1987" n'est PAS dans le SQL — il vit uniquement dans Supabase Auth
+- L'ID du Super Admin est hardcodé dans 003 (c'est OK car ce n'est pas un secret, juste un identifiant)
+- Politiques RLS NON incluses (comme demandé) — seront ajoutées à l'étape 5
+- Prochaine étape naturelle : étape 5 (RLS policies) ou étape 6 (test auth end-to-end)
