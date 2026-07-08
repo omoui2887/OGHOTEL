@@ -577,3 +577,17 @@ Stage Summary:
 - 5 bugs corrigés
 - 150 tests manuels documentés dans docs/TEST_PLAN.md
 - Tous les modules sont fonctionnels et sécurisés
+
+---
+Task ID: 34
+Agent: main-orchestrator
+Task: Amélioration UX/UI complète
+
+Work Log:
+- Créé src/app/not-found.tsx : page 404 professionnelle avec logo, boutons retour
+- Créé src/app/error.tsx : error boundary global avec bouton "Réessayer" + code d'erreur
+- Amélioré src/app/(auth)/unauthorized/page.tsx : labels de rôles en français, message d'aide, support WhatsApp
+- Créé src/components/shared/empty-state.tsx : composant réutilisable d'état vide avec CTA ("Aucune chambre. Cliquez ici pour ajouter...")
+- Créé src/components/shared/loading-states.tsx : LoadingState (spinner), StatCardSkeleton, TableSkeleton
+- Vérifié : 0 hydration error, 0 lint error
+- Commit sur GitHub
