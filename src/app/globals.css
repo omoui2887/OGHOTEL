@@ -44,93 +44,96 @@
 }
 
 /*
- * Thème OGHOTEL
- * Bleu marine profond + doré chaleureux + blanc + gris clair.
- * Conforme au PRD §10.2.
+ * Thème OGHOTEL V2
+ * Fond bleu marine profond (#0A1929) + orange primaire (#FF6B35) + texte blanc.
+ * Thème sombre par défaut, conçu pour la landing page publique.
  */
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.99 0.005 240);
-  --foreground: oklch(0.18 0.03 255);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.03 255);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.03 255);
 
-  /* Bleu marine profond (primary) */
-  --primary: oklch(0.32 0.09 255);
-  --primary-foreground: oklch(0.99 0.005 240);
+  /* Fond bleu marine (#0A1929) + texte blanc */
+  --background: #0a1929;
+  --foreground: #f8fafc;
 
-  --secondary: oklch(0.96 0.01 240);
-  --secondary-foreground: oklch(0.22 0.04 255);
+  /* Cartes : navy légèrement plus clair */
+  --card: #102841;
+  --card-foreground: #f8fafc;
 
-  --muted: oklch(0.96 0.01 240);
-  --muted-foreground: oklch(0.50 0.02 255);
+  --popover: #0f2438;
+  --popover-foreground: #f8fafc;
 
-  /* Doré chaleureux (accent) */
-  --accent: oklch(0.80 0.14 75);
-  --accent-foreground: oklch(0.22 0.05 60);
+  /* Orange primaire (#FF6B35) */
+  --primary: #ff6b35;
+  --primary-foreground: #0a1929;
 
-  --destructive: oklch(0.58 0.24 27);
-  --border: oklch(0.91 0.01 240);
-  --input: oklch(0.91 0.01 240);
-  --ring: oklch(0.32 0.09 255);
+  /* Surfaces secondaires : navy encore plus clair */
+  --secondary: #163049;
+  --secondary-foreground: #f8fafc;
 
-  --chart-1: oklch(0.32 0.09 255);
-  --chart-2: oklch(0.80 0.14 75);
-  --chart-3: oklch(0.65 0.15 160);
-  --chart-4: oklch(0.60 0.20 30);
-  --chart-5: oklch(0.55 0.13 280);
+  --muted: #163049;
+  --muted-foreground: #94a3b8;
 
-  --sidebar: oklch(0.22 0.04 255);
-  --sidebar-foreground: oklch(0.96 0.01 240);
-  --sidebar-primary: oklch(0.80 0.14 75);
-  --sidebar-primary-foreground: oklch(0.18 0.03 255);
-  --sidebar-accent: oklch(0.28 0.05 255);
-  --sidebar-accent-foreground: oklch(0.96 0.01 240);
-  --sidebar-border: oklch(0.30 0.04 255);
-  --sidebar-ring: oklch(0.80 0.14 75);
+  /* Accent orange plus doux pour hover/secondaire */
+  --accent: #ff8a5c;
+  --accent-foreground: #0a1929;
+
+  --destructive: #ef4444;
+
+  /* Bordures subtiles sur fond navy */
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #ff6b35;
+
+  --chart-1: #ff6b35;
+  --chart-2: #38bdf8;
+  --chart-3: #4ade80;
+  --chart-4: #fbbf24;
+  --chart-5: #a78bfa;
+
+  /* Sidebar admin/app (gardée sombre cohérente) */
+  --sidebar: #0a1929;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-primary: #ff6b35;
+  --sidebar-primary-foreground: #0a1929;
+  --sidebar-accent: #163049;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #ff6b35;
 }
 
+/* Le mode dark utilise la même palette : le site est sombre par défaut. */
 .dark {
-  --background: oklch(0.15 0.02 255);
-  --foreground: oklch(0.96 0.01 240);
-  --card: oklch(0.20 0.03 255);
-  --card-foreground: oklch(0.96 0.01 240);
-  --popover: oklch(0.20 0.03 255);
-  --popover-foreground: oklch(0.96 0.01 240);
-
-  --primary: oklch(0.65 0.13 255);
-  --primary-foreground: oklch(0.15 0.02 255);
-
-  --secondary: oklch(0.27 0.03 255);
-  --secondary-foreground: oklch(0.96 0.01 240);
-
-  --muted: oklch(0.27 0.03 255);
-  --muted-foreground: oklch(0.72 0.02 240);
-
-  --accent: oklch(0.75 0.15 75);
-  --accent-foreground: oklch(0.15 0.02 255);
-
-  --destructive: oklch(0.70 0.19 22);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.75 0.15 75);
-
-  --chart-1: oklch(0.65 0.13 255);
-  --chart-2: oklch(0.80 0.14 75);
-  --chart-3: oklch(0.70 0.15 160);
-  --chart-4: oklch(0.65 0.20 30);
-  --chart-5: oklch(0.60 0.13 280);
-
-  --sidebar: oklch(0.18 0.03 255);
-  --sidebar-foreground: oklch(0.96 0.01 240);
-  --sidebar-primary: oklch(0.80 0.14 75);
-  --sidebar-primary-foreground: oklch(0.15 0.02 255);
-  --sidebar-accent: oklch(0.25 0.04 255);
-  --sidebar-accent-foreground: oklch(0.96 0.01 240);
-  --sidebar-border: oklch(0.25 0.03 255);
-  --sidebar-ring: oklch(0.80 0.14 75);
+  --background: #0a1929;
+  --foreground: #f8fafc;
+  --card: #102841;
+  --card-foreground: #f8fafc;
+  --popover: #0f2438;
+  --popover-foreground: #f8fafc;
+  --primary: #ff6b35;
+  --primary-foreground: #0a1929;
+  --secondary: #163049;
+  --secondary-foreground: #f8fafc;
+  --muted: #163049;
+  --muted-foreground: #94a3b8;
+  --accent: #ff8a5c;
+  --accent-foreground: #0a1929;
+  --destructive: #ef4444;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #ff6b35;
+  --chart-1: #ff6b35;
+  --chart-2: #38bdf8;
+  --chart-3: #4ade80;
+  --chart-4: #fbbf24;
+  --chart-5: #a78bfa;
+  --sidebar: #0a1929;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-primary: #ff6b35;
+  --sidebar-primary-foreground: #0a1929;
+  --sidebar-accent: #163049;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #ff6b35;
 }
 
 @layer base {

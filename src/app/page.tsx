@@ -1,22 +1,37 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
-  Hotel,
-  CalendarCheck,
-  Receipt,
-  Wallet,
-  Users,
-  ShieldCheck,
-  Smartphone,
-  BarChart3,
+  Star,
   ArrowRight,
+  Play,
+  LayoutGrid,
+  Clock,
+  Smartphone,
+  Building,
+  TrendingUp,
+  Calendar,
+  Users,
+  BarChart3,
+  Wallet,
+  Bell,
+  Shield,
+  Globe,
+  Sparkles,
+  Book,
+  Headset,
+  HelpCircle,
   Check,
   MessageCircle,
-  Sparkles,
+  Mail,
+  ShieldCheck,
+  Receipt,
 } from "lucide-react";
+
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { LeadForm } from "@/components/marketing/lead-form";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
@@ -25,278 +40,419 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-  PLANS,
   APP_NAME,
-  APP_TAGLINE,
+  HERO_BADGE,
+  HERO_TITLE_WHITE,
+  HERO_TITLE_ORANGE,
+  HERO_DESCRIPTION,
+  HERO_KEY_POINTS,
+  HERO_STATS,
+  MAIN_FEATURES,
+  SECONDARY_FEATURES,
+  RESULTS_SECTION,
+  PLANS,
+  FAQ_ITEMS,
+  NAV_LINKS,
   WHATSAPP_CONTACT,
   WHATSAPP_DISPLAY,
   SUPPORT_EMAIL,
 } from "@/lib/constants";
 import { buildWhatsAppUrl } from "@/lib/utils";
 
-const FEATURES = [
-  {
-    icon: CalendarCheck,
-    title: "Réservations sans conflit",
-    desc: "Plus jamais de double réservation. Le calendrier vérifie les disponibilités en temps réel.",
-  },
-  {
-    icon: Hotel,
-    title: "Chambres en temps réel",
-    desc: "Libres, occupées, en nettoyage ou hors service — l'état de chaque chambre d'un coup d'œil.",
-  },
-  {
-    icon: Wallet,
-    title: "Paiements Mobile Money",
-    desc: "Orange, MTN, Moov, Wave, espèces. Suivez acomptes, soldes et impayés sans effort.",
-  },
-  {
-    icon: Receipt,
-    title: "Reçus & factures pro",
-    desc: "Générez des reçus professionnels imprimables en un clic. Fini les reçus manuels.",
-  },
-  {
-    icon: BarChart3,
-    title: "Rapports clairs",
-    desc: "Taux d'occupation, chiffre d'affaires, dépenses, résultat net. Pilotez votre activité.",
-  },
-  {
-    icon: Users,
-    title: "Personnel & rôles",
-    desc: "Réceptionniste, comptable, ménage, maintenance. Des accès adaptés à chaque rôle.",
-  },
-];
+import type { LucideIcon } from "lucide-react";
 
-const FAQ = [
-  {
-    q: "OGHOTEL est-il adapté à ma structure ?",
-    a: "O GHOTEL convient aux hôtels, résidences meublées, auberges et autres structures d'hébergement en Côte d'Ivoire, des plus petites aux structures moyennes.",
-  },
-  {
-    q: "Quels moyens de paiement sont acceptés ?",
-    a: "Pour l'abonnement : Orange Money, MTN Mobile Money, Moov Money, Wave, espèces ou virement. Dans votre établissement, vous pouvez enregistrer tous les paiements reçus de vos clients, quel que soit le moyen.",
-  },
-  {
-    q: "Mes données sont-elles sécurisées ?",
-    a: "Oui. Chaque établissement est isolé : vos données ne sont jamais visibles par un autre hôtel. L'accès est protégé par mot de passe et les actions sensibles sont tracées.",
-  },
-  {
-    q: "Puis-je utiliser OGHOTEL sur mon téléphone ?",
-    a: "Absolument. L'application est entièrement responsive : smartphone, tablette et ordinateur. Aucune installation requise — tout fonctionne dans le navigateur.",
-  },
-  {
-    q: "Comment démarrer ?",
-    a: "Remplissez le formulaire de demande ci-dessous. Notre équipe vous contacte par WhatsApp, vous réglez l'abonnement annuel, et vous recevez un code d'activation pour créer votre espace.",
-  },
-  {
-    q: "Que se passe-t-il à l'expiration de l'abonnement ?",
-    a: "Vous recevez des rappels avant l'expiration. Vous pouvez renouveler à tout moment via notre équipe commerciale. Vos données restent accessibles.",
-  },
-];
+/* -------------------------------------------------------------------------- */
+/*  Lookups                                                                    */
+/* -------------------------------------------------------------------------- */
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  "layout-grid": LayoutGrid,
+  clock: Clock,
+  smartphone: Smartphone,
+  building: Building,
+  "trending-up": TrendingUp,
+  calendar: Calendar,
+  users: Users,
+  "bar-chart": BarChart3,
+  wallet: Wallet,
+  bell: Bell,
+  shield: Shield,
+  globe: Globe,
+  sparkles: Sparkles,
+  book: Book,
+  headset: Headset,
+};
+
+const COLOR_CLASSES: Record<string, string> = {
+  orange: "bg-orange-500/15 text-orange-400",
+  blue: "bg-blue-500/15 text-blue-400",
+  green: "bg-green-500/15 text-green-400",
+  pink: "bg-pink-500/15 text-pink-400",
+  purple: "bg-purple-500/15 text-purple-400",
+  yellow: "bg-yellow-500/15 text-yellow-400",
+};
+
+/* -------------------------------------------------------------------------- */
+/*  Page                                                                       */
+/* -------------------------------------------------------------------------- */
 
 export default function HomePage() {
   return (
     <>
       <SiteHeader />
 
-      {/* HERO */}
-      <section className="relative overflow-hidden border-b border-border/60 bg-gradient-to-b from-primary/5 via-background to-background">
-        <div className="container mx-auto px-4 py-16 md:py-24">
-          <div className="grid items-center gap-10 md:grid-cols-2">
-            <div className="space-y-6">
-              <Badge variant="secondary" className="gap-1.5">
-                <Sparkles className="h-3.5 w-3.5" />
-                Conçu pour la Côte d'Ivoire
-              </Badge>
-              <h1 className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
-                {APP_TAGLINE}
+      {/* ----------------------------------------------------------------- */}
+      {/* HERO                                                               */}
+      {/* ----------------------------------------------------------------- */}
+      <section className="relative overflow-hidden border-b border-white/10">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-40"
+          style={{
+            background:
+              "radial-gradient(ellipse 60% 50% at 70% 0%, rgba(255,107,53,0.18), transparent 70%)",
+          }}
+        />
+        <div className="container relative mx-auto px-4 py-16 md:py-24">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            {/* Left */}
+            <div className="space-y-7">
+              <span className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-1.5 text-sm font-medium text-orange-300">
+                <Star className="h-4 w-4 fill-orange-400 text-orange-400" />
+                {HERO_BADGE}
+              </span>
+
+              <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-5xl lg:text-6xl">
+                <span className="text-white">{HERO_TITLE_WHITE}</span>
+                <br />
+                <span className="text-orange-500">{HERO_TITLE_ORANGE}</span>
               </h1>
-              <p className="text-lg text-muted-foreground">
-                {APP_NAME} centralise vos chambres, réservations, paiements
-                Mobile Money, factures et rapports — en français, en FCFA,
-                pensé pour les réalités du terrain.
+
+              <p className="max-w-xl text-lg text-slate-300">
+                {HERO_DESCRIPTION}
               </p>
+
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Button asChild size="lg">
-                  <Link href="#contact">
-                    Demander une démo
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-orange-500 text-white hover:bg-orange-600"
+                >
+                  <Link href="/#contact">
+                    Commencer Gratuitement
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild variant="outline" size="lg">
-                  <a
-                    href={buildWhatsAppUrl(
-                      WHATSAPP_CONTACT,
-                      `Bonjour, je souhaite des informations sur ${APP_NAME}.`
-                    )}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    WhatsApp : {WHATSAPP_DISPLAY}
-                  </a>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                >
+                  <Link href="/#produit">
+                    <Play className="mr-2 h-4 w-4" />
+                    Voir la démo
+                  </Link>
                 </Button>
               </div>
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <Check className="h-4 w-4 text-primary" />
-                  Sans engagement mensuel
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Check className="h-4 w-4 text-primary" />
-                  À partir de 30 000 FCFA/an
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Check className="h-4 w-4 text-primary" />
-                  Activation en 24h
-                </span>
+
+              {/* Key points */}
+              <ul className="flex flex-wrap items-center gap-x-6 gap-y-3 pt-2">
+                {HERO_KEY_POINTS.map((point) => {
+                  const Icon = ICON_MAP[point.icon] ?? Star;
+                  return (
+                    <li
+                      key={point.title}
+                      className="flex items-center gap-2 text-sm text-slate-300"
+                    >
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/15 text-orange-400">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="font-medium">{point.title}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {/* Stats */}
+              <div className="grid max-w-md grid-cols-2 gap-4 pt-4">
+                {HERO_STATS.map((stat) => {
+                  const Icon = ICON_MAP[stat.icon] ?? Building;
+                  return (
+                    <div
+                      key={stat.label}
+                      className="rounded-xl border border-white/10 bg-white/5 p-4"
+                    >
+                      <Icon className="mb-2 h-5 w-5 text-orange-400" />
+                      <div className="text-2xl font-bold text-white">
+                        {stat.value}
+                      </div>
+                      <div className="text-sm text-slate-400">{stat.label}</div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Carte visuelle */}
+            {/* Right — hotel lobby image */}
             <div className="relative">
-              <Card className="overflow-hidden border-primary/20 shadow-xl">
-                <CardHeader className="bg-primary text-primary-foreground">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base font-medium">
-                      Aperçu tableau de bord
-                    </CardTitle>
-                    <Badge className="bg-accent text-accent-foreground">
-                      En direct
-                    </Badge>
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+                <Image
+                  src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=80"
+                  alt="Lobby d'hôtel moderne et lumineux"
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover"
+                />
+              </div>
+              <div className="absolute -bottom-4 -left-4 hidden rounded-xl border border-orange-500/30 bg-[#0a1929]/90 p-4 shadow-lg backdrop-blur sm:block">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500 text-white">
+                    <TrendingUp className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <div className="text-sm font-semibold text-white">
+                      +45% de revenus
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      en moyenne dès le 1er mois
+                    </div>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4 p-5">
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { label: "Libres", value: "8", color: "text-emerald-600" },
-                      { label: "Occupées", value: "12", color: "text-primary" },
-                      { label: "Nettoyage", value: "3", color: "text-amber-600" },
-                    ].map((s) => (
-                      <div
-                        key={s.label}
-                        className="rounded-lg border border-border/60 bg-muted/30 p-3 text-center"
-                      >
-                        <div className={`text-2xl font-bold ${s.color}`}>
-                          {s.value}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {s.label}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="space-y-2">
-                    {[
-                      { room: "Chambre 101", guest: "M. Kouassi", status: "Occupée" },
-                      { room: "Chambre 205", guest: "Mme Diallo", status: "Réservée" },
-                      { room: "Suite 301", guest: "—", status: "Libre" },
-                    ].map((r) => (
-                      <div
-                        key={r.room}
-                        className="flex items-center justify-between rounded-md border border-border/60 px-3 py-2 text-sm"
-                      >
-                        <div>
-                          <div className="font-medium">{r.room}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {r.guest}
-                          </div>
-                        </div>
-                        <Badge variant="outline">{r.status}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* FONCTIONNALITÉS */}
+      {/* ----------------------------------------------------------------- */}
+      {/* FONCTIONNALITÉS (MAIN)                                             */}
+      {/* ----------------------------------------------------------------- */}
       <section id="fonctionnalites" className="py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-              Tout ce qu'il faut pour gérer votre établissement
+            <span className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-1.5 text-sm font-medium text-orange-300">
+              <Star className="h-4 w-4 fill-orange-400 text-orange-400" />
+              Fonctionnalités
+            </span>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-white md:text-4xl">
+              Fonctionnalités Puissantes
             </h2>
-            <p className="mt-4 text-muted-foreground">
-              Une interface simple, pensée pour les équipes peu technophiles.
-              Professionnalisez votre gestion sans complexité.
+            <p className="mt-4 text-slate-400">
+              Tout ce dont vous avez besoin pour piloter votre établissement, dans
+              une interface simple en français et en FCFA.
             </p>
           </div>
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((f) => (
-              <Card key={f.title} className="transition-shadow hover:shadow-md">
-                <CardHeader>
-                  <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <f.icon className="h-5 w-5" />
-                  </div>
-                  <CardTitle className="mt-4 text-lg">{f.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{f.desc}</p>
-                </CardContent>
-              </Card>
-            ))}
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {MAIN_FEATURES.map((feature) => {
+              const Icon = ICON_MAP[feature.icon] ?? Sparkles;
+              const colorClass =
+                COLOR_CLASSES[feature.color] ?? COLOR_CLASSES.orange;
+              return (
+                <Card
+                  key={feature.title}
+                  className="border-white/10 bg-white/5 transition-colors hover:border-orange-500/40 hover:bg-white/[0.07]"
+                >
+                  <CardContent className="space-y-4">
+                    <div
+                      className={`flex h-12 w-12 items-center justify-center rounded-xl ${colorClass}`}
+                    >
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-white">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-slate-400">{feature.desc}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* TARIFS */}
-      <section id="tarifs" className="border-y border-border/60 bg-muted/30 py-16 md:py-24">
+      {/* ----------------------------------------------------------------- */}
+      {/* PRODUIT (SECONDARY FEATURES)                                       */}
+      {/* ----------------------------------------------------------------- */}
+      <section
+        id="produit"
+        className="border-y border-white/10 bg-white/[0.02] py-16 md:py-24"
+      >
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-1.5 text-sm font-medium text-orange-300">
+              <Sparkles className="h-4 w-4 text-orange-400" />
+              Produit
+            </span>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-white md:text-4xl">
+              Tout ce dont vous avez besoin
+            </h2>
+            <p className="mt-4 text-slate-400">
+              Une suite complète pour gérer chaque aspect de votre activité
+              hôtelière, du check-in aux rapports financiers.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {SECONDARY_FEATURES.map((feature) => {
+              const Icon = ICON_MAP[feature.icon] ?? Sparkles;
+              const colorClass =
+                COLOR_CLASSES[feature.color] ?? COLOR_CLASSES.orange;
+              return (
+                <Card
+                  key={feature.title}
+                  className="border-white/10 bg-[#0a1929]/60 transition-colors hover:border-orange-500/40"
+                >
+                  <CardContent className="space-y-3">
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-lg ${colorClass}`}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-base font-semibold text-white">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-slate-400">{feature.desc}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ----------------------------------------------------------------- */}
+      {/* TÉMOIGNAGES / RÉSULTATS                                            */}
+      {/* ----------------------------------------------------------------- */}
+      <section id="temoignages" className="py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-              Des tarifs adaptés à votre taille
+              <span className="text-white">{RESULTS_SECTION.titleWhite}</span>{" "}
+              <span className="text-orange-500">{RESULTS_SECTION.titleOrange}</span>
             </h2>
-            <p className="mt-4 text-muted-foreground">
+            <p className="mt-4 text-slate-400">{RESULTS_SECTION.subtitle}</p>
+          </div>
+
+          <div className="mt-12 grid items-center gap-8 lg:grid-cols-2">
+            {/* Image */}
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-white/10 shadow-xl">
+              <Image
+                src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=1200&q=80"
+                alt="Réception d'hôtel avec réceptionniste au travail"
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover"
+              />
+            </div>
+
+            {/* Card */}
+            <Card className="border-orange-500/30 bg-gradient-to-br from-orange-500/10 to-transparent">
+              <CardContent className="space-y-5">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-500/15 text-orange-400">
+                  <TrendingUp className="h-7 w-7" />
+                </div>
+                <h3 className="text-2xl font-bold text-white">
+                  {RESULTS_SECTION.cardTitle}
+                </h3>
+                <p className="text-slate-300">{RESULTS_SECTION.cardDesc}</p>
+                <Button
+                  asChild
+                  variant="link"
+                  className="h-auto p-0 text-orange-400 hover:text-orange-300"
+                >
+                  <Link href="/#contact">
+                    {RESULTS_SECTION.cardCta}
+                    <ArrowRight className="ml-1 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* ----------------------------------------------------------------- */}
+      {/* TARIFS                                                             */}
+      {/* ----------------------------------------------------------------- */}
+      <section
+        id="tarifs"
+        className="border-y border-white/10 bg-white/[0.02] py-16 md:py-24"
+      >
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+              <span className="text-white">Des tarifs</span>{" "}
+              <span className="text-orange-500">adaptés à votre taille</span>
+            </h2>
+            <p className="mt-4 text-slate-400">
               Un paiement annuel simple. Aucun frais caché. Choisissez la formule
               qui correspond à votre activité.
             </p>
           </div>
+
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
             {PLANS.map((plan) => {
-              const isFeatured = plan.id === "privilege";
+              const isFeatured = !!plan.highlighted;
               return (
                 <Card
                   key={plan.id}
                   className={
                     isFeatured
-                      ? "border-primary shadow-lg ring-1 ring-primary/20"
-                      : ""
+                      ? "border-orange-500 bg-gradient-to-b from-orange-500/[0.08] to-transparent shadow-xl shadow-orange-500/10"
+                      : "border-white/10 bg-white/5"
                   }
                 >
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-xl">{plan.name}</CardTitle>
-                      {isFeatured && (
-                        <Badge className="bg-accent text-accent-foreground">
-                          Le plus choisi
+                  <CardContent className="flex h-full flex-col gap-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-xl font-semibold text-white">
+                          {plan.name}
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-400">
+                          {plan.target}
+                        </p>
+                      </div>
+                      {plan.badge && (
+                        <Badge className="bg-orange-500 text-white hover:bg-orange-500">
+                          {plan.badge}
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{plan.target}</p>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+
+                    <p className="text-sm text-slate-300">{plan.summary}</p>
+
                     <div>
-                      <span className="text-3xl font-bold">{plan.priceLabel}</span>
-                      <span className="text-muted-foreground"> / {plan.period}</span>
+                      <span className="text-3xl font-bold text-white">
+                        {plan.priceLabel}
+                      </span>
+                      <span className="text-slate-400"> / {plan.period}</span>
                     </div>
-                    <ul className="space-y-2">
+
+                    <ul className="flex-1 space-y-2.5">
                       {plan.features.map((feat) => (
-                        <li key={feat} className="flex items-start gap-2 text-sm">
-                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                        <li
+                          key={feat}
+                          className="flex items-start gap-2 text-sm text-slate-300"
+                        >
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-orange-400" />
                           <span>{feat}</span>
                         </li>
                       ))}
                     </ul>
+
                     <Button
                       asChild
-                      className="w-full"
+                      className={
+                        isFeatured
+                          ? "w-full bg-orange-500 text-white hover:bg-orange-600"
+                          : "w-full border-white/20 bg-transparent text-white hover:bg-white/10"
+                      }
                       variant={isFeatured ? "default" : "outline"}
                     >
-                      <Link href="#contact">Choisir {plan.name}</Link>
+                      <Link href="/#contact">Choisir {plan.name}</Link>
                     </Button>
                   </CardContent>
                 </Card>
@@ -306,43 +462,82 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* FAQ */}
+      {/* ----------------------------------------------------------------- */}
+      {/* FAQ                                                               */}
+      {/* ----------------------------------------------------------------- */}
       <section id="faq" className="py-16 md:py-24">
         <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-2xl">
-            <h2 className="text-center text-3xl font-bold tracking-tight md:text-4xl">
-              Questions fréquentes
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-1.5 text-sm font-medium text-orange-300">
+              <HelpCircle className="h-4 w-4 text-orange-400" />
+              FAQ
+            </span>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight md:text-4xl">
+              <span className="text-white">Questions</span>{" "}
+              <span className="text-orange-500">fréquentes</span>
             </h2>
-            <Accordion type="single" collapsible className="mt-10">
-              {FAQ.map((item, i) => (
-                <AccordionItem key={i} value={`item-${i}`}>
-                  <AccordionTrigger className="text-left">
-                    {item.q}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground">
-                    {item.a}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+            <p className="mt-4 text-slate-400">
+              Tout ce que vous devez savoir avant de démarrer avec {APP_NAME}.
+            </p>
+          </div>
+
+          <div className="mx-auto mt-12 max-w-3xl">
+            <Card className="border-white/10 bg-white/5">
+              <CardContent>
+                <Accordion type="single" collapsible className="w-full">
+                  {FAQ_ITEMS.map((item, i) => (
+                    <AccordionItem
+                      key={i}
+                      value={`item-${i}`}
+                      className="border-white/10"
+                    >
+                      <AccordionTrigger className="text-left text-base font-medium text-white hover:text-orange-300">
+                        {item.q}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-sm leading-relaxed text-slate-300">
+                        {item.a}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
 
-      {/* CONTACT / CTA */}
-      <section id="contact" className="border-t border-border/60 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4 py-16 md:py-24">
-          <div className="grid items-center gap-10 md:grid-cols-2">
-            <div className="space-y-4">
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-                Prêt à digitaliser votre gestion ?
-              </h2>
-              <p className="text-primary-foreground/80">
-                Laissez-nous vos coordonnées. Notre équipe vous contacte par
-                WhatsApp sous 24h pour organiser une démo et activer votre espace.
-              </p>
+      {/* ----------------------------------------------------------------- */}
+      {/* CONTACT                                                            */}
+      {/* ----------------------------------------------------------------- */}
+      <section
+        id="contact"
+        className="border-t border-white/10 bg-[#081626] py-16 md:py-24"
+      >
+        <div className="container mx-auto px-4">
+          <div className="grid items-start gap-10 lg:grid-cols-2">
+            {/* Left — CTA + benefits */}
+            <div className="space-y-7">
+              <div className="space-y-3">
+                <span className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-1.5 text-sm font-medium text-orange-300">
+                  <Star className="h-4 w-4 fill-orange-400 text-orange-400" />
+                  Démarrez gratuitement
+                </span>
+                <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
+                  Prêt à digitaliser votre gestion hôtelière ?
+                </h2>
+                <p className="max-w-md text-slate-300">
+                  Laissez-nous vos coordonnées. Notre équipe vous contacte par
+                  WhatsApp sous 24h pour organiser une démo et activer votre
+                  espace.
+                </p>
+              </div>
+
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Button asChild size="lg" variant="secondary">
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-orange-500 text-white hover:bg-orange-600"
+                >
                   <a
                     href={buildWhatsAppUrl(
                       WHATSAPP_CONTACT,
@@ -359,29 +554,45 @@ export default function HomePage() {
                   asChild
                   size="lg"
                   variant="outline"
-                  className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                  className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
                 >
-                  <a href={`mailto:${SUPPORT_EMAIL}`}>Écrire un email</a>
+                  <a href={`mailto:${SUPPORT_EMAIL}`}>
+                    <Mail className="mr-2 h-4 w-4" />
+                    Écrire un email
+                  </a>
                 </Button>
               </div>
-            </div>
 
-            <Card className="border-0 bg-primary-foreground/5 text-primary-foreground backdrop-blur">
-              <CardHeader>
-                <CardTitle>Pourquoi choisir {APP_NAME} ?</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
+              <ul className="grid gap-3 pt-2 sm:grid-cols-2">
                 {[
                   { icon: ShieldCheck, text: "Données isolées par établissement" },
-                  { icon: Smartphone, text: "Utilisable sur mobile, tablette, ordinateur" },
-                  { icon: Wallet, text: "Mobile Money et espèces pris en charge" },
+                  { icon: Smartphone, text: "Mobile, tablette et ordinateur" },
+                  { icon: Wallet, text: "Mobile Money et espèces supportés" },
                   { icon: Receipt, text: "Factures et reçus professionnels inclus" },
                 ].map((item) => (
-                  <div key={item.text} className="flex items-center gap-3">
-                    <item.icon className="h-5 w-5 text-accent" />
-                    <span className="text-sm">{item.text}</span>
-                  </div>
+                  <li
+                    key={item.text}
+                    className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-200"
+                  >
+                    <item.icon className="h-5 w-5 shrink-0 text-orange-400" />
+                    <span>{item.text}</span>
+                  </li>
                 ))}
+              </ul>
+            </div>
+
+            {/* Right — Lead form */}
+            <Card className="border-white/10 bg-[#0a1929]">
+              <CardContent>
+                <div className="mb-5">
+                  <h3 className="text-xl font-semibold text-white">
+                    Demandez votre démo gratuite
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Réponse sous 24h, sans engagement.
+                  </p>
+                </div>
+                <LeadForm />
               </CardContent>
             </Card>
           </div>

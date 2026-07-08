@@ -376,3 +376,87 @@ Stage Summary:
   10. ✅ Bouton "Contacter OGHOTEL" WhatsApp
 - Permissions : hotel_admin + manager peuvent modifier
 - Données liées à establishment_id
+
+---
+Task ID: 29
+Agent: frontend-styling-expert
+Task: Reconstruction de la landing page OGHOTEL V2 (dark navy + orange)
+
+Work Log:
+- Lu le worklog partagé : aucune trace d'un "Task ID: 8" (probablement perdu dans le reset sandbox).
+- Vérifié l'état du projet : constants.ts déjà mis à jour avec tout le contenu V2 (HERO_BADGE, HERO_TITLE_WHITE/ORANGE, HERO_KEY_POINTS, HERO_STATS, MAIN_FEATURES, SECONDARY_FEATURES, RESULTS_SECTION, PLANS, FAQ_ITEMS, NAV_LINKS, BUSINESS_TYPES, DESIRED_PLAN_OPTIONS). Les fichiers page.tsx / site-header / site-footer existaient mais utilisaient l'ancien thème bleu marine + doré.
+
+Fichiers créés / remplacés :
+
+1. `src/app/globals.css` (REMPLACÉ)
+   - Nouveau thème V2 : background #0A1929 (dark navy) + primary #FF6B35 (orange) + foreground blanc
+   - Cartes #102841, surfaces secondaires #163049, muted-foreground #94a3b8
+   - Bordures en rgba(255,255,255,0.08) pour fondre sur le navy
+   - `:root` ET `.dark` partagent la même palette (le site est sombre par défaut)
+
+2. `src/app/layout.tsx` (MODIFIÉ)
+   - `<html className="dark">` pour éviter tout flash FOUC
+   - ThemeProvider : defaultTheme="dark", enableSystem={false} (pas de toggle UI)
+
+3. `src/components/layout/site-header.tsx` (REMPLACÉ)
+   - Header sticky sombre avec bg-[#0a1929]/90 + backdrop-blur
+   - Logo : carré arrondi orange avec "OG" + texte "OGHOTEL" blanc
+   - Nav desktop centrée (5 liens de NAV_LINKS) en slate-300
+   - Actions : "Connexion" (ghost) + "Essai Gratuit" (orange + ArrowRight)
+   - Mobile : Sheet avec pattern `mounted` (render placeholder disabled avant mount → évite hydration mismatch)
+   - SheetContent avec `aria-describedby={undefined}` et style navy
+   - AUCUN theme toggle (supprimé du header)
+
+4. `src/components/layout/site-footer.tsx` (REMPLACÉ)
+   - Footer sombre bg-[#081626] avec border-top subtil
+   - 4 colonnes : Brand (logo OG + tagline) | À propos | Contact (WhatsApp orange + email orange) | Navigation (Fonctionnalités, Tarifs, Connexion, Activer mon compte)
+   - Liens hover:text-orange-400
+   - Copyright bas avec année dynamique
+
+5. `src/app/page.tsx` (REMPLACÉ)
+   - 9 sections complètes, sémantiques, mobile-first, py-16 md:py-24
+   - HERO : badge orange "#1 en Côte d'Ivoire" avec Star, H1 white+orange, description, 2 CTAs (orange + outline avec Play), 3 key points (icones orange), 2 stats (500+ Hôtels / +45% Revenus), image lobby hôtel (Unsplash) + carte flottante "+45% de revenus"
+   - #fonctionnalites : badge Star + "Fonctionnalités Puissantes", 4 cartes MAIN_FEATURES avec carrés d'icônes colorés (COLOR_CLASSES : orange/blue/green/pink)
+   - #produit : badge Sparkles + "Tout ce dont vous avez besoin", 8 cartes SECONDARY_FEATURES (4 colonnes desktop)
+   - #temoignages : "Des résultats" (white) + "qui parlent d'eux-mêmes" (orange), 2 colonnes : image hôtel + Card orange avec TrendingUp, titre "Augmentez vos revenus de 45%", CTA "Découvrir comment →"
+   - #tarifs : "Des tarifs" (white) + "adaptés à votre taille" (orange), 3 cartes PLANS, Privilège mis en avant (border-orange-500 + badge "Le plus choisi" + bg gradient orange), boutons orange pour plan en avant / outline pour autres
+   - #faq : badge HelpCircle + "Questions" (white) + "fréquentes" (orange), 5 FAQ_ITEMS dans Accordion shadcn (intérieur Card)
+   - #contact : bande sombre bg-[#081626], 2 colonnes : gauche (badge + H2 + description + 2 CTAs WhatsApp/email + 4 benefits avec icônes orange ShieldCheck/Smartphone/Wallet/Receipt) | droite (Card avec <LeadForm />)
+   - <SiteFooter />
+   - Lookups locaux : ICON_MAP (15 icônes lucide) + COLOR_CLASSES (6 couleurs)
+
+6. `src/components/marketing/lead-form.tsx` (CRÉÉ — fichier support manquant)
+   - Le fichier n'existait pas dans la sandbox, mais page.tsx l'importe → créé
+   - react-hook-form + zod + sonner toast
+   - Champs : full_name, hotel_name, email, phone, business_type (Select), desired_plan (Select), message (Textarea)
+   - POST /api/leads, gère 503 (Supabase non configuré) avec message clair
+   - Écran de succès avec CheckCircle2 + bouton "Envoyer une autre demande"
+   - Bouton submit orange "Demander ma démo gratuite"
+
+7. `src/app/api/leads/route.ts` (CRÉÉ — endpoint support manquant)
+   - POST public : validation zod, INSERT dans table `leads` (RLS Supabase autorise INSERT public)
+   - Gestion gracieuse si Supabase non configuré (503) ou erreur BDD (500)
+
+8. `next.config.ts` (MODIFIÉ)
+   - Ajout images.remotePatterns pour images.unsplash.com (nécessaire pour next/image des 2 photos héros et témoignages)
+
+Vérifications :
+- ✅ `bun run lint` → 0 erreur, 0 warning
+- ✅ `bunx tsc --noEmit` → 0 erreur sur mes fichiers (erreurs préexistantes signalées dans components/hotel/* et examples/* sont hors scope)
+- ✅ Dev server (port 3000) : GET / 200, page rendue en 193ms
+- ✅ Toutes les sections attendues présentes dans le HTML rendu : "Commencer Gratuitement", "Essai Gratuit", "Voir la démo", "Fonctionnalités Puissantes", "Tout ce dont vous avez besoin", "Augmentez vos revenus", "adaptés à votre taille", "Questions", "fréquentes", "Demander votre démo gratuite"
+- ✅ LeadForm rendu avec tous ses champs (lead-full-name, lead-email, lead-phone, lead-hotel-name, lead-business-type, lead-desired-plan, lead-message)
+- ✅ POST /api/leads valide l'email (retourne {"error":"Email invalide"} sur email mal formé)
+- ✅ Classe `dark` appliquée sur <html> (pas de FOUC)
+- ✅ Image Unsplash préchargée via next/image (remotePatterns configuré)
+
+Stage Summary:
+- Reconstruction de la landing V2 TERMINÉE
+- 3 fichiers demandés créés (site-header, site-footer, page.tsx) + 4 fichiers supports nécessaires (globals.css, layout.tsx, lead-form.tsx, /api/leads/route.ts) + 1 config (next.config.ts)
+- Thème respecté : dark navy #0A1929 + orange #FF6B35 + texte blanc, aucun indigo/bleu par défaut
+- Pattern `mounted` utilisé pour le Sheet mobile (évite hydration mismatch)
+- SheetContent avec `aria-describedby={undefined}` (conforme à la spec)
+- Pas de theme toggle (conforme à la spec)
+- LeadForm opérationnel (validation, soumission, écran de succès, gestion d'erreur 503)
+- Prêt pour étapes suivantes : test navigateur (agent-browser), intégration RLS réelle sur leads, route /activation
+
