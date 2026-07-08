@@ -255,3 +255,54 @@ Stage Summary:
 - Le script utilise \gset (variables psql) qui fonctionne dans Supabase SQL Editor
 - L'utilisateur peut maintenant copier-coller le script entier et cliquer Run
 - Les 7 tests valident l'isolation multi-tenant de bout en bout
+
+---
+Task ID: 26
+Agent: main-orchestrator
+Task: Module gestion utilisateurs et permissions
+
+Work Log:
+- Note : sandbox a perdu plusieurs fichiers (lib/hotel, components/hotel) — recréé les fichiers essentiels
+- Recréé .env.local (supprimé par nettoyage sandbox)
+- Créé src/lib/hotel/users.ts : types (StaffUser) + ROLE_LABELS + ROLE_DESCRIPTIONS + ROLE_OPTIONS + PERMISSIONS_MATRIX (13 modules × 7 rôles)
+- Créé src/lib/hotel/users-server.ts :
+  * getStaffUsers : liste avec récupération email depuis auth.users
+  * getPlanLimits : vérifie max_users du plan + compte actuel
+  * createStaffUser : vérifie limites, crée user Auth + profil, empêche doublons, rollback si échec
+  * updateStaffUser : modifie rôle/actif/nom/téléphone, empêche auto-modification du rôle
+  * resetStaffPassword : réinitialise via admin API + force must_change_password
+  * deleteStaffUser : empêche auto-suppression, supprime profil + user Auth
+- Créé 3 API routes :
+  * POST /api/hotel/users : créer (hotel_admin uniquement, vérifie limites plan)
+  * PATCH/DELETE /api/hotel/users/[id] : modifier/supprimer
+  * POST /api/hotel/users/[id]/reset-password : réinitialiser mot de passe
+- Créé composant users-list.tsx :
+  * Carte limite plan (current/max + bouton ajouter désactivé si limite atteinte)
+  * Tableau personnel avec nom, email, rôle, statut, date, actions
+  * Actions : modifier, réinitialiser mot de passe, activer/désactiver, supprimer
+  * Matrice des permissions (13 modules × 6 rôles hôteliers avec ✓/✗)
+  * Dialog création (email, mot de passe temporaire, nom, téléphone, rôle)
+  * Dialog modification (nom, téléphone, rôle)
+  * Dialog réinitialisation mot de passe
+  * Dialog suppression avec confirmation
+- Créé page /app/users (hotel_admin uniquement, accès refusé pour autres rôles)
+
+Tests :
+- ✅ Plan PRIVILEGE : max 3 users, 1 actuel → peut créer
+- ✅ Création réceptionniste (email + password + profil role=receptionist)
+- ✅ must_change_password = true automatiquement
+- ✅ Connexion du réceptionniste réussie
+- ✅ Lint clean
+
+Stage Summary:
+- Étape 23 (utilisateurs et permissions) TERMINÉE
+- 7 fonctionnalités satisfaites :
+  1. ✅ Créer comptes selon limites formule (getPlanLimits vérifie max_users)
+  2. ✅ Modifier rôle utilisateur
+  3. ✅ Activer/désactiver compte
+  4. ✅ Réinitialiser mot de passe (via admin API + force must_change)
+  5. ✅ Afficher limite utilisateurs selon plan
+  6. ✅ Bloquer création si limite atteinte
+  7. ✅ Permissions par rôle (matrice 13 modules × 7 rôles)
+- Sécurité : création via service_role côté serveur uniquement, jamais côté client
+- Empêche auto-suppression et auto-modification du rôle
