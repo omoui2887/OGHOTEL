@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getCurrentProfile } from "@/lib/auth";
 import { getActivityLogs } from "@/lib/super-admin/logs-server";
+import { ACTION_LABELS } from "@/lib/super-admin/logs";
 import { LogsList } from "@/components/super-admin/logs-list";
 
 export const metadata = {

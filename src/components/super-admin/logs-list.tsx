@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import {
   ACTION_LABELS, type ActivityLog,
-} from "@/lib/super-admin/logs-server";
+} from "@/lib/super-admin/logs";
 import { formatDateTime } from "@/lib/utils";
 
 type Props = {

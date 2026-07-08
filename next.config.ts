@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -15,6 +14,11 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+  },
+  // Les pages qui utilisent Supabase (cookies, auth) ne peuvent pas être
+  // pré-rendues statiquement. On les force en dynamique.
+  experimental: {
+    dynamicIO: true,
   },
 };
 

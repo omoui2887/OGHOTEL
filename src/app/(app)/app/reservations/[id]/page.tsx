@@ -18,7 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { getCurrentProfile } from "@/lib/auth";
-import { getReservationById, getGuestPayments } from "@/lib/hotel/reservations-server";
+import { getReservationById } from "@/lib/hotel/reservations-server";
+import { getGuestPayments } from "@/lib/hotel/guests-server";
 import { ReservationDetailActions } from "@/components/hotel/reservation-detail-actions";
 import {
   RESERVATION_STATUS_LABELS,
