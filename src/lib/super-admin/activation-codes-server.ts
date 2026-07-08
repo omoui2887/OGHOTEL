@@ -258,3 +258,122 @@ export async function updateCodeStatus(
 
   return { success: true };
 }
+
+/**
+ * Génère un code d'activation d'ESSAI (24h) sans paiement requis.
+ * Permet au Super Admin de faire tester le SaaS à un prospect.
+ *
+ * Règles :
+ * - Pas de payment_id requis
+ * - Durée de validité : 24 heures (au lieu de 30 jours)
+ * - Le plan doit être actif
+ * - Le code est unique (retry si collision)
+ */
+export async function generateTrialCode(input: {
+  plan_id: string;
+  created_by: string;
+}): Promise<{
+  success: boolean;
+  code?: ActivationCode;
+  error?: string;
+}> {
+  const supabase = createSupabaseAdminClient();
+
+  // 1. Vérifier que le plan existe et est actif
+  const { data: plan, error: planErr } = await supabase
+    .from("plans")
+    .select("id, name, price_fcfa, is_active")
+    .eq("id", input.plan_id)
+    .single();
+
+  if (planErr || !plan) {
+    return { success: false, error: "Formule introuvable" };
+  }
+
+  if (!plan.is_active) {
+    return { success: false, error: "Cette formule n'est plus disponible" };
+  }
+
+  // 2. Générer un code unique
+  let code = "";
+  let attempts = 0;
+  const maxAttempts = 10;
+
+  while (attempts < maxAttempts) {
+    code = generateActivationCodeFormat();
+    const { data: existing } = await supabase
+      .from("activation_codes")
+      .select("id")
+      .eq("code", code)
+      .maybeSingle();
+
+    if (!existing) break;
+    attempts++;
+  }
+
+  if (attempts >= maxAttempts) {
+    return { success: false, error: "Impossible de générer un code unique" };
+  }
+
+  // 3. Calculer l'expiration (24h)
+  const expiresAt = new Date();
+  expiresAt.setHours(expiresAt.getHours() + 24);
+
+  // 4. Insérer le code d'essai (sans payment_id, sans lead_id)
+  const { data: newCode, error: insertErr } = await supabase
+    .from("activation_codes")
+    .insert({
+      code,
+      lead_id: null,
+      establishment_id: null,
+      plan_id: input.plan_id,
+      payment_id: null,
+      amount_fcfa: 0, // Essai gratuit
+      status: "generated",
+      expires_at: expiresAt.toISOString(),
+      created_by: input.created_by,
+    })
+    .select(`
+      id, code, lead_id, establishment_id, plan_id, payment_id, amount_fcfa,
+      status, expires_at, used_at, created_by, created_at,
+      plan:plans(name),
+      lead:leads(full_name),
+      establishment:establishments(name)
+    `)
+    .single();
+
+  if (insertErr || !newCode) {
+    return { success: false, error: insertErr?.message ?? "Erreur d'insertion" };
+  }
+
+  // 5. Log
+  await supabase.from("activity_logs").insert({
+    establishment_id: null,
+    user_id: input.created_by,
+    action: "trial_code_generated",
+    entity_type: "activation_code",
+    entity_id: newCode.id,
+    metadata: { code, plan_name: plan.name, expires_at: expiresAt.toISOString() },
+  });
+
+  const c = newCode as any;
+  const codeResult: ActivationCode = {
+    id: c.id,
+    code: c.code,
+    lead_id: c.lead_id,
+    establishment_id: c.establishment_id,
+    plan_id: c.plan_id,
+    plan_name: c.plan?.name ?? null,
+    payment_id: c.payment_id,
+    amount_fcfa: c.amount_fcfa,
+    status: c.status,
+    expires_at: c.expires_at,
+    used_at: c.used_at,
+    created_by: c.created_by,
+    created_at: c.created_at,
+    lead_name: c.lead?.full_name ?? null,
+    establishment_name: c.establishment?.name ?? null,
+  };
+
+  return { success: true, code: codeResult };
+}

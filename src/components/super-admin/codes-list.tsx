@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Copy, Send, Ban, Inbox, ChevronLeft, ChevronRight } from "lucide-react";
+import { Copy, Send, Ban, Inbox, ChevronLeft, ChevronRight, Plus, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   CODE_STATUS_LABELS,
   CODE_STATUS_OPTIONS,
   type ActivationCode,
@@ -28,6 +36,7 @@ type CodesListProps = {
   page: number;
   totalPages: number;
   initialStatus: string;
+  plans: { id: string; name: string }[];
 };
 
 export function CodesList({
@@ -36,11 +45,16 @@ export function CodesList({
   page,
   totalPages,
   initialStatus,
+  plans,
 }: CodesListProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [statusFilter, setStatusFilter] = React.useState(initialStatus);
   const [actionLoading, setActionLoading] = React.useState<string | null>(null);
+  const [showTrialDialog, setShowTrialDialog] = React.useState(false);
+  const [trialPlan, setTrialPlan] = React.useState("");
+  const [trialLoading, setTrialLoading] = React.useState(false);
+  const [trialResult, setTrialResult] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const sp = new URLSearchParams(searchParams.toString());
@@ -117,6 +131,16 @@ export function CodesList({
           <span className="text-xs text-muted-foreground">
             {total} code{total > 1 ? "s" : ""}
           </span>
+          <div className="ml-auto">
+            <Button
+              size="sm"
+              variant="default"
+              onClick={() => { setShowTrialDialog(true); setTrialResult(null); setTrialPlan(""); }}
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              Code d'essai 24h
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -269,6 +293,106 @@ export function CodesList({
           </div>
         </div>
       )}
+
+      {/* Dialog code d'essai */}
+      <Dialog open={showTrialDialog} onOpenChange={setShowTrialDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Code d'essai 24h</DialogTitle>
+            <DialogDescription>
+              Générez un code d'activation d'essai valide 24 heures, sans paiement requis.
+              Idéal pour faire tester le SaaS à un prospect.
+            </DialogDescription>
+          </DialogHeader>
+
+          {trialResult ? (
+            <div className="space-y-4">
+              <div className="rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 p-6 text-center">
+                <p className="text-xs text-muted-foreground mb-2">Code d'essai généré</p>
+                <p className="text-2xl font-bold tracking-wider text-primary font-mono">
+                  {trialResult}
+                </p>
+                <p className="mt-2 text-xs text-amber-500">Valide 24h uniquement</p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  className="flex-1"
+                  onClick={() => {
+                    navigator.clipboard.writeText(trialResult);
+                    toast.success("Code copié");
+                  }}
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copier
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowTrialDialog(false)}
+                >
+                  Fermer
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Formule à tester</label>
+                <Select value={trialPlan} onValueChange={setTrialPlan}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionnez une formule..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {plans.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
+                <p>⚠️ Ce code sera valide <strong>24 heures uniquement</strong>.</p>
+                <p>Le prospect pourra créer son établissement et tester toutes les fonctionnalités.</p>
+                <p>Après 24h, le code expirera automatiquement.</p>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowTrialDialog(false)}>
+                  Annuler
+                </Button>
+                <Button
+                  onClick={async () => {
+                    if (!trialPlan) { toast.error("Veuillez sélectionner une formule"); return; }
+                    setTrialLoading(true);
+                    try {
+                      const res = await fetch("/api/super-admin/activation-codes/trial", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ plan_id: trialPlan }),
+                      });
+                      const data = await res.json();
+                      if (!res.ok) { toast.error(data.error ?? "Erreur"); return; }
+                      setTrialResult(data.code.code);
+                      toast.success(data.message);
+                      router.refresh();
+                    } catch { toast.error("Erreur réseau"); }
+                    finally { setTrialLoading(false); }
+                  }}
+                  disabled={trialLoading || !trialPlan}
+                >
+                  {trialLoading ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Génération...</>
+                  ) : (
+                    <><Sparkles className="mr-2 h-4 w-4" /> Générer le code d'essai</>
+                  )}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
