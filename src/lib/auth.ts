@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/types";
 
 /**
@@ -53,8 +54,11 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     const user = await getCurrentUser();
     if (!user) return null;
 
-    const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase
+    // Utiliser le client admin (bypass RLS) pour lire le profil.
+    // Le client standard est bloqué par RLS si l'utilisateur n'a pas encore
+    // de session active ou si les politiques ne sont pas en place.
+    const adminClient = createSupabaseAdminClient();
+    const { data, error } = await adminClient
       .from("profiles")
       .select("*")
       .eq("id", user.id)

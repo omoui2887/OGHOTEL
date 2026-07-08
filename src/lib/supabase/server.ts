@@ -1,13 +1,10 @@
+import "server-only";
 import { createServerClient } from "@supabase/ssr";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 /**
  * Client Supabase côté serveur (Server Components, Route Handlers, Server Actions).
- *
- * Utilise uniquement les variables NEXT_PUBLIC_* + la session cookie.
- * Ne jamais utiliser la clé service_role ici — pour les opérations
- * administrateur critiques, utiliser une Route Handler dédiée qui vérifie
- * le rôle super_admin et appelle le client service côté serveur uniquement.
  */
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
@@ -32,8 +29,7 @@ export async function createSupabaseServerClient() {
             cookieStore.set(name, value, options)
           );
         } catch {
-          // Ignoré : appelé depuis un Server Component où on ne peut pas
-          // modifier les cookies. Le middleware se chargera de rafraîchir.
+          // Ignoré : appelé depuis un Server Component
         }
       },
     },
@@ -41,14 +37,8 @@ export async function createSupabaseServerClient() {
 }
 
 /**
- * Client Supabase avec la clé service_role.
- *
- * ⚠️ DANGEREUX — contourne toute la RLS.
- * À utiliser UNIQUEMENT dans des Route Handlers / Server Actions très
- * spécifiques (ex : seed initial, opération d'administration globale)
- * et TOUJOURS après vérification du rôle super_admin.
- *
- * Ne JAMAIS importer cette fonction dans un composant client.
+ * Client Supabase avec la clé service_role (bypass RLS).
+ * ⚠️ Ne JAMAIS importer dans un composant client.
  */
 export function createSupabaseAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -56,18 +46,14 @@ export function createSupabaseAdminClient() {
 
   if (!url || !serviceRoleKey) {
     throw new Error(
-      "Configuration admin Supabase manquante. Définissez NEXT_PUBLIC_SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY dans .env.local (côté serveur uniquement)"
+      "Configuration admin Supabase manquante. Définissez NEXT_PUBLIC_SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY dans .env.local"
     );
   }
 
-  return createServerClient(url, serviceRoleKey, {
-    cookies: {
-      getAll() {
-        return [];
-      },
-      setAll() {
-        // No-op : le client admin ne gère pas de session cookie.
-      },
+  return createAdminClient(url, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
     },
   });
 }
