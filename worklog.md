@@ -306,3 +306,39 @@ Stage Summary:
   7. ✅ Permissions par rôle (matrice 13 modules × 7 rôles)
 - Sécurité : création via service_role côté serveur uniquement, jamais côté client
 - Empêche auto-suppression et auto-modification du rôle
+
+---
+Task ID: 27
+Agent: main-orchestrator
+Task: Module Rapports et Statistiques
+
+Work Log:
+- Créé src/lib/hotel/reports-server.ts : getReports() calcule 10 rapports
+  * Taux d'occupation (occupiedNights / totalNights)
+  * Chiffre d'affaires (jour/semaine/mois/année + byDay 14j + byMonth 6 mois)
+  * CA par type de chambre (jointure rooms + room_types)
+  * Réservations par statut (count par status)
+  * Paiements reçus (total + par méthode)
+  * Paiements partiels et impayés (balance_amount > 0)
+  * Dépenses par catégorie (camembert)
+  * Résultat net (recettes - dépenses)
+  * Top 5 chambres (par nuits)
+  * Top 5 clients fréquents (par séjours)
+- Créé src/components/hotel/reports-view.tsx : composant client complet
+  * Sélecteur période (aujourd'hui / 7 jours / mois / trimestre / année)
+  * 4 cartes statistiques principales (occupation, recettes mois, dépenses, résultat net)
+  * 3 cartes recettes rapides (jour, semaine, année)
+  * 4 graphiques Recharts (bar revenus 14j, line revenus 6 mois, pie dépenses, bar réservations)
+  * Tableau CA par type de chambre avec %
+  * Top 5 chambres + Top 5 clients
+  * Tableau impayés avec détails
+  * Tableau paiements par méthode avec %
+  * Export CSV (BOM pour Excel)
+- Créé page /app/reports (hotel_admin, manager, accountant uniquement)
+- Lint clean
+
+Stage Summary:
+- Étape 24 (rapports) TERMINÉE
+- 10 rapports + 4 graphiques + export CSV
+- Permissions : hotel_admin, manager, accountant
+- Données filtrées par establishment_id
