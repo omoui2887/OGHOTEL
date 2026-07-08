@@ -4,16 +4,20 @@ import * as React from "react";
 import { SuperAdminSidebar } from "@/components/super-admin/sidebar";
 import { SuperAdminTopbar } from "@/components/super-admin/topbar";
 
+import type { Notification } from "@/lib/notifications";
+
 type SuperAdminShellProps = {
   profile: {
     full_name: string | null;
     email: string;
     role: string;
   } | null;
+  notifications?: Notification[];
+  unreadCount?: number;
   children: React.ReactNode;
 };
 
-export function SuperAdminShell({ profile, children }: SuperAdminShellProps) {
+export function SuperAdminShell({ profile, notifications = [], unreadCount = 0, children }: SuperAdminShellProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
   return (
@@ -25,6 +29,8 @@ export function SuperAdminShell({ profile, children }: SuperAdminShellProps) {
         <SuperAdminTopbar
           profile={profile}
           onMenuClick={() => setSidebarOpen(true)}
+          notifications={notifications}
+          unreadCount={unreadCount}
         />
         <main className="flex-1 p-4 md:p-6 lg:p-8">{children}</main>
       </div>

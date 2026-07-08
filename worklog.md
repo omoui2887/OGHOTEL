@@ -491,3 +491,32 @@ Stage Summary:
 - Isolation par establishment_id pour les exports hôtel
 - Noms de fichiers clairs avec date
 - Factures/reçus PDF déjà gérés via window.print() sur /app/invoices/[id]
+
+---
+Task ID: 31
+Agent: main-orchestrator
+Task: Notifications internes et alertes
+
+Work Log:
+- Créé src/lib/notifications.ts : calcul dynamique (pas de table dédiée)
+  * getSuperAdminNotifications() : 4 types (nouveaux prospects, paiements en attente, abonnements expirant, codes expirés)
+  * getHotelNotifications() : 6 types (arrivées du jour, départs du jour, chambres à nettoyer, maintenance urgente, impayés, abonnement expirant)
+  * Chaque notification : id, type, icon, title, description, severity (info/warning/danger/success), action_url, action_label
+- Créé src/components/shared/notification-bell.tsx : composant client
+  * Cloche avec badge (nombre non lues)
+  * Popover avec liste des notifications (icônes colorées par severity + titre + description + lien d'action)
+  * État vide : "Tout est à jour !"
+  * Scrollable (max-h-80)
+- Intégré dans :
+  * SuperAdminTopbar (via SuperAdminShell + layout)
+  * HotelTopbar (via HotelShell + layout)
+  * Les layouts fetch les notifications côté serveur et les passent aux shells
+- Lint clean
+
+Stage Summary:
+- Notifications internes Phase 1 TERMINÉE
+- 4 notifications Super Admin + 6 notifications Admin Hôtel
+- Badges dans le header (topbar) avec dropdown
+- Boutons d'action rapide (liens vers les pages concernées)
+- Calcul dynamique : pas de table notifications, pas de "marquer comme lu"
+- Phase 2 (email + WhatsApp) à venir

@@ -2,16 +2,8 @@ import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth";
 import { isSuperAdmin } from "@/lib/roles";
 import { SuperAdminShell } from "@/components/super-admin/shell";
+import { getSuperAdminNotifications } from "@/lib/notifications";
 
-/**
- * Layout defense-in-depth pour /super-admin/*.
- *
- * Le middleware vérifie déjà le rôle, mais cette vérification côté serveur
- * ajoute une couche de sécurité au cas où le middleware serait bypassé.
- *
- * En sandbox (pas de Supabase), getCurrentProfile() retourne null →
- * on laisse passer (le middleware gère en production).
- */
 export default async function SuperAdminLayout({
   children,
 }: {
@@ -19,13 +11,23 @@ export default async function SuperAdminLayout({
 }) {
   const profile = await getCurrentProfile();
 
-  // Si Supabase est configuré et l'utilisateur est connecté mais pas super_admin
-  // → rediriger vers /unauthorized
   if (profile && !isSuperAdmin(profile.role)) {
     redirect("/unauthorized");
   }
 
-  // Passe le profil au shell client pour le topbar
+  // Fetch notifications (dynamic, server-side)
+  let notifications: any[] = [];
+  let unreadCount = 0;
+  if (profile) {
+    try {
+      const result = await getSuperAdminNotifications();
+      notifications = result.notifications;
+      unreadCount = result.unread_count;
+    } catch {
+      // Si erreur, on continue sans notifications
+    }
+  }
+
   return (
     <SuperAdminShell
       profile={
@@ -37,6 +39,8 @@ export default async function SuperAdminLayout({
             }
           : null
       }
+      notifications={notifications}
+      unreadCount={unreadCount}
     >
       {children}
     </SuperAdminShell>

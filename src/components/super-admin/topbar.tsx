@@ -13,6 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { NotificationBell } from "@/components/shared/notification-bell";
+import type { Notification } from "@/lib/notifications";
 
 type TopbarProps = {
   profile: {
@@ -21,9 +23,11 @@ type TopbarProps = {
     role: string;
   } | null;
   onMenuClick: () => void;
+  notifications?: Notification[];
+  unreadCount?: number;
 };
 
-export function SuperAdminTopbar({ profile, onMenuClick }: TopbarProps) {
+export function SuperAdminTopbar({ profile, onMenuClick, notifications = [], unreadCount = 0 }: TopbarProps) {
   const initials = profile?.full_name
     ? profile.full_name
         .split(" ")
@@ -54,8 +58,9 @@ export function SuperAdminTopbar({ profile, onMenuClick }: TopbarProps) {
         </div>
       </div>
 
-      {/* Right: profile + logout */}
+      {/* Right: notifications + profile + logout */}
       <div className="flex items-center gap-2">
+        <NotificationBell notifications={notifications} unreadCount={unreadCount} />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2 rounded-lg px-2 py-1 transition-colors hover:bg-muted">

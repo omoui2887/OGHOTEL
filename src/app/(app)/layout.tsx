@@ -3,6 +3,7 @@ import { getCurrentProfile } from "@/lib/auth";
 import { isHotelUser } from "@/lib/roles";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { HotelShell } from "@/components/hotel/shell";
+import { getHotelNotifications } from "@/lib/notifications";
 
 /**
  * Layout /app/* — espace établissement.
@@ -39,9 +40,11 @@ export default async function AppLayout({
     );
   }
 
-  // Récupérer l'établissement + features du plan
+  // Récupérer l'établissement + features du plan + notifications
   let establishmentName: string | null = null;
   let features: Record<string, boolean> = {};
+  let notifications: any[] = [];
+  let unreadCount = 0;
 
   if (profile.establishment_id) {
     const adminClient = createSupabaseAdminClient();
@@ -55,6 +58,13 @@ export default async function AppLayout({
       establishmentName = est.name;
       features = (est as any).plan?.features ?? {};
     }
+
+    // Fetch notifications
+    try {
+      const result = await getHotelNotifications(profile.establishment_id);
+      notifications = result.notifications;
+      unreadCount = result.unread_count;
+    } catch {}
   }
 
   return (
@@ -66,6 +76,8 @@ export default async function AppLayout({
       }}
       establishmentName={establishmentName}
       features={features}
+      notifications={notifications}
+      unreadCount={unreadCount}
     >
       {children}
     </HotelShell>
