@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Menu, ArrowRight } from "lucide-react";
+import { Menu, ArrowRight, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -46,6 +46,12 @@ export function SiteHeader() {
 
         {/* Actions desktop */}
         <div className="hidden items-center gap-2 md:flex">
+          <Button asChild variant="ghost" size="sm" className="text-slate-200 hover:bg-white/10 hover:text-white">
+            <Link href="/activation">
+              <KeyRound className="mr-1.5 h-4 w-4" />
+              Activer mon compte
+            </Link>
+          </Button>
           <Button asChild variant="ghost" size="sm" className="text-slate-200 hover:bg-white/10 hover:text-white">
             <Link href="/login">Connexion</Link>
           </Button>
@@ -101,6 +107,15 @@ export function SiteHeader() {
                       className="rounded-md px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
                     >
                       Connexion
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link
+                      href="/activation"
+                      className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-orange-400 transition-colors hover:bg-white/10"
+                    >
+                      <KeyRound className="h-4 w-4" />
+                      Activer mon compte
                     </Link>
                   </SheetClose>
                   <SheetClose asChild>
