@@ -520,3 +520,33 @@ Stage Summary:
 - Boutons d'action rapide (liens vers les pages concernées)
 - Calcul dynamique : pas de table notifications, pas de "marquer comme lu"
 - Phase 2 (email + WhatsApp) à venir
+
+---
+Task ID: 32
+Agent: main-orchestrator
+Task: Journal d'activité (page /super-admin/logs)
+
+Work Log:
+- Vérifié : la table activity_logs existe déjà (migration 001) et de nombreuses actions sont déjà tracées automatiquement par les fonctions serveur (check-in, check-out, création réservation, paiement, dépense, etc.)
+- Créé src/lib/super-admin/logs-server.ts :
+  * getActivityLogs() : fetch avec filtres (action, user_id, establishment_id, date_from, date_to) + pagination + jointures profiles + establishments
+  * getEstablishmentLogs() : wrapper pour filtrer par establishment_id
+  * ACTION_LABELS : 27 actions traduites en français
+  * type ActivityLog avec user_name, user_email, user_role, establishment_name
+- Créé src/components/super-admin/logs-list.tsx : composant client
+  * Filtres : action (dropdown), date from/to
+  * Liste avec point coloré + label action + badges (rôle, établissement) + métadonnées (old/new status, montant, code, numéro facture) + date/heure
+  * Pagination
+  * État vide
+- Créé page /super-admin/logs (server component)
+
+Actions déjà tracées automatiquement (vérifiées dans le code) :
+- Super Admin : lead_status_changed, saas_payment_created, saas_payment_status_changed, activation_code_generated, activation_code_status_changed, plan_updated
+- Admin Hôtel : reservation_created, reservation_updated, reservation_cancelled, check_in, check_out, stay_payment_created, expense_created, expense_updated, expense_deleted, housekeeping_task_created, housekeeping_task_updated, maintenance_ticket_created, maintenance_ticket_updated, staff_user_created, staff_user_updated, staff_user_deleted, staff_password_reset, establishment_settings_updated, invoice_generated, invoice_cancelled, account_activated
+
+Stage Summary:
+- Journal d'activité TERMINÉ
+- 27 types d'actions déjà tracées automatiquement par les fonctions serveur
+- Page /super-admin/logs avec filtres (action, date) + pagination
+- Aucun secret ou mot de passe stocké dans les logs
+- Respect de establishment_id (filtre par établissement)
