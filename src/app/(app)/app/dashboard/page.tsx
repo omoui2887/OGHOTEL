@@ -18,6 +18,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { APP_NAME } from "@/lib/constants";
+import { ExportButton } from "@/components/shared/export-button";
 import { getCurrentProfile } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/roles";
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -46,6 +47,7 @@ export default async function AppDashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <ExportButton scope="hotel" />
             {profile && (
               <span className="hidden text-sm text-muted-foreground sm:inline">
                 {profile.full_name ?? profile.email}

@@ -22,6 +22,7 @@ import { APP_NAME } from "@/lib/constants";
 import { getCurrentProfile } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/roles";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ExportButton } from "@/components/shared/export-button";
 
 const QUICK_LINKS = [
   { href: "/super-admin/leads", label: "Prospects", icon: Users },
@@ -49,6 +50,7 @@ export default async function SuperAdminDashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <ExportButton scope="super-admin" />
             {profile && (
               <span className="hidden text-sm text-muted-foreground sm:inline">
                 {profile.full_name ?? profile.email}

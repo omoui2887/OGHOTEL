@@ -460,3 +460,34 @@ Stage Summary:
 - LeadForm opérationnel (validation, soumission, écran de succès, gestion d'erreur 503)
 - Prêt pour étapes suivantes : test navigateur (agent-browser), intégration RLS réelle sur leads, route /activation
 
+
+---
+Task ID: 30
+Agent: main-orchestrator
+Task: Exports CSV (Super Admin + Admin Hôtel)
+
+Work Log:
+- Créé src/app/api/super-admin/export/route.ts : GET avec type=prospects|clients|payments|revenue
+  * Vérifie auth + rôle super_admin
+  * CSV avec BOM pour Excel
+  * Noms de fichiers : oghotel-prospects-YYYY-MM-DD.csv, oghotel-clients-*, oghotel-paiements-saas-*, oghotel-revenus-*
+- Créé src/app/api/hotel/export/route.ts : GET avec type=reservations|payments|expenses|reports
+  * Vérifie auth + rôle selon type (reservations=receptionist+, payments=accountant+, expenses=accountant+, reports=accountant+)
+  * Filtrage par establishment_id
+  * Rapport complet : recettes + dépenses + résultat net + dépenses par catégorie
+  * Noms de fichiers : oghotel-reservations-*, oghotel-paiements-*, oghotel-depenses-*, oghotel-rapport-*
+- Créé src/components/shared/export-button.tsx : composant réutilisable
+  * Select pour choisir le type d'export
+  * Bouton CSV avec loader
+  * Télécharge automatiquement le fichier
+  * Deux scopes : "super-admin" et "hotel"
+- Ajouté ExportButton dans le dashboard Super Admin (scope="super-admin")
+- Ajouté ExportButton dans le dashboard Admin Hôtel (scope="hotel")
+- Lint clean
+
+Stage Summary:
+- Exports CSV implémentés pour Super Admin (4 types) + Admin Hôtel (4 types)
+- Permissions respectées par type d'export
+- Isolation par establishment_id pour les exports hôtel
+- Noms de fichiers clairs avec date
+- Factures/reçus PDF déjà gérés via window.print() sur /app/invoices/[id]
