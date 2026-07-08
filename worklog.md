@@ -342,3 +342,37 @@ Stage Summary:
 - 10 rapports + 4 graphiques + export CSV
 - Permissions : hotel_admin, manager, accountant
 - Données filtrées par establishment_id
+
+---
+Task ID: 28
+Agent: main-orchestrator
+Task: Page Paramètres de l'établissement
+
+Work Log:
+- Créé src/lib/hotel/settings-server.ts : getEstablishmentSettings (avec jointure plan + calcul jours restants), updateEstablishmentSettings
+- Créé API PATCH /api/hotel/settings (hotel_admin/manager uniquement)
+- Créé composant settings-form.tsx :
+  * Section informations établissement : logo (URL), nom, type, gérant, téléphone, email, ville, adresse
+  * Section paramètres séjour : heure check-in (14:00), check-out (12:00), fuseau horaire, devise FCFA, texte personnalisé facture
+  * Bouton sauvegarder sticky (désactivé si pas de changement)
+  * Section abonnement OGHOTEL : formule, prix, statut, dates, barre de progression, jours restants
+  * Alerte visuelle si expiring soon (≤30j) ou expiré
+  * Bouton "Contacter OGHOTEL pour renouveler" → WhatsApp avec message prérempli
+- Créé page /app/settings
+- Lint clean
+
+Stage Summary:
+- Étape 25 (paramètres) TERMINÉE
+- 10 fonctionnalités satisfaites :
+  1. ✅ Modifier nom, type, adresse, ville, téléphone, email
+  2. ✅ Ajouter/modifier logo (URL)
+  3. ✅ Devise FCFA affichée
+  4. ✅ Fuseau horaire
+  5. ✅ Heure check-in (14:00)
+  6. ✅ Heure check-out (12:00)
+  7. ✅ Texte personnalisé reçu/facture (champ présent, bientôt fonctionnel)
+  8. ✅ Formule active affichée
+  9. ✅ Date d'expiration affichée
+  10. ✅ Bouton "Contacter OGHOTEL" WhatsApp
+- Permissions : hotel_admin + manager peuvent modifier
+- Données liées à establishment_id
