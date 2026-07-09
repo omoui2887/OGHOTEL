@@ -83,13 +83,15 @@ export function RoomTypesList({ roomTypes, canEdit }: Props) {
       {canEdit && (
         <div className="flex justify-end">
           <Button
+            size="lg"
+            className="bg-orange-500 text-white hover:bg-orange-600 shadow-lg"
             onClick={() => {
               setEditing(null);
               setShowForm(true);
             }}
           >
-            <Plus className="mr-2 h-4 w-4" />
-            Nouveau type
+            <Plus className="mr-2 h-5 w-5" />
+            Nouveau type de chambre
           </Button>
         </div>
       )}
@@ -108,7 +110,8 @@ export function RoomTypesList({ roomTypes, canEdit }: Props) {
             </p>
             {canEdit && (
               <Button
-                className="mt-4"
+                size="lg"
+                className="mt-4 bg-orange-500 text-white hover:bg-orange-600 shadow-lg"
                 onClick={() => {
                   setEditing(null);
                   setShowForm(true);

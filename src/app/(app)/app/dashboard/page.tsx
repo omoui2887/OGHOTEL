@@ -7,6 +7,7 @@ import {
   Users,
   ArrowLeft,
   ShieldCheck,
+  Zap,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,12 @@ export default async function AppDashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             <ExportButton scope="hotel" />
+            <Button asChild size="sm" className="bg-orange-500 text-white hover:bg-orange-600 shadow-md">
+              <Link href="/app/reservations/new">
+                <Zap className="mr-1.5 h-4 w-4" />
+                Réservation rapide
+              </Link>
+            </Button>
             {profile && (
               <span className="hidden text-sm text-muted-foreground sm:inline">
                 {profile.full_name ?? profile.email}

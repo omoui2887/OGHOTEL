@@ -14,7 +14,8 @@ export default async function RoomTypesPage() {
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Types de chambres</h1>
         <p className="text-sm text-muted-foreground">
-          Aucun établissement associé à votre compte.
+          Aucun établissement associé à votre compte. Si vous venez d'activer votre compte,
+          déconnectez-vous puis reconnectez-vous.
         </p>
       </div>
     );
@@ -22,22 +23,23 @@ export default async function RoomTypesPage() {
 
   const roomTypes = await getRoomTypes(profile.establishment_id);
 
-  // Permissions : hotel_admin, manager, receptionist, housekeeping peuvent créer/modifier
-  // housekeeping et maintenance ne peuvent que voir
-  const canEdit = ["hotel_admin", "manager", "receptionist", "housekeeping"].includes(
+  // hotel_admin, manager, receptionist peuvent créer/modifier.
+  const canEdit = ["hotel_admin", "manager", "receptionist"].includes(
     profile.role
   );
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-          Types de chambres
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Créez vos types de chambres (Simple, Double, Suite...) avec un prix par
-          défaut et une capacité. Vous pourrez ensuite créer vos chambres.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+            Types de chambres
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Créez vos types de chambres (Simple, Double, Suite...) avec un prix par
+            défaut et une capacité. Vous pourrez ensuite créer vos chambres.
+          </p>
+        </div>
       </div>
 
       <RoomTypesList roomTypes={roomTypes} canEdit={canEdit} />
