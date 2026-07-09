@@ -2801,3 +2801,54 @@ Stage Summary:
 - ~30 liens avec prefetch + hover-prefetch
 - 3 composants dialog avec animations plus rapides (150ms)
 - 0 erreur lint, 0 erreur TypeScript
+
+---
+Task ID: 44
+Agent: main-orchestrator
+Task: Analyse des 5 captures + diagnostic + actions correctives
+
+Work Log:
+- 5 captures analysées via VLM :
+  * Screen 1 : Supabase Table Editor — table plans (ESSENTIEL, PRIVILEGE, PREMIUM) avec is_active, max_users, etc. — OK
+  * Screen 2 : Supabase Schema Visualizer — tables et relations affichées — OK (bloc de pixels = artefact de rendu Supabase, pas un bug OGHOTEL)
+  * Screen 3 : Supabase Database Functions — seule fonction "handle_updated_at" visible — ATTENTION : les helper functions RLS (is_super_admin, belongs_to_establishment, get_current_user_establishment_id) ne sont PAS visibles → migration 003_rls_policies.sql pas appliquée sur ce projet Supabase
+  * Screen 4 : Supabase OAuth Apps — "OAuth Server is disabled" + "No OAuth apps found" — OK (pas besoin d'OAuth pour OGHOTEL, auth par email/password)
+  * Screen 5 : Page réservations OGHOTEL affiche "Impossible de charger le formulaire" — ANCIENNE erreur de error.tsx supprimé (Task 37) → cache Vercel non invalidé
+
+DIAGNOSTIC :
+1. Page réservations affiche l'ancien message d'erreur car le déploiement Vercel n'était pas à jour (9 commits en retard non pushés)
+2. Les helper functions RLS ne sont PAS déployées sur le projet Supabase "oghotel2" → RLS policies qui utilisent is_super_admin(), belongs_to_establishment(), get_current_user_establishment_id() vont ÉCHOUER → toutes les requêtes RLS renvoient erreur ou données vides
+3. Migration 006 (constraints GiST anti double-booking) probablement pas appliquée non plus
+
+ACTIONS CORRECTIVES :
+1. ✅ Push des 9 commits en attente vers GitHub (main → déclenche redeploy Vercel automatique)
+   - Commit 56096e4..d3ecb6b poussé avec succès
+   - Vercel va redéployer automatiquement (pull depuis GitHub main)
+   - L'ancien message "Impossible de charger le formulaire" disparaîtra après le redeploy
+
+2. ⚠️ Action manuelle requise par l'utilisateur sur Supabase :
+   - Aller sur le Dashboard Supabase du projet "oghotel2"
+   - SQL Editor → exécuter les migrations manquantes :
+     a) 003_rls_policies.sql (CRITICAL — sans ça, RLS casse toutes les requêtes)
+     b) 006_unique_constraints.sql (anti double-booking + anti double-facture)
+   - OU si 003 déjà appliqué partiellement, vérifier que les fonctions existent :
+     SELECT proname FROM pg_proc WHERE proname IN ('is_super_admin', 'belongs_to_establishment', 'get_current_user_establishment_id', 'handle_updated_at');
+
+3. ℹ️ Vérifications post-deploy :
+   - La page /app/reservations ne doit PLUS afficher "Impossible de charger le formulaire"
+   - Les boutons "Nouvelle Réservation" et "Walk-In" doivent ouvrir le wizard modal
+   - La création de réservation doit fonctionner (checkRoomAvailability corrigé Task 43)
+
+Vérifications code :
+- Lint : 0 erreur, 0 warning
+- TypeScript : 0 erreur dans src/
+- Compilation : 25 pages testées, toutes 200 ou 307 (redirect auth)
+- API : POST /api/hotel/reservations retourne "Non authentifié" (correct sans session)
+- API : POST /api/leads accepte business_type="other" (correct, fix Task 41)
+- 0 référence à "reservations/new" ou "Impossible de charger le formulaire" dans le code
+
+Stage Summary:
+- 9 commits pushés vers GitHub → Vercel redéploie automatiquement
+- L'ancienne erreur "Impossible de charger le formulaire" disparaîtra après redeploy
+- ⚠️ L'utilisateur DOIT appliquer manuellement les migrations SQL 003 + 006 sur Supabase
+- Les helper functions RLS (is_super_admin, belongs_to_establishment, etc.) sont CRITICAL — sans elles, RLS casse tout
