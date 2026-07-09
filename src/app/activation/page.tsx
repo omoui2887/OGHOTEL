@@ -15,10 +15,10 @@ export const metadata = {
 
 export default function ActivationPage() {
   return (
-    <AuthSplitLayout sidebarVariant="navy">
-      {/* === SIDEBAR — ÉTAPES === */}
-      <RegistrationStepsSidebar currentStep={1} />
-
+    <AuthSplitLayout
+      sidebarVariant="navy"
+      sidebar={<RegistrationStepsSidebar currentStep={1} />}
+    >
       {/* === CONTENU DROIT — FORMULAIRE === */}
       <div className="w-full max-w-md">
         {/* Stepper horizontal */}

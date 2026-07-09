@@ -38,7 +38,7 @@ const schema = z.object({
   }),
   recipient_id: z.string().min(1, "Veuillez sélectionner un destinataire"),
   plan_id: z.string().uuid("Veuillez sélectionner une formule"),
-  amount_fcfa: z.coerce
+  amount_fcfa: z
     .number({ error: "Montant invalide" })
     .int("Le montant doit être un entier")
     .min(1, "Le montant doit être positif")
@@ -258,7 +258,7 @@ export function PaymentFormDialog({
               type="number"
               min={1}
               step={1000}
-              {...register("amount_fcfa")}
+              {...register("amount_fcfa", { valueAsNumber: true })}
             />
             {errors.amount_fcfa && (
               <p className="text-xs text-destructive">{errors.amount_fcfa.message}</p>

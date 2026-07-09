@@ -98,7 +98,7 @@ export async function updateRoom(
     floor?: string;
     capacity?: number;
     price_per_night?: number;
-    half_day_price?: number;
+    half_day_price?: number | null;
     status?: string;
     amenities?: string[];
     notes?: string;
@@ -114,7 +114,12 @@ export async function updateRoom(
   if (input.floor !== undefined) updateData.floor = input.floor.trim() || null;
   if (input.capacity !== undefined) updateData.capacity = input.capacity;
   if (input.price_per_night !== undefined) updateData.price_per_night = input.price_per_night;
-  if (input.half_day_price !== undefined) updateData.half_day_price = input.half_day_price || null;
+  if (input.half_day_price !== undefined) {
+    updateData.half_day_price =
+      input.half_day_price === null || input.half_day_price === 0
+        ? null
+        : input.half_day_price;
+  }
   if (input.status !== undefined) updateData.status = input.status;
   if (input.amenities !== undefined) updateData.amenities = input.amenities;
   if (input.notes !== undefined) updateData.notes = input.notes.trim() || null;

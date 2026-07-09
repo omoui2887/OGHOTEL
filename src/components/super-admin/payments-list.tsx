@@ -54,21 +54,31 @@ export function PaymentsList({
 }: PaymentsListProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const isFirstRender = React.useRef(true);
   const [statusFilter, setStatusFilter] = React.useState(initialStatus);
   const [showForm, setShowForm] = React.useState(false);
   const [actionLoading, setActionLoading] = React.useState<string | null>(null);
   const [generatedCode, setGeneratedCode] = React.useState<string | null>(null);
 
+  // Debounce pour le filtre statut — on saute le premier render pour éviter
+  // un router.push inutile au montage (qui provoquerait un re-fetch serveur).
   React.useEffect(() => {
-    const sp = new URLSearchParams(searchParams.toString());
-    if (statusFilter && statusFilter !== "all") {
-      sp.set("status", statusFilter);
-    } else {
-      sp.delete("status");
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
     }
-    sp.delete("page");
-    const qs = sp.toString();
-    router.push(`/super-admin/payments${qs ? "?" + qs : ""}`);
+    const t = setTimeout(() => {
+      const sp = new URLSearchParams(searchParams.toString());
+      if (statusFilter && statusFilter !== "all") {
+        sp.set("status", statusFilter);
+      } else {
+        sp.delete("status");
+      }
+      sp.delete("page");
+      const qs = sp.toString();
+      router.push(`/super-admin/payments${qs ? "?" + qs : ""}`);
+    }, 400);
+    return () => clearTimeout(t);
   }, [statusFilter, router, searchParams]);
 
   function goToPage(p: number) {

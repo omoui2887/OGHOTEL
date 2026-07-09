@@ -13,28 +13,44 @@ export default async function ReportsPage() {
   const profile = await getCurrentProfile();
   if (!profile) return null;
 
-  const supabase = createSupabaseAdminClient();
+  // Fetch défensif : si Supabase n'est pas configuré ou qu'une erreur
+  // réseau/DB survient, on affiche la page avec des compteurs à 0 au lieu
+  // de planter toute la page via l'error boundary global.
+  let payments: { amount_fcfa: number; status: string; payment_method: string; paid_at: string | null }[] = [];
+  let totalLeads: number = 0;
+  let totalClients: number = 0;
+  let activeCodes: number = 0;
 
-  const { data: payments } = await supabase
-    .from("subscription_payments")
-    .select("amount_fcfa, status, payment_method, paid_at")
-    .eq("status", "validated")
-    .order("paid_at", { ascending: false });
+  try {
+    const supabase = createSupabaseAdminClient();
 
-  const { count: totalLeads } = await supabase
-    .from("leads").select("id", { count: "exact", head: true });
+    const { data: paymentsData } = await supabase
+      .from("subscription_payments")
+      .select("amount_fcfa, status, payment_method, paid_at")
+      .eq("status", "validated")
+      .order("paid_at", { ascending: false });
+    payments = (paymentsData ?? []) as typeof payments;
 
-  const { count: totalClients } = await supabase
-    .from("establishments").select("id", { count: "exact", head: true });
+    const { count: leadsCount } = await supabase
+      .from("leads").select("id", { count: "exact", head: true });
+    totalLeads = leadsCount ?? 0;
 
-  const { count: activeCodes } = await supabase
-    .from("activation_codes").select("id", { count: "exact", head: true })
-    .in("status", ["generated", "sent"]);
+    const { count: clientsCount } = await supabase
+      .from("establishments").select("id", { count: "exact", head: true });
+    totalClients = clientsCount ?? 0;
 
-  const totalRevenue = (payments ?? []).reduce((s: number, p: any) => s + p.amount_fcfa, 0);
+    const { count: codesCount } = await supabase
+      .from("activation_codes").select("id", { count: "exact", head: true })
+      .in("status", ["generated", "sent"]);
+    activeCodes = codesCount ?? 0;
+  } catch (err) {
+    console.error("Erreur chargement rapports:", err);
+  }
+
+  const totalRevenue = payments.reduce((s, p) => s + p.amount_fcfa, 0);
 
   const methodMap = new Map<string, number>();
-  (payments ?? []).forEach((p: any) => {
+  payments.forEach((p) => {
     methodMap.set(p.payment_method, (methodMap.get(p.payment_method) || 0) + p.amount_fcfa);
   });
 

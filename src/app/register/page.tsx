@@ -51,8 +51,10 @@ export default async function RegisterPage({
   // Cas code invalide — on affiche la sidebar + contenu d'erreur
   if (!verify.valid) {
     return (
-      <AuthSplitLayout sidebarVariant="navy">
-        <RegistrationStepsSidebar currentStep={1} />
+      <AuthSplitLayout
+        sidebarVariant="navy"
+        sidebar={<RegistrationStepsSidebar currentStep={1} />}
+      >
         <div className="w-full max-w-md">
           <HorizontalStepper currentStep={1} />
           <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-center">
@@ -76,10 +78,10 @@ export default async function RegisterPage({
   }
 
   return (
-    <AuthSplitLayout sidebarVariant="navy">
-      {/* === SIDEBAR — ÉTAPES (étape 2 active) === */}
-      <RegistrationStepsSidebar currentStep={2} />
-
+    <AuthSplitLayout
+      sidebarVariant="navy"
+      sidebar={<RegistrationStepsSidebar currentStep={2} />}
+    >
       {/* === CONTENU DROIT — FORMULAIRE === */}
       <div className="w-full max-w-2xl">
         {/* Stepper horizontal */}

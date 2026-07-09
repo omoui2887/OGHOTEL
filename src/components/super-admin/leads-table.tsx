@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Search,
@@ -61,7 +61,7 @@ export function LeadsTable({
   initialFilters,
 }: LeadsTableProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const isFirstRender = React.useRef(true);
 
   const [search, setSearch] = React.useState(initialFilters.search);
   const [status, setStatus] = React.useState(initialFilters.status);
@@ -88,8 +88,13 @@ export function LeadsTable({
     [router]
   );
 
-  // Debounce pour la recherche
+  // Debounce pour la recherche — on saute le premier render pour éviter
+  // un router.push inutile au montage (qui provoquerait un re-fetch serveur).
   React.useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     const t = setTimeout(() => {
       updateUrl({ search, status, city, plan_id: planId, page: 1 });
     }, 350);

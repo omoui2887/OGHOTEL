@@ -25,12 +25,12 @@ import type { RoomType } from "@/lib/hotel/room-types";
 
 const schema = z.object({
   name: z.string().min(1, "Le nom est requis").max(100, "Nom trop long"),
-  default_price: z.coerce
+  default_price: z
     .number({ error: "Prix invalide" })
     .int("Le prix doit être un entier")
     .min(0, "Le prix ne peut pas être négatif")
     .max(10000000, "Prix trop élevé"),
-  capacity: z.coerce
+  capacity: z
     .number({ error: "Capacité invalide" })
     .int()
     .min(1, "Au moins 1 personne")
@@ -152,7 +152,7 @@ export function RoomTypeFormDialog({ open, onOpenChange, roomType }: Props) {
                 type="number"
                 min={0}
                 step={1000}
-                {...register("default_price")}
+                {...register("default_price", { valueAsNumber: true })}
               />
               {errors.default_price && (
                 <p className="text-xs text-destructive">{errors.default_price.message}</p>
@@ -168,7 +168,7 @@ export function RoomTypeFormDialog({ open, onOpenChange, roomType }: Props) {
                 type="number"
                 min={1}
                 max={50}
-                {...register("capacity")}
+                {...register("capacity", { valueAsNumber: true })}
               />
               {errors.capacity && (
                 <p className="text-xs text-destructive">{errors.capacity.message}</p>

@@ -261,8 +261,25 @@ export async function performCheckOut(
     newTotal = reservation.total_amount + options.extraCharges;
   }
 
-  // 3. Enregistrer le paiement si fourni
+  // 3. Calculer le nouveau solde AVANT d'enregistrer le paiement
+  // (pour éviter d'insérer un paiement si le check-out doit échouer)
   let newPaidAmount = reservation.paid_amount;
+  if (options.payment && options.payment.amount > 0) {
+    newPaidAmount += options.payment.amount;
+  }
+
+  const newBalance = newTotal - newPaidAmount;
+
+  // 4. Vérifier le solde AVANT d'insérer le paiement
+  // (sinon le paiement reste enregistré alors que le check-out échoue)
+  if (newBalance > 0 && !options.forceUnpaid) {
+    return {
+      success: false,
+      error: `Solde impayé de ${newBalance} FCFA. Encaissez le solde ou demandez à un manager de forcer le check-out.`,
+    };
+  }
+
+  // 5. Enregistrer le paiement maintenant qu'on est sûr de pouvoir checker
   if (options.payment && options.payment.amount > 0) {
     const { error: payErr } = await supabase.from("stay_payments").insert({
       establishment_id: establishmentId,
@@ -277,20 +294,9 @@ export async function performCheckOut(
     if (payErr) {
       return { success: false, error: "Erreur paiement : " + payErr.message };
     }
-    newPaidAmount += options.payment.amount;
   }
 
-  const newBalance = newTotal - newPaidAmount;
-
-  // 4. Vérifier le solde
-  if (newBalance > 0 && !options.forceUnpaid) {
-    return {
-      success: false,
-      error: `Solde impayé de ${newBalance} FCFA. Encaissez le solde ou demandez à un manager de forcer le check-out.`,
-    };
-  }
-
-  // 5. Mettre à jour la réservation
+  // 6. Mettre à jour la réservation
   const { error: updateResErr } = await supabase
     .from("reservations")
     .update({
@@ -306,7 +312,7 @@ export async function performCheckOut(
     return { success: false, error: updateResErr.message };
   }
 
-  // 6. Mettre à jour le statut de la chambre → cleaning
+  // 7. Mettre à jour le statut de la chambre → cleaning
   const { error: roomErr } = await supabase
     .from("rooms")
     .update({ status: "cleaning", updated_at: new Date().toISOString() })

@@ -42,7 +42,16 @@ export async function PATCH(
       id,
       profile.establishment_id,
       profile.id,
-      parsed.data
+      {
+        title: parsed.data.title,
+        description: parsed.data.description,
+        priority: parsed.data.priority,
+        status: parsed.data.status,
+        cost: parsed.data.cost,
+        assigned_to: parsed.data.assigned_to,
+        setRoomMaintenance: parsed.data.set_room_maintenance,
+        setRoomAvailable: parsed.data.set_room_available,
+      }
     );
 
     if (!result.success) {

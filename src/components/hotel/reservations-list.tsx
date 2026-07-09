@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Search,
@@ -61,7 +61,6 @@ export function ReservationsList({
   canEdit,
 }: Props) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [search, setSearch] = React.useState(initialSearch);
   const [status, setStatus] = React.useState(initialStatus);
   const [roomId, setRoomId] = React.useState(initialRoomId);
@@ -100,7 +99,12 @@ export function ReservationsList({
   );
 
   // Debounce recherche
+  const isFirstRender = React.useRef(true);
   React.useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     const t = setTimeout(() => {
       updateUrl({ search, status, roomId, page: 1 });
     }, 400);

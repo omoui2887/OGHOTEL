@@ -21,12 +21,30 @@ export default async function PaymentsPage({
   const page = sp.page ? parseInt(sp.page, 10) : 1;
   const status = sp.status ?? "all";
 
-  const [result, leads, establishments, plans] = await Promise.all([
-    getPayments({ status, page: Number.isNaN(page) || page < 1 ? 1 : page, pageSize: 10 }),
-    getLeadsForPayment(),
-    getEstablishmentsForPayment(),
-    getPlansForPayment(),
-  ]);
+  // Fetch défensif : si Supabase n'est pas configuré ou qu'une erreur
+  // réseau/DB survient, on affiche la page avec des listes vides au lieu
+  // de planter toute la page via l'error boundary global.
+  let result: Awaited<ReturnType<typeof getPayments>> = {
+    payments: [],
+    total: 0,
+    page: Number.isNaN(page) || page < 1 ? 1 : page,
+    pageSize: 10,
+    totalPages: 0,
+  };
+  let leads: Awaited<ReturnType<typeof getLeadsForPayment>> = [];
+  let establishments: Awaited<ReturnType<typeof getEstablishmentsForPayment>> = [];
+  let plans: Awaited<ReturnType<typeof getPlansForPayment>> = [];
+
+  try {
+    [result, leads, establishments, plans] = await Promise.all([
+      getPayments({ status, page: Number.isNaN(page) || page < 1 ? 1 : page, pageSize: 10 }),
+      getLeadsForPayment(),
+      getEstablishmentsForPayment(),
+      getPlansForPayment(),
+    ]);
+  } catch (err) {
+    console.error("Erreur chargement paiements SaaS:", err);
+  }
 
   return (
     <div className="space-y-6">

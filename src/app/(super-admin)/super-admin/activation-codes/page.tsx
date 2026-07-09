@@ -21,18 +21,35 @@ export default async function ActivationCodesPage({
   const page = sp.page ? parseInt(sp.page, 10) : 1;
   const status = sp.status ?? "all";
 
-  const supabase = createSupabaseAdminClient();
-  const { data: plans } = await supabase
-    .from("plans")
-    .select("id, name")
-    .eq("is_active", true)
-    .order("price_fcfa", { ascending: true });
-
-  const result = await getActivationCodes({
-    status,
+  // Fetch défensif : si Supabase n'est pas configuré ou qu'une erreur
+  // réseau/DB survient, on affiche la page avec des listes vides au lieu
+  // de planter toute la page via l'error boundary global.
+  let plans: { id: string; name: string }[] = [];
+  let result: Awaited<ReturnType<typeof getActivationCodes>> = {
+    codes: [],
+    total: 0,
     page: Number.isNaN(page) || page < 1 ? 1 : page,
     pageSize: 10,
-  });
+    totalPages: 0,
+  };
+
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data: plansData } = await supabase
+      .from("plans")
+      .select("id, name")
+      .eq("is_active", true)
+      .order("price_fcfa", { ascending: true });
+    plans = (plansData ?? []) as { id: string; name: string }[];
+
+    result = await getActivationCodes({
+      status,
+      page: Number.isNaN(page) || page < 1 ? 1 : page,
+      pageSize: 10,
+    });
+  } catch (err) {
+    console.error("Erreur chargement codes d'activation:", err);
+  }
 
   return (
     <div className="space-y-6">

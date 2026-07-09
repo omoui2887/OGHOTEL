@@ -172,10 +172,10 @@ export async function updatePaymentStatus(
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = createSupabaseAdminClient();
 
-  // Récupérer l'ancien statut
+  // Récupérer l'ancien statut + paid_at
   const { data: current } = await supabase
     .from("subscription_payments")
-    .select("status")
+    .select("status, paid_at")
     .eq("id", paymentId)
     .single();
 

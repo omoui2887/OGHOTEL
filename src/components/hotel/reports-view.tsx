@@ -33,7 +33,12 @@ export function ReportsView({ data, initialPeriod }: Props) {
   const searchParams = useSearchParams();
   const [period, setPeriod] = React.useState(initialPeriod);
 
+  const isFirstRender = React.useRef(true);
   React.useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     const sp = new URLSearchParams(searchParams.toString());
     if (period && period !== "month") sp.set("period", period);
     else sp.delete("period");

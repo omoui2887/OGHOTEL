@@ -26,11 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  PAYMENT_METHOD_OPTIONS,
-  PAYMENT_METHOD_LABELS,
-  type SaaSPayment,
-} from "@/lib/super-admin/payments";
+import { PAYMENT_METHOD_OPTIONS } from "@/lib/super-admin/payments";
 import type { Reservation } from "@/lib/hotel/reservations";
 import { formatFCFA, formatDate } from "@/lib/utils";
 

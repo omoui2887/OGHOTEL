@@ -17,7 +17,14 @@ export default async function InvoiceDetailPage({ params }: { params: Params }) 
     notFound();
   }
 
-  const invoice = await getInvoiceById(id, profile.establishment_id);
+  // Fetch défensif : si Supabase mal configuré, on affiche notFound au lieu
+  // de planter via l'error boundary global.
+  let invoice: Awaited<ReturnType<typeof getInvoiceById>> = null;
+  try {
+    invoice = await getInvoiceById(id, profile.establishment_id);
+  } catch (err) {
+    console.error("Erreur chargement facture:", err);
+  }
 
   if (!invoice) {
     notFound();

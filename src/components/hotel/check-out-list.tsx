@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, LogOut, Eye, AlertCircle, FileText } from "lucide-react";
+import { Loader2, LogOut, Eye, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -27,11 +27,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  PAYMENT_METHOD_OPTIONS,
-} from "@/lib/super-admin/payments";
 import type { Reservation } from "@/lib/hotel/reservations";
 import { formatFCFA, formatDate } from "@/lib/utils";
+
+const PAYMENT_METHOD_OPTIONS: { value: string; label: string }[] = [
+  { value: "cash", label: "Espèces" },
+  { value: "orange", label: "Orange Money" },
+  { value: "mtn", label: "MTN Money" },
+  { value: "moov", label: "Moov Money" },
+  { value: "wave", label: "Wave" },
+  { value: "card", label: "Carte" },
+  { value: "transfer", label: "Virement" },
+];
 
 type Props = {
   stays: (Reservation & { room_number: string | null })[];
@@ -48,7 +55,6 @@ export function CheckOutList({ stays, canForceUnpaid }: Props) {
   const [paymentAmount, setPaymentAmount] = React.useState("");
   const [paymentMethod, setPaymentMethod] = React.useState("");
   const [forceUnpaid, setForceUnpaid] = React.useState(false);
-  const [invoiceUrl, setInvoiceUrl] = React.useState<string | null>(null);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -58,7 +64,6 @@ export function CheckOutList({ stays, canForceUnpaid }: Props) {
     setPaymentAmount(r.balance_amount > 0 ? String(r.balance_amount) : "");
     setPaymentMethod("");
     setForceUnpaid(false);
-    setInvoiceUrl(null);
   }
 
   async function handleCheckOut() {

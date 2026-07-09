@@ -47,49 +47,52 @@ export default async function LoginPage() {
   }
 
   return (
-    <AuthSplitLayout sidebarVariant="orange">
-      {/* === SIDEBAR MARKETING === */}
-      <div className="space-y-8">
-        <div className="space-y-3">
-          <h2 className="text-3xl font-bold leading-tight text-white lg:text-4xl">
-            La plateforme de gestion hôtelière de référence en Côte d&apos;Ivoire
-          </h2>
-          <p className="text-base text-white/80">{APP_DESCRIPTION}</p>
-        </div>
-
-        {/* Points forts */}
-        <ul className="space-y-5">
-          {MARKETING_POINTS.map((p) => (
-            <li key={p.title} className="flex items-start gap-4">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20 backdrop-blur-sm">
-                <p.icon className="h-5 w-5 text-white" />
-              </span>
-              <div>
-                <p className="font-semibold text-white">{p.title}</p>
-                <p className="text-sm text-white/70">{p.desc}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-
-        {/* Témoignage */}
-        <figure className="rounded-2xl bg-white/10 p-5 ring-1 ring-white/15 backdrop-blur-sm">
-          <div className="mb-3 flex gap-0.5">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="h-4 w-4 fill-yellow-300 text-yellow-300" />
-            ))}
+    <AuthSplitLayout
+      sidebarVariant="orange"
+      sidebar={
+        /* === SIDEBAR MARKETING === */
+        <div className="space-y-8">
+          <div className="space-y-3">
+            <h2 className="text-3xl font-bold leading-tight text-white lg:text-4xl">
+              La plateforme de gestion hôtelière de référence en Côte d&apos;Ivoire
+            </h2>
+            <p className="text-base text-white/80">{APP_DESCRIPTION}</p>
           </div>
-          <blockquote className="text-sm leading-relaxed text-white/95">
-            «&nbsp;{APP_NAME} a transformé la gestion de notre établissement.
-            Simple, rapide et efficace. Le support basé à Abidjan est
-            exceptionnel.&nbsp;»
-          </blockquote>
-          <figcaption className="mt-3 text-xs text-white/70">
-            Directeur, Hôtel Le Baobab — Abidjan
-          </figcaption>
-        </figure>
-      </div>
 
+          {/* Points forts */}
+          <ul className="space-y-5">
+            {MARKETING_POINTS.map((p) => (
+              <li key={p.title} className="flex items-start gap-4">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20 backdrop-blur-sm">
+                  <p.icon className="h-5 w-5 text-white" />
+                </span>
+                <div>
+                  <p className="font-semibold text-white">{p.title}</p>
+                  <p className="text-sm text-white/70">{p.desc}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          {/* Témoignage */}
+          <figure className="rounded-2xl bg-white/10 p-5 ring-1 ring-white/15 backdrop-blur-sm">
+            <div className="mb-3 flex gap-0.5">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="h-4 w-4 fill-yellow-300 text-yellow-300" />
+              ))}
+            </div>
+            <blockquote className="text-sm leading-relaxed text-white/95">
+              «&nbsp;{APP_NAME} a transformé la gestion de notre établissement.
+              Simple, rapide et efficace. Le support basé à Abidjan est
+              exceptionnel.&nbsp;»
+            </blockquote>
+            <figcaption className="mt-3 text-xs text-white/70">
+              Directeur, Hôtel Le Baobab — Abidjan
+            </figcaption>
+          </figure>
+        </div>
+      }
+    >
       {/* === CONTENU DROIT — FORMULAIRE === */}
       <div className="w-full max-w-md">
         {/* En-tête */}

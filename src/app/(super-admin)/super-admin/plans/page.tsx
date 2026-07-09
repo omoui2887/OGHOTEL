@@ -14,7 +14,16 @@ export const metadata = {
 };
 
 export default async function PlansPage() {
-  const plans = await getPlans();
+  // Fetch défensif : si Supabase n'est pas configuré ou qu'une erreur
+  // réseau/DB survient, on affiche la page avec une liste vide au lieu de
+  // planter toute la page via l'error boundary global.
+  let plans: Awaited<ReturnType<typeof getPlans>> = [];
+
+  try {
+    plans = await getPlans();
+  } catch (err) {
+    console.error("Erreur chargement formules:", err);
+  }
 
   return (
     <div className="space-y-6">

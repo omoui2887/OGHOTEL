@@ -30,12 +30,28 @@ export default async function LeadsPage({
     pageSize: 10,
   };
 
-  // Fetch en parallèle
-  const [result, cities, plans] = await Promise.all([
-    getLeads(filters),
-    getDistinctCities(),
-    getPlansForFilter(),
-  ]);
+  // Fetch défensif : si Supabase n'est pas configuré ou qu'une erreur
+  // réseau/DB survient, on affiche la page avec des listes vides au lieu
+  // de planter toute la page via l'error boundary global.
+  let result: Awaited<ReturnType<typeof getLeads>> = {
+    leads: [],
+    total: 0,
+    page: filters.page,
+    pageSize: filters.pageSize,
+    totalPages: 0,
+  };
+  let cities: Awaited<ReturnType<typeof getDistinctCities>> = [];
+  let plans: Awaited<ReturnType<typeof getPlansForFilter>> = [];
+
+  try {
+    [result, cities, plans] = await Promise.all([
+      getLeads(filters),
+      getDistinctCities(),
+      getPlansForFilter(),
+    ]);
+  } catch (err) {
+    console.error("Erreur chargement prospects:", err);
+  }
 
   return (
     <div className="space-y-6">

@@ -317,7 +317,7 @@ export function HousekeepingList({
           <DialogHeader>
             <DialogTitle>Nouvelle tâche de ménage</DialogTitle>
             <DialogDescription>
-              Créez une tâche pour une chambre qui needs être nettoyée.
+              Créez une tâche pour une chambre qui doit être nettoyée.
             </DialogDescription>
           </DialogHeader>
 

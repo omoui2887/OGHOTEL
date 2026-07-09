@@ -36,17 +36,17 @@ const schema = z.object({
   room_type_id: z.string().uuid("Type de chambre requis"),
   room_number: z.string().min(1, "Le numéro est requis").max(50),
   floor: z.string().max(50).optional().or(z.literal("")),
-  capacity: z.coerce
+  capacity: z
     .number({ error: "Capacité invalide" })
     .int()
     .min(1, "Au moins 1")
     .max(50),
-  price_per_night: z.coerce
+  price_per_night: z
     .number({ error: "Prix invalide" })
     .int()
     .min(0, "Prix négatif impossible")
     .max(10000000),
-  half_day_price: z.coerce
+  half_day_price: z
     .number()
     .int()
     .min(0)
@@ -107,7 +107,7 @@ export function RoomFormDialog({ open, onOpenChange, room, roomTypes }: Props) {
         floor: room?.floor ?? "",
         capacity: room?.capacity ?? 2,
         price_per_night: room?.price_per_night ?? 15000,
-        half_day_price: room?.half_day_price ? String(room.half_day_price) : "",
+        half_day_price: room?.half_day_price ?? "",
         amenities: room?.amenities ?? [],
         notes: room?.notes ?? "",
       });
@@ -253,7 +253,7 @@ export function RoomFormDialog({ open, onOpenChange, room, roomTypes }: Props) {
                 type="number"
                 min={1}
                 max={50}
-                {...register("capacity")}
+                {...register("capacity", { valueAsNumber: true })}
               />
               {errors.capacity && (
                 <p className="text-xs text-destructive">{errors.capacity.message}</p>
@@ -268,7 +268,7 @@ export function RoomFormDialog({ open, onOpenChange, room, roomTypes }: Props) {
                 type="number"
                 min={0}
                 step={1000}
-                {...register("price_per_night")}
+                {...register("price_per_night", { valueAsNumber: true })}
               />
               {errors.price_per_night && (
                 <p className="text-xs text-destructive">{errors.price_per_night.message}</p>
@@ -285,7 +285,13 @@ export function RoomFormDialog({ open, onOpenChange, room, roomTypes }: Props) {
               min={0}
               step={1000}
               placeholder="Laisser vide si pas de tarif demi-journée"
-              {...register("half_day_price")}
+              {...register("half_day_price", {
+                setValueAs: (v) => {
+                  if (v === "" || v === null || v === undefined) return "";
+                  const n = typeof v === "number" ? v : Number(v);
+                  return Number.isNaN(n) ? "" : n;
+                },
+              })}
             />
           </div>
 

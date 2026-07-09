@@ -35,7 +35,14 @@ export async function POST(request: NextRequest) {
     const result = await createMaintenanceTicket(
       profile.establishment_id,
       profile.id,
-      parsed.data
+      {
+        room_id: parsed.data.room_id,
+        title: parsed.data.title,
+        description: parsed.data.description,
+        priority: parsed.data.priority,
+        cost: parsed.data.cost,
+        setRoomMaintenance: parsed.data.set_room_maintenance,
+      }
     );
 
     if (!result.success) {

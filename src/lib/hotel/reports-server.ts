@@ -27,7 +27,7 @@ export type ReportsData = {
   payments: {
     totalReceived: number;
     count: number;
-    byMethod: { method: string; total: number; count: number }[];
+    byMethod: { method: string; total: number; count: number; label?: string }[];
   };
   unpaid: {
     partialPayments: number;
@@ -35,7 +35,7 @@ export type ReportsData = {
     totalBalance: number;
     details: { guest_name: string; room_number: string; balance: number; total: number }[];
   };
-  expensesByCategory: { category: string; total: number; count: number }[];
+  expensesByCategory: { category: string; total: number; count: number; label?: string }[];
   netResult: { revenue: number; expenses: number; net: number };
   topRooms: { room_number: string; nights: number; revenue: number }[];
   topGuests: { guest_name: string; stays: number; totalPaid: number }[];

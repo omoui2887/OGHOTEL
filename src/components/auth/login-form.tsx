@@ -54,6 +54,14 @@ export function LoginForm() {
 
       toast.success("Connexion réussie — redirection…");
 
+      // Si l'utilisateur doit changer son mot de passe (compte créé par admin,
+      // import initial, etc.), on le redirige vers /change-password avant tout.
+      if (data.profile?.must_change_password) {
+        router.push("/change-password");
+        router.refresh();
+        return;
+      }
+
       const redirectTo = searchParams.get("redirect");
       const rolePath = getRedirectPathForRole(data.profile?.role);
 

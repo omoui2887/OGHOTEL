@@ -36,7 +36,6 @@ export function SettingsForm({ settings, canEdit }: Props) {
   const [isLoading, setIsLoading] = React.useState(false);
 
   const [name, setName] = React.useState(settings.name);
-  const [type, setType] = React.useState(settings.type);
   const [ownerName, setOwnerName] = React.useState(settings.owner_name ?? "");
   const [email, setEmail] = React.useState(settings.email ?? "");
   const [phone, setPhone] = React.useState(settings.phone ?? "");

@@ -43,6 +43,7 @@ export function LogsList({
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const isFirstRender = React.useRef(true);
   const [action, setAction] = React.useState(initialAction);
   const [dateFrom, setDateFrom] = React.useState(initialDateFrom);
   const [dateTo, setDateTo] = React.useState(initialDateTo);
@@ -60,7 +61,13 @@ export function LogsList({
     [router]
   );
 
+  // Debounce pour les filtres — on saute le premier render pour éviter
+  // un router.push inutile au montage (qui provoquerait un re-fetch serveur).
   React.useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     const t = setTimeout(() => {
       updateUrl({ action, dateFrom, dateTo, page: 1 });
     }, 400);

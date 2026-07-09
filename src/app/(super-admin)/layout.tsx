@@ -11,21 +11,25 @@ export default async function SuperAdminLayout({
 }) {
   const profile = await getCurrentProfile();
 
-  if (profile && !isSuperAdmin(profile.role)) {
+  // Si non connecté (middleware aurait dû rediriger, mais defense-in-depth),
+  // on redirige vers /login. Si connecté mais pas super_admin ou inactif,
+  // on redirige vers /unauthorized.
+  if (!profile) {
+    redirect("/login?redirect=/super-admin/dashboard");
+  }
+  if (!profile.is_active || !isSuperAdmin(profile.role)) {
     redirect("/unauthorized");
   }
 
   // Fetch notifications (dynamic, server-side)
   let notifications: any[] = [];
   let unreadCount = 0;
-  if (profile) {
-    try {
-      const result = await getSuperAdminNotifications();
-      notifications = result.notifications;
-      unreadCount = result.unread_count;
-    } catch {
-      // Si erreur, on continue sans notifications
-    }
+  try {
+    const result = await getSuperAdminNotifications();
+    notifications = result.notifications;
+    unreadCount = result.unread_count;
+  } catch {
+    // Si erreur, on continue sans notifications
   }
 
   return (

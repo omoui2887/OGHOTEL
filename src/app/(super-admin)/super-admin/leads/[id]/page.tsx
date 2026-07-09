@@ -37,10 +37,20 @@ type Params = Promise<{ id: string }>;
 
 export default async function LeadDetailPage({ params }: { params: Params }) {
   const { id } = await params;
-  const [lead, activity] = await Promise.all([
-    getLeadById(id),
-    getLeadActivity(id),
-  ]);
+
+  // Fetch défensif : si Supabase n'est pas configuré ou qu'une erreur
+  // réseau/DB survient, on affiche notFound() au lieu de planter la page.
+  let lead: Awaited<ReturnType<typeof getLeadById>> = null;
+  let activity: Awaited<ReturnType<typeof getLeadActivity>> = [];
+
+  try {
+    [lead, activity] = await Promise.all([
+      getLeadById(id),
+      getLeadActivity(id),
+    ]);
+  } catch (err) {
+    console.error("Erreur chargement détail prospect:", err);
+  }
 
   if (!lead) {
     notFound();

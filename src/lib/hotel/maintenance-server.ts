@@ -192,12 +192,23 @@ export async function updateMaintenanceTicket(
         .eq("id", ticket.room_id)
         .eq("establishment_id", establishmentId);
     } else if (input.setRoomAvailable || input.status === "resolved") {
-      // Quand le ticket est résolu, remettre la chambre en available
-      await supabase
-        .from("rooms")
-        .update({ status: "available", updated_at: new Date().toISOString() })
-        .eq("id", ticket.room_id)
-        .eq("establishment_id", establishmentId);
+      // Quand le ticket est résolu, on ne remet la chambre en "available"
+      // que s'il n'y a pas d'AUTRE ticket ouvert/in_progress sur la même chambre.
+      const { count: openCount } = await supabase
+        .from("maintenance_tickets")
+        .select("id", { count: "exact", head: true })
+        .eq("room_id", ticket.room_id)
+        .eq("establishment_id", establishmentId)
+        .in("status", ["open", "in_progress"])
+        .neq("id", id);
+
+      if ((openCount ?? 0) === 0) {
+        await supabase
+          .from("rooms")
+          .update({ status: "available", updated_at: new Date().toISOString() })
+          .eq("id", ticket.room_id)
+          .eq("establishment_id", establishmentId);
+      }
     }
   }
 

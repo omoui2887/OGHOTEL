@@ -13,15 +13,38 @@ export default async function ClientsPage() {
   const profile = await getCurrentProfile();
   if (!profile) return null;
 
-  const supabase = createSupabaseAdminClient();
-  const { data: establishments } = await supabase
-    .from("establishments")
-    .select(`
-      id, name, type, owner_name, email, phone, city, address,
-      subscription_status, subscription_start, subscription_end,
-      plan:plans(name, price_fcfa)
-    `)
-    .order("created_at", { ascending: false });
+  // Fetch défensif : si Supabase n'est pas configuré ou qu'une erreur
+  // réseau/DB survient, on affiche la page avec une liste vide au lieu de
+  // planter toute la page via l'error boundary global.
+  let establishments: {
+    id: string;
+    name: string;
+    type: string | null;
+    owner_name: string | null;
+    email: string | null;
+    phone: string | null;
+    city: string | null;
+    address: string | null;
+    subscription_status: string | null;
+    subscription_start: string | null;
+    subscription_end: string | null;
+    plan: { name: string; price_fcfa: number } | null;
+  }[] = [];
+
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data } = await supabase
+      .from("establishments")
+      .select(`
+        id, name, type, owner_name, email, phone, city, address,
+        subscription_status, subscription_start, subscription_end,
+        plan:plans(name, price_fcfa)
+      `)
+      .order("created_at", { ascending: false });
+    establishments = (data ?? []) as unknown as typeof establishments;
+  } catch (err) {
+    console.error("Erreur chargement clients:", err);
+  }
 
   const STATUS_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" }> = {
     active: { label: "Actif", variant: "success" },

@@ -50,7 +50,12 @@ export function GuestsList({
   const [isLoading, setIsLoading] = React.useState(false);
 
   // Debounce recherche
+  const isFirstRender = React.useRef(true);
   React.useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     const t = setTimeout(() => {
       const sp = new URLSearchParams(searchParams.toString());
       if (search) {

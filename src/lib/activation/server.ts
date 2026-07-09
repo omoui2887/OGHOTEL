@@ -184,9 +184,15 @@ export async function activateAccount(
   const userId = authData.user.id;
 
   // Créer établissement
+  // Durée d'abonnement : 365 jours pour un code normal, 1 jour pour un code
+  // d'essai (trial). Un code est considéré "trial" si son montant est 0 FCFA
+  // (généré via /api/super-admin/activation-codes/trial qui pose expires_at = +24h).
+  const isTrial = (codeInfo.amount_fcfa ?? 0) === 0;
   const subscriptionStart = new Date();
   const subscriptionEnd = new Date();
-  subscriptionEnd.setDate(subscriptionEnd.getDate() + 365);
+  subscriptionEnd.setDate(
+    subscriptionEnd.getDate() + (isTrial ? 1 : 365)
+  );
 
   const { data: estData, error: estError } = await supabase
     .from("establishments")
@@ -199,7 +205,7 @@ export async function activateAccount(
       city: input.city,
       address: input.address,
       plan_id: codeInfo.plan_id,
-      subscription_status: "active",
+      subscription_status: isTrial ? "trial" : "active",
       subscription_start: subscriptionStart.toISOString().split("T")[0],
       subscription_end: subscriptionEnd.toISOString().split("T")[0],
       timezone: "Africa/Abidjan",
