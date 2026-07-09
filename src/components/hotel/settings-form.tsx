@@ -28,7 +28,7 @@ const ESTABLISHMENT_TYPES = [
   { value: "hotel", label: "Hôtel" },
   { value: "residence", label: "Résidence meublée" },
   { value: "auberge", label: "Auberge" },
-  { value: "autre", label: "Autre" },
+  { value: "other", label: "Autre" },
 ];
 
 export function SettingsForm({ settings, canEdit }: Props) {

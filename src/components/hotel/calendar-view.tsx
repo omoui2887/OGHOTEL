@@ -86,7 +86,7 @@ const ROOM_STATUS_COLORS: Record<string, string> = {
 };
 
 const ROOM_STATUS_LABELS: Record<string, string> = {
-  available: "Libre",
+  available: "Disponible",
   reserved: "Réservée",
   occupied: "Occupée",
   cleaning: "Nettoyage",

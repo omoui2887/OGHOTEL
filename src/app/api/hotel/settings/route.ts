@@ -6,7 +6,7 @@ import { isSafeUrl } from "@/lib/security/url";
 
 const schema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(150).optional(),
-  type: z.enum(["hotel", "residence", "auberge", "autre"]).optional(),
+  type: z.enum(["hotel", "residence", "auberge", "other"]).optional(),
   owner_name: z.string().max(100).optional(),
   email: z.string().email("Email invalide").max(150).optional().or(z.literal("")),
   phone: z.string().max(20).optional(),

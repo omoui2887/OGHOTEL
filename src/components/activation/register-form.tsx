@@ -41,7 +41,7 @@ const schema = z
       .string()
       .min(2, "Le nom de l'établissement doit contenir au moins 2 caractères")
       .max(150),
-    establishment_type: z.enum(["hotel", "residence", "auberge", "autre"], {
+    establishment_type: z.enum(["hotel", "residence", "auberge", "other"], {
       error: "Veuillez sélectionner un type",
     }),
     city: z.string().min(2, "Ville requise").max(100),
@@ -255,7 +255,7 @@ export function RegisterForm({ code, leadName, planName }: RegisterFormProps) {
                 <SelectItem value="hotel">Hôtel</SelectItem>
                 <SelectItem value="residence">Résidence meublée</SelectItem>
                 <SelectItem value="auberge">Auberge</SelectItem>
-                <SelectItem value="autre">Autre</SelectItem>
+                <SelectItem value="other">Autre</SelectItem>
               </SelectContent>
             </Select>
             {errors.establishment_type && (

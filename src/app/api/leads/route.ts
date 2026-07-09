@@ -7,7 +7,7 @@ const leadSchema = z.object({
   email: z.string().min(1, "L'email est requis").email("Email invalide"),
   phone: z.string().min(6, "Le téléphone est requis"),
   hotel_name: z.string().min(2, "Le nom de l'établissement est requis"),
-  business_type: z.enum(["hotel", "residence", "auberge", "autre"]),
+  business_type: z.enum(["hotel", "residence", "auberge", "other"]),
   desired_plan: z.enum(["essentiel", "privilege", "premium", "indecis"]),
   message: z.string().max(2000).optional().nullable(),
 });

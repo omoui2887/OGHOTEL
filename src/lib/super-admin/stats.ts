@@ -23,6 +23,7 @@ export type SuperAdminStats = {
     expiring: number;
     expired: number;
     suspended: number;
+    trial: number;
   };
   payments: {
     monthRevenue: number;
@@ -100,6 +101,7 @@ export async function getSuperAdminStats(): Promise<SuperAdminStats> {
     expiring: establishments.filter((e) => e.subscription_status === "expiring").length,
     expired: establishments.filter((e) => e.subscription_status === "expired").length,
     suspended: establishments.filter((e) => e.subscription_status === "suspended").length,
+    trial: establishments.filter((e) => e.subscription_status === "trial").length,
   };
 
   // --- PAYMENTS ---

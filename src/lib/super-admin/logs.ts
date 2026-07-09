@@ -37,8 +37,10 @@ export const ACTION_LABELS: Record<string, string> = {
   "expense_deleted": "Dépense supprimée",
   "housekeeping_task_created": "Tâche ménage créée",
   "housekeeping_task_updated": "Tâche ménage modifiée",
+  "housekeeping_task_deleted": "Tâche ménage supprimée",
   "maintenance_ticket_created": "Ticket maintenance créé",
   "maintenance_ticket_updated": "Ticket maintenance modifié",
+  "maintenance_ticket_deleted": "Ticket maintenance supprimé",
   "staff_user_created": "Utilisateur créé",
   "staff_user_updated": "Utilisateur modifié",
   "staff_user_deleted": "Utilisateur supprimé",
@@ -47,4 +49,5 @@ export const ACTION_LABELS: Record<string, string> = {
   "invoice_generated": "Facture générée",
   "invoice_cancelled": "Facture annulée",
   "account_activated": "Compte activé",
+  "trial_code_generated": "Code d'essai généré",
 };

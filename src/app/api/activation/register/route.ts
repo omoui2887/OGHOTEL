@@ -30,7 +30,7 @@ const schema = z.object({
     .string()
     .min(2, "Le nom de l'établissement doit contenir au moins 2 caractères")
     .max(150, "Nom trop long"),
-  establishment_type: z.enum(["hotel", "residence", "auberge", "autre"], {
+  establishment_type: z.enum(["hotel", "residence", "auberge", "other"], {
     error: "Type d'établissement invalide",
   }),
   city: z

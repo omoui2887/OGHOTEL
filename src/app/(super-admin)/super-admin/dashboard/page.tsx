@@ -72,6 +72,8 @@ export default async function SuperAdminDashboardPage() {
               hint="En attente de contact" variant="warning" />
             <StatCard label="Clients actifs" value={stats.establishments.active} icon={Building2}
               hint={`sur ${stats.establishments.total} total`} variant="success" />
+            <StatCard label="Essais en cours" value={stats.establishments.trial} icon={Clock}
+              hint="Codes d'essai 24h" variant="warning" />
             <StatCard label="Clients expirés" value={stats.establishments.expired} icon={Building}
               hint="À relancer" variant="danger" />
           </div>

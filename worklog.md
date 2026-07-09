@@ -2060,3 +2060,234 @@ Stage Summary:
 - ~20 fichiers modifiés
 - 0 erreur lint, 0 erreur TypeScript
 - L'utilisateur doit redéployer sur Vercel pour bénéficier des correctifs de sécurité
+
+---
+Task ID: AUDIT-SCHEMA
+Agent: Explore (audit cohérence schéma DB vs code)
+Task: Audit cohérence — 16 tables, establishment_id, rôles, statuts
+
+Work Log:
+- Lu /home/z/my-project/worklog.md (contexte projet : Next.js 16 + Supabase + RLS applicative + 16 tables métier)
+- Lu /home/z/my-project/supabase/migrations/001_initial_schema.sql (463 lignes — les 16 tables avec CHECK constraints)
+- Lu /home/z/my-project/supabase/migrations/002_seed_plans.sql (3 plans ESSENTIEL/PRIVILEGE/PREMIUM)
+- Lu /home/z/my-project/supabase/migrations/003_rls_policies.sql (RLS activé sur les 16 tables + 80 politiques)
+- Lu /home/z/my-project/supabase/migrations/003_seed_super_admin.sql ET 004_seed_super_admin.sql (FICHIERS IDENTIQUES — doublon)
+- Lu /home/z/my-project/supabase/migrations/005_test_rls_isolation.sql (test multi-tenant)
+- Lu /home/z/my-project/src/types/index.ts (8 types Union : UserRole, LeadStatus, SubscriptionStatus, ActivationCodeStatus, SubscriptionPaymentStatus, RoomStatus, ReservationStatus, ReservationSource, PaymentMethod, EstablishmentType)
+- Lu /home/z/my-project/src/lib/roles.ts (7 rôles, helpers isSuperAdmin/isHotelUser)
+- Lu /home/z/my-project/src/lib/auth.ts (requireRole/requireSuperAdmin/requireHotelUser)
+- Lu /home/z/my-project/src/lib/hotel/{rooms,reservations,housekeeping,maintenance,invoices,payments,expenses,guests,room-types,users,settings-server}.ts (types + labels)
+- Lu /home/z/my-project/src/lib/super-admin/{activation-codes,payments,plans,leads,logs,stats}.ts (types + labels + compteurs)
+- Lu /home/z/my-project/src/lib/activation/server.ts (verifyActivationCode + activateAccount + isTrial)
+- Lu /home/z/my-project/src/lib/super-admin/activation-codes-server.ts (machine à états ALLOWED_CODE_TRANSITIONS)
+- Lu /home/z/my-project/src/lib/hotel/reservations-server.ts (BLOCKING_STATUSES + cancelReservation)
+- Lu /home/z/my-project/src/lib/notifications.ts (filtres par statut)
+- Lu /home/z/my-project/src/lib/constants.ts (BUSINESS_TYPES = "hotel/residence/auberge/autre")
+- Lu /home/z/my-project/src/components/marketing/lead-form.tsx (envoie business_type depuis BUSINESS_TYPES)
+- Lu /home/z/my-project/src/components/activation/register-form.tsx (SelectItem value="autre")
+- Lu /home/z/my-project/src/components/hotel/settings-form.tsx (ESTABLISHMENT_TYPES contient "autre")
+- Audité les 38 routes API de src/app/api/ (Zod schemas + filtrage establishment_id)
+- Croisé les CHECK constraints SQL avec les enums Zod, les types TS et les labels UI
+- Comparé les clés de ACTION_LABELS (logs.ts) avec les actions réellement émises par le code (31 actions émises, 28 labelisées)
+
+Stage Summary:
+
+### BILAN GLOBAL
+- ✅ 16/16 tables présentes dans la migration 001 (toutes avec RLS dans 003)
+- ✅ establishment_id NOT NULL sur les 9 tables métier hotel + nullable sur activity_logs (correct)
+- ✅ 7/7 rôles définis dans SQL CHECK + types TS + ROLE_LABELS
+- ✅ 6/6 statuts chambre cohérents (SQL CHECK = TS type = Zod enum = UI labels)
+- ✅ 6/6 statuts réservation cohérents (SQL CHECK = TS type = Zod enum = UI labels)
+- ✅ 5/5 statuts code activation cohérents (SQL CHECK = TS type = Zod enum = UI labels)
+- ✅ 4/4 statuts paiement SaaS cohérents (SQL CHECK = TS type = Zod enum)
+- ✅ 9/9 catégories de dépenses cohérentes (SQL CHECK = TS type = Zod enum = UI labels)
+- ✅ 4/4 statuts facture cohérents (SQL CHECK = TS type)
+- ✅ 4/4 statuts ménage + 3/3 statuts maintenance + 3/3 priorités maintenance cohérents
+
+### ISSUES TROUVÉS
+
+#### 🔴 CRITICAL (2) — Incohérence "autre" vs "other" sur leads.business_type et establishments.type
+
+**CRITICAL-1 : leads.business_type — "autre" accepté par Zod mais rejeté par CHECK SQL**
+- Fichiers concernés :
+  - src/lib/constants.ts:112 — BUSINESS_TYPES = [{ value: "autre", label: "Autre" }] (et la landing form envoie cette valeur)
+  - src/components/marketing/lead-form.tsx:31 — schema Zod client n'impose pas l'enum (valide tous les strings)
+  - src/app/api/leads/route.ts:10 — `business_type: z.enum(["hotel", "residence", "auberge", "autre"])` — accepte "autre"
+  - src/app/api/leads/route.ts:70 — `business_type: data.business_type` — passe la valeur à Supabase sans transformation
+  - supabase/migrations/001_initial_schema.sql:68-69 — `check (business_type in ('hotel','residence','auberge','other'))` — REJETTE "autre", attend "other"
+- Impact : Tout prospect qui sélectionne "Autre" sur la landing page déclenche une erreur DB (CHECK constraint violation). L'utilisateur voit le message générique "Impossible d'enregistrer votre demande pour le moment." — la demande est perdue.
+- Note : src/lib/super-admin/leads.ts:53-58 BUSINESS_TYPE_LABELS utilise bien `other` comme clé — donc les labels existants ne seront jamais affichés pour un lead "autre" (qui n'existera jamais en DB de toute façon).
+- Fix recommandé (Option A — code-side, sans migration DB) :
+  - src/lib/constants.ts:112 → remplacer `{ value: "autre", label: "Autre" }` par `{ value: "other", label: "Autre" }`
+  - src/app/api/leads/route.ts:10 → remplacer l'enum par `z.enum(["hotel", "residence", "auberge", "other"])`
+  - Le SelectItem affiche toujours "Autre" (label) mais envoie "other" (value)
+- Fix alternatif (Option B — DB-side) : nouvelle migration SQL qui alter le CHECK constraint pour accepter "autre" — mais cela ajoute une migration et un contexte mixte (expenses utilise déjà "autre").
+
+**CRITICAL-2 : establishments.type — même bug sur /api/activation/register ET /api/hotel/settings**
+- Fichiers concernés :
+  - src/components/activation/register-form.tsx:44 — `establishment_type: z.enum(["hotel", "residence", "auberge", "autre"])`
+  - src/components/activation/register-form.tsx:258 — `<SelectItem value="autre">Autre</SelectItem>`
+  - src/app/api/activation/register/route.ts:33 — `establishment_type: z.enum(["hotel", "residence", "auberge", "autre"])`
+  - src/lib/activation/server.ts:202 — `type: input.establishment_type` — passe "autre" à Supabase sans transformation
+  - supabase/migrations/001_initial_schema.sql:91-92 — `check (type in ('hotel','residence','auberge','other'))` — REJETTE "autre"
+  - src/components/hotel/settings-form.tsx:31 — ESTABLISHMENT_TYPES = [{ value: "autre", label: "Autre" }]
+  - src/app/api/hotel/settings/route.ts:9 — `type: z.enum(["hotel", "residence", "auberge", "autre"]).optional()`
+  - src/lib/hotel/settings-server.ts:123 — `updateData.type = input.type` — sans transformation
+- Impact : Tout prospect qui active un code en choisissant "Autre" comme type d'établissement déclenche un échec d'insert establishments → activation rollbackée (code non marqué "used", user Auth supprimé, establishment supprimé). L'utilisateur voit "Impossible de créer l'établissement. Réessayez ou contactez le support." — la cause réelle n'est pas indiquée. Idem pour hotel_admin qui tente de changer le type de son établissement vers "Autre".
+- Fix recommandé (Option A) : remplacer "autre" par "other" dans tous les Zod schemas + SelectItem value (le label reste "Autre" en UI).
+  - src/components/activation/register-form.tsx:44,258
+  - src/app/api/activation/register/route.ts:33
+  - src/components/hotel/settings-form.tsx:31
+  - src/app/api/hotel/settings/route.ts:9
+
+#### 🟡 MEDIUM (2)
+
+**MEDIUM-1 : SuperAdminStats ne compte pas les établissements "trial"**
+- src/lib/super-admin/stats.ts:20-26 — Type `establishments: { total, active, expiring, expired, suspended }` — pas de `trial`.
+- src/lib/super-admin/stats.ts:99-102 — Filtres sur 4 statuts seulement (active, expiring, expired, suspended).
+- src/lib/activation/server.ts:209 — `subscription_status: isTrial ? "trial" : "active"` — les établissements trial existent en DB.
+- src/app/(super-admin)/super-admin/clients/page.tsx:54 — STATUS_LABELS inclut bien `trial: { label: "Essai", variant: "outline" }` (donc le badge s'affiche correctement côté clients).
+- Impact : Le dashboard super-admin peut afficher un total d'établissements qui ne correspond pas à la somme des statuts affichés (active + expiring + expired + suspended ≠ total quand il y a des trials). Pas de crash, juste une statistique incomplète.
+- Fix recommandé : Ajouter `trial: number` au type establishments + ajouter le filtre `trial: establishments.filter(e => e.subscription_status === "trial").length` ligne 102.
+
+**MEDIUM-2 : Migration 003 en doublon (003_seed_super_admin.sql == 004_seed_super_admin.sql)**
+- Fichiers : supabase/migrations/003_seed_super_admin.sql ET supabase/migrations/004_seed_super_admin.sql — `diff` retourne 0 ligne (fichiers identiques).
+- Conflit de nom : 003_rls_policies.sql ET 003_seed_super_admin.sql partagent le préfixe "003_".
+- Impact : Selon l'outil de migration (supabase CLI, etc.), l'ordre d'exécution est alphabétique — les deux fichiers "003_*" pourraient s'exécuter dans un ordre non déterministe, et le seed super_admin pourrait s'exécuter AVANT le RLS (cas si 003_seed passe avant 003_rls). Le seed est idempotent (`on conflict do nothing`), donc pas d'erreur fatale, mais c'est une mauvaise pratique.
+- Fix recommandé : Supprimer supabase/migrations/003_seed_super_admin.sql (garder 004_seed_super_admin.sql comme l'indique le contenu du fichier lui-même qui s'intitule "Migration 003" mais porte le nom 004 — suggère un renommage antérieur incomplet).
+
+#### 🟢 LOW (3)
+
+**LOW-1 : 3 actions activity_logs non labelisées dans ACTION_LABELS**
+- src/lib/super-admin/logs.ts:21-50 — ACTION_LABELS contient 28 clés.
+- Actions émises par le code MAIS absentes d'ACTION_LABELS :
+  - `trial_code_generated` — émise par src/lib/super-admin/activation-codes-server.ts:389
+  - `housekeeping_task_deleted` — émise par src/lib/hotel/housekeeping-server.ts:199
+  - `maintenance_ticket_deleted` — émise par src/lib/hotel/maintenance-server.ts:250
+- Impact : Les 3 actions s'affichent en raw string (ex: "trial_code_generated") dans /super-admin/logs au lieu d'un label français.
+- Fix recommandé : Ajouter les 3 entrées dans ACTION_LABELS :
+  - `"trial_code_generated": "Code d'essai généré"`
+  - `"housekeeping_task_deleted": "Tâche ménage supprimée"`
+  - `"maintenance_ticket_deleted": "Ticket maintenance supprimé"`
+
+**LOW-2 : Label room status "available" incohérent entre rooms.ts et calendar-view.tsx**
+- src/lib/hotel/rooms.ts:36 — `available: { label: "Disponible", ... }`
+- src/components/hotel/calendar-view.tsx:89 — `available: "Libre"`
+- Impact : Un même statut s'affiche "Disponible" sur /app/rooms et "Libre" sur /app/calendar — incohérence UI mineure.
+- Fix recommandé : Utiliser le même label partout (préférez "Disponible" car utilisé dans le Select de filtre).
+
+**LOW-3 : src/types/database.ts est un placeholder vide**
+- src/types/database.ts:11-18 — `Database = { public: { Tables: Record<string, never>; ... } }` — type vide.
+- Le projet utilise Supabase mais n'a pas généré les types via `supabase gen types typescript`.
+- Impact : Pas de typage statique sur les requêtes Supabase — beaucoup de `as any` dans le code (ex: leads-server.ts:83, reservations-server.ts:120, settings-server.ts:44). Risque de typo sur un nom de colonne non détecté à la compilation.
+- Fix recommandé : Exécuter `npx supabase gen types typescript --project-id <id> > src/types/database.ts` et remplacer le placeholder.
+
+### VÉRIFICATIONS PASSÉES (aucun issue)
+
+| Catégorie | SQL CHECK | TS Type | Zod API | UI Labels | Status |
+|-----------|-----------|---------|---------|-----------|--------|
+| UserRole (7) | profiles.role | types/index.ts | /api/hotel/users (POST: 5 staff, PATCH: 5 staff) | ROLE_LABELS | ✅ |
+| RoomStatus (6) | rooms.status | hotel/rooms.ts | /api/hotel/rooms/[id] PATCH | ROOM_STATUS_LABELS | ✅ |
+| ReservationStatus (6) | reservations.status | hotel/reservations.ts | /api/hotel/reservations/[id] PATCH | RESERVATION_STATUS_LABELS | ✅ |
+| ReservationSource (5) | reservations.source | hotel/reservations.ts | /api/hotel/reservations POST | RESERVATION_SOURCE_LABELS | ✅ |
+| SubscriptionStatus (5) | establishments.subscription_status | types/index.ts | activateAccount (active/trial) | clients/page.tsx STATUS_LABELS | ✅ |
+| ActivationCodeStatus (5) | activation_codes.status | super-admin/activation-codes.ts | /api/super-admin/activation-codes/[id] PATCH (sent/cancelled) + machine à états | CODE_STATUS_LABELS | ✅ |
+| SubscriptionPaymentStatus (4) | subscription_payments.status | super-admin/payments.ts | /api/super-admin/payments POST (pending) + [id] PATCH (validated/rejected/refunded) | PAYMENT_STATUS_LABELS | ✅ |
+| PaymentMethod (7) | subscription_payments.payment_method + stay_payments.method + expenses.payment_method | super-admin/payments.ts + hotel/payments.ts | /api/super-admin/payments + /api/hotel/stay-payments + /api/hotel/expenses | PAYMENT_METHOD_LABELS | ✅ |
+| InvoiceType (2) | invoices.type | hotel/invoices.ts | /api/hotel/invoices/generate POST | INVOICE_TYPE_LABELS | ✅ |
+| InvoiceStatus (4) | invoices.status | hotel/invoices.ts | (transitions serveur uniquement) | INVOICE_STATUS_LABELS | ✅ |
+| ExpenseCategory (9) | expenses.category | hotel/expenses.ts | /api/hotel/expenses POST + [id] PATCH | EXPENSE_CATEGORY_LABELS | ✅ |
+| HousekeepingStatus (4) | housekeeping_tasks.status | hotel/housekeeping.ts | /api/hotel/housekeeping/[id] PATCH | HOUSEKEEPING_STATUS_LABELS | ✅ |
+| MaintenanceStatus (3) | maintenance_tickets.status | hotel/maintenance.ts | /api/hotel/maintenance/[id] PATCH | MAINTENANCE_STATUS_LABELS | ✅ |
+| MaintenancePriority (3) | maintenance_tickets.priority | hotel/maintenance.ts | /api/hotel/maintenance POST + [id] PATCH | PRIORITY_LABELS | ✅ |
+| LeadStatus (5) | leads.status | types/index.ts + super-admin/leads.ts | /api/super-admin/leads/[id] PATCH | LEAD_STATUS_LABELS | ✅ |
+| PlanName (3) | plans.name CHECK | (non typé comme enum) | (seed uniquement, pas de POST) | PLAN_NAME_LABELS | ✅ |
+| IdType (4) | guests.id_type | hotel/guests.ts | /api/hotel/guests POST | ID_TYPE_LABELS | ✅ |
+| EstablishmentType (4) | establishments.type + leads.business_type | types/index.ts (EstablishmentType = hotel/residence/auberge/other) | ⚠️ /api/leads + /api/activation/register + /api/hotel/settings utilisent "autre" | dashboard/page.tsx BUSINESS_TYPE_LABELS utilise "other" | ❌ CRITICAL-1 + CRITICAL-2 |
+
+### TABLES — 16/16 PRÉSENTES
+
+| # | Table | SQL Lignes | establishment_id | Notes |
+|---|-------|------------|------------------|-------|
+| 1 | profiles | 23-34 | nullable (super_admin) | ✅ Conforme spec |
+| 2 | plans | 43-56 | absent | ✅ Conforme (table globale) |
+| 3 | leads | 64-81 | absent | ✅ Conforme (table globale) |
+| 4 | establishments | 88-108 | absent (PK) | ✅ Conforme |
+| 5 | subscription_payments | 120-136 | nullable (pré-activation) | ✅ Conforme |
+| 6 | activation_codes | 143-157 | nullable (pré-activation) | ✅ Conforme |
+| 7 | room_types | 164-175 | NOT NULL | ✅ |
+| 8 | rooms | 182-198 | NOT NULL | ✅ + unique index (establishment_id, room_number) |
+| 9 | guests | 209-223 | NOT NULL | ✅ |
+| 10 | reservations | 230-253 | NOT NULL | ✅ + check dates |
+| 11 | stay_payments | 265-277 | NOT NULL | ✅ |
+| 12 | invoices | 284-299 | NOT NULL | ✅ + unique index (establishment_id, invoice_number) |
+| 13 | expenses | 310-323 | NOT NULL | ✅ |
+| 14 | housekeeping_tasks | 330-340 | NOT NULL | ✅ |
+| 15 | maintenance_tickets | 347-363 | NOT NULL | ✅ |
+| 16 | activity_logs | 370-379 | nullable (logs système) | ✅ Conforme spec |
+
+### CONCLUSION
+- **2 bugs CRITICAL** à corriger en priorité : tout prospect sélectionnant "Autre" (type d'établissement ou business_type) sur la landing page ou lors de l'activation provoque un échec silencieux côté DB (CHECK constraint violation masquée derrière un message générique). Le funnel acquisition est cassé pour ce cas.
+- **2 issues MEDIUM** (stats incomplètes + doublon migration) à corriger prochainement.
+- **3 issues LOW** (labels manquants, label incohérent, types DB non générés) — qualité de code.
+- **Aucun issue** sur les 16 tables, establishment_id, 7 rôles, 6 statuts room, 6 statuts réservation, 5 statuts code, 4 statuts paiement SaaS, 9 catégories dépense, 4 statuts facture, 4 statuts ménage, 3 statuts maintenance, 3 priorités maintenance.
+- Schéma SQL globalement cohérent avec le code, à l'exception du mismatch "autre" vs "other" sur 2 colonnes (leads.business_type et establishments.type) qui est la cause racine des 2 CRITICAL.
+
+---
+Task ID: 41
+Agent: main-orchestrator
+Task: Audit cohérence schéma DB vs code + corrections
+
+Work Log:
+- Audit complet par subagent (16 tables, establishment_id, 7 rôles, 6 statuts chambres, 6 statuts réservations, 5 statuts abonnements, 5 statuts codes activation)
+- Résultat : 16/16 tables ✅, establishment_id conforme ✅, 7/7 rôles ✅, statuts cohérents ✅
+- 2 bugs CRITICAL trouvés : mismatch "autre" vs "other" sur business_type et establishments.type
+
+CORRECTIONS CRITICAL (2) :
+1. leads.business_type "autre" vs "other"
+   - SQL CHECK accepte 'hotel','residence','auberge','other' mais code envoyait "autre"
+   - Impact : tout prospect sélectionnant "Autre" sur la landing → échec silencieux DB → demande perdue
+   - Fix : constants.ts BUSINESS_TYPES value "autre" → "other" (label reste "Autre") + api/leads/route.ts Zod enum
+2. establishments.type "autre" vs "other"
+   - Même bug sur activation + settings
+   - Impact : activation échoue pour type "Autre" (rollback complet : user Auth supprimé, établissement supprimé, code non marqué "used") ; hotel_admin ne peut pas changer le type vers "Autre"
+   - Fix : 4 fichiers modifiés (register-form.tsx, api/activation/register/route.ts, settings-form.tsx, api/hotel/settings/route.ts) — Zod enum + SelectItem value "autre" → "other"
+
+CORRECTIONS MEDIUM (2) :
+3. SuperAdminStats ne compte pas trial
+   - Type SuperAdminStats.establishments manquait le champ "trial"
+   - Fix : ajout trial: number au type + filtre stats + carte "Essais en cours" sur dashboard super-admin
+4. Migration SQL en doublon
+   - 003_seed_super_admin.sql et 004_seed_super_admin.sql étaient identiques (conflit de nom avec 003_rls_policies.sql)
+   - Fix : supprimé 003_seed_super_admin.sql (gardé 004_seed_super_admin.sql)
+
+CORRECTIONS LOW (2) :
+5. ACTION_LABELS manquants (3)
+   - trial_code_generated, housekeeping_task_deleted, maintenance_ticket_deleted s'affichaient en raw string dans /super-admin/logs
+   - Fix : ajoutés dans src/lib/super-admin/logs.ts ACTION_LABELS
+6. Label "available" incohérent
+   - rooms.ts : "Disponible" ; calendar-view.tsx : "Libre"
+   - Fix : calendar-view.tsx aligné sur "Disponible"
+
+Vérifications :
+- Lint : 0 erreur, 0 warning
+- TypeScript (npx tsc --noEmit) : 0 erreur dans src/
+- Compilation : 7 pages testées, toutes 200 ou 307 (redirect auth)
+- Test API : business_type=other accepté ✅, business_type=autre rejeté par Zod ✅, establishment_type=other accepté ✅
+
+Points forts confirmés par l'audit :
+- 16/16 tables présentes dans les migrations SQL
+- establishment_id NOT NULL sur 9 tables métier (room_types, rooms, guests, reservations, stay_payments, invoices, expenses, housekeeping_tasks, maintenance_tickets)
+- activity_logs.establishment_id nullable (logs système super_admin)
+- profiles.establishment_id nullable (super_admin)
+- 7 rôles cohérents entre SQL CHECK, TypeScript types, ROLE_LABELS, requireHotelUser
+- 6 statuts chambres cohérents entre SQL, TS, Zod, labels
+- 6 statuts réservations cohérents + BLOCKING_STATUSES correct
+- 5 statuts abonnements (active, expiring, expired, suspended, trial) cohérents
+- 5 statuts codes activation cohérents + machine à états ALLOWED_CODE_TRANSITIONS
+
+Stage Summary:
+- 6 incohérences corrigées (2 CRITICAL + 2 MEDIUM + 2 LOW)
+- 8 fichiers modifiés + 1 fichier supprimé (migration doublon)
+- 0 erreur lint, 0 erreur TypeScript
+- Le funnel d'acquisition prospects + l'activation des comptes fonctionnent maintenant pour le type "Autre"

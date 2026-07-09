@@ -109,7 +109,7 @@ export const BUSINESS_TYPES = [
   { value: "hotel", label: "Hôtel" },
   { value: "residence", label: "Résidence meublée" },
   { value: "auberge", label: "Auberge" },
-  { value: "autre", label: "Autre" },
+  { value: "other", label: "Autre" },
 ] as const;
 
 export const DESIRED_PLAN_OPTIONS = [
