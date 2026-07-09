@@ -223,7 +223,8 @@ export async function createGuest(
     .single();
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[guests] createGuest failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   return { success: true, id: data.id };
@@ -264,7 +265,8 @@ export async function updateGuest(
     .eq("establishment_id", establishmentId);
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[guests] updateGuest failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   return { success: true };
@@ -297,7 +299,8 @@ export async function deleteGuest(
     .eq("establishment_id", establishmentId);
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[guests] deleteGuest failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   return { success: true };

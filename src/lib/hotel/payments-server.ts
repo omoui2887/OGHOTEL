@@ -164,7 +164,8 @@ export async function createStayPayment(
     .single();
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[payments] createStayPayment failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   // 4. Mettre à jour paid_amount et balance_amount de la réservation

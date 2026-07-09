@@ -161,6 +161,7 @@ export async function activateAccount(
   });
 
   if (authError) {
+    console.error("[activation] createUser failed:", authError.message);
     // Erreur 422 = user already exists
     if (authError.message.includes("already") || authError.message.includes("exists")) {
       return {
@@ -170,7 +171,7 @@ export async function activateAccount(
     }
     return {
       success: false,
-      error: "Impossible de créer le compte : " + authError.message,
+      error: "Impossible de créer le compte. Réessayez ou contactez le support.",
     };
   }
 
@@ -215,10 +216,11 @@ export async function activateAccount(
     .single();
 
   if (estError || !estData) {
+    console.error("[activation] createEstablishment failed:", estError?.message);
     await supabase.auth.admin.deleteUser(userId);
     return {
       success: false,
-      error: "Impossible de créer l'établissement : " + (estError?.message ?? "erreur"),
+      error: "Impossible de créer l'établissement. Réessayez ou contactez le support.",
     };
   }
 
@@ -238,24 +240,46 @@ export async function activateAccount(
   if (profileError) {
     await supabase.from("establishments").delete().eq("id", establishmentId);
     await supabase.auth.admin.deleteUser(userId);
+    console.error("[activation] createProfile failed:", profileError.message);
     return {
       success: false,
-      error: "Impossible de créer le profil : " + profileError.message,
+      error: "Impossible de créer le profil utilisateur. Réessayez ou contactez le support.",
     };
   }
 
-  // Marquer code comme used
-  const { error: codeUpdateError } = await supabase
+  // Marquer le code comme "used" de manière ATOMIQUE et CONDITIONNELLE.
+  // On ne met à jour QUE si le statut est encore "generated" ou "sent".
+  // Cela empêche la race condition où 2 prospects activent le même code
+  // simultanément (les 2 passeraient verifyActivationCode, puis les 2
+  // réussiraient un update inconditionnel).
+  const { data: updatedCode, count: updatedCount } = await supabase
     .from("activation_codes")
     .update({
       status: "used",
       used_at: new Date().toISOString(),
       establishment_id: establishmentId,
     })
-    .eq("id", codeInfo.id);
+    .eq("id", codeInfo.id)
+    .in("status", ["generated", "sent"])
+    .select("id");
 
-  if (codeUpdateError) {
-    console.error("Erreur mise à jour code:", codeUpdateError);
+  // Si 0 ligne mise à jour → le code a été utilisé par quelqu'un d'autre
+  // entre verifyActivationCode et maintenant. On doit annuler (rollback)
+  // tout ce qu'on vient de créer.
+  if (!updatedCode || updatedCode.length === 0) {
+    console.warn(
+      "[activation] Code déjà utilisé par une autre session, rollback. Code:",
+      codeInfo.code
+    );
+    await supabase.from("profiles").delete().eq("id", userId);
+    await supabase.from("establishments").delete().eq("id", establishmentId);
+    await supabase.auth.admin.deleteUser(userId);
+    return {
+      success: false,
+      error:
+        "Ce code d'activation vient d'être utilisé par une autre session. " +
+        "Si vous pensez qu'il s'agit d'une erreur, contactez le support.",
+    };
   }
 
   // Log activité

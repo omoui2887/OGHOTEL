@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentProfile } from "@/lib/auth";
 import { createExpense } from "@/lib/hotel/expenses-server";
+import { isSafeUrl } from "@/lib/security/url";
 
 const schema = z.object({
   category: z.enum(
@@ -16,7 +17,12 @@ const schema = z.object({
   expense_date: z.string().min(1, "Date requise"),
   payment_method: z.enum(["cash", "orange", "mtn", "moov", "wave", "card", "transfer"]).optional(),
   description: z.string().max(2000).optional().or(z.literal("")),
-  attachment_url: z.string().url().optional().or(z.literal("")),
+  attachment_url: z
+    .string()
+    .url()
+    .refine(isSafeUrl, "L'URL de la pièce jointe doit être HTTPS et publique")
+    .optional()
+    .or(z.literal("")),
 });
 
 export async function POST(request: NextRequest) {

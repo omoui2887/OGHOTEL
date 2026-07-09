@@ -130,7 +130,8 @@ export async function updatePlan(
     .eq("id", id);
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[plans] updatePlan failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   return { success: true };

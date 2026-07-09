@@ -172,7 +172,8 @@ export async function performCheckIn(
     });
 
     if (payErr) {
-      return { success: false, error: "Erreur enregistrement paiement : " + payErr.message };
+      console.error("[stay] performCheckIn payment insert failed:", payErr.message);
+      return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
     }
     newPaidAmount += payment.amount;
   }
@@ -191,7 +192,8 @@ export async function performCheckIn(
     .eq("id", reservationId);
 
   if (updateResErr) {
-    return { success: false, error: updateResErr.message };
+    console.error("[stay] performCheckIn reservation update failed:", updateResErr.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   // 4. Mettre à jour le statut de la chambre → occupied
@@ -292,7 +294,8 @@ export async function performCheckOut(
     });
 
     if (payErr) {
-      return { success: false, error: "Erreur paiement : " + payErr.message };
+      console.error("[stay] performCheckOut payment insert failed:", payErr.message);
+      return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
     }
   }
 
@@ -309,7 +312,8 @@ export async function performCheckOut(
     .eq("id", reservationId);
 
   if (updateResErr) {
-    return { success: false, error: updateResErr.message };
+    console.error("[stay] performCheckOut reservation update failed:", updateResErr.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   // 7. Mettre à jour le statut de la chambre → cleaning

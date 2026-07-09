@@ -83,7 +83,8 @@ export async function createStaffUser(
     if (authError.message.includes("already") || authError.message.includes("exists")) {
       return { success: false, error: "Un compte existe déjà avec cet email." };
     }
-    return { success: false, error: "Impossible de créer le compte : " + authError.message };
+    console.error("[users] createStaffUser failed:", authError.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   if (!authData.user) return { success: false, error: "Impossible de créer le compte" };
@@ -101,7 +102,8 @@ export async function createStaffUser(
 
   if (profileError) {
     await supabase.auth.admin.deleteUser(userId);
-    return { success: false, error: "Impossible de créer le profil : " + profileError.message };
+    console.error("[users] createStaffUser profile insert failed:", profileError.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   await supabase.from("activity_logs").insert({
@@ -136,7 +138,10 @@ export async function updateStaffUser(
   const { error } = await supabase.from("profiles")
     .update(updateData).eq("id", userId).eq("establishment_id", establishmentId);
 
-  if (error) return { success: false, error: error.message };
+  if (error) {
+    console.error("[users] updateStaffUser failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
+  }
 
   await supabase.from("activity_logs").insert({
     establishment_id: establishmentId, user_id: updatedBy,
@@ -156,7 +161,10 @@ export async function resetStaffPassword(
   if (!existing) return { success: false, error: "Utilisateur introuvable" };
 
   const { error } = await supabase.auth.admin.updateUserById(userId, { password: newPassword });
-  if (error) return { success: false, error: "Impossible de réinitialiser : " + error.message };
+  if (error) {
+    console.error("[users] resetStaffPassword failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
+  }
 
   await supabase.from("profiles")
     .update({ must_change_password: true, updated_at: new Date().toISOString() }).eq("id", userId);

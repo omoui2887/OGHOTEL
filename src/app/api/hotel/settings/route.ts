@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentProfile } from "@/lib/auth";
 import { updateEstablishmentSettings } from "@/lib/hotel/settings-server";
+import { isSafeUrl } from "@/lib/security/url";
 
 const schema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(150).optional(),
@@ -11,7 +12,12 @@ const schema = z.object({
   phone: z.string().max(20).optional(),
   city: z.string().max(100).optional(),
   address: z.string().max(300).optional(),
-  logo_url: z.string().url().optional().or(z.literal("")),
+  logo_url: z
+    .string()
+    .url()
+    .refine(isSafeUrl, "L'URL du logo doit être HTTPS et publique (pas d'IP privée)")
+    .optional()
+    .or(z.literal("")),
   timezone: z.string().max(50).optional(),
 });
 

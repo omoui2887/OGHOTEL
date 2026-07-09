@@ -1,3 +1,4 @@
+import "server-only";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
@@ -37,7 +38,13 @@ export async function getCurrentUser() {
       data: { user },
     } = await supabase.auth.getUser();
     return user;
-  } catch {
+  } catch (err) {
+    // Log pour diagnostic, mais ne pas planter la page (defense-in-depth).
+    // Les erreurs attendues (env vars manquantes en sandbox) sont silencieuses.
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!msg.includes("Configuration Supabase manquante") && !msg.includes("NEXT_PUBLIC_SUPABASE")) {
+      console.error("[auth] getCurrentUser error:", msg);
+    }
     return null;
   }
 }
@@ -70,7 +77,11 @@ export async function getCurrentProfile(): Promise<Profile | null> {
       ...data,
       email: user.email ?? "",
     } as Profile;
-  } catch {
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!msg.includes("Configuration Supabase manquante") && !msg.includes("Configuration admin Supabase manquante") && !msg.includes("NEXT_PUBLIC_SUPABASE")) {
+      console.error("[auth] getCurrentProfile error:", msg);
+    }
     return null;
   }
 }

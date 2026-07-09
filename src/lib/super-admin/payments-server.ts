@@ -145,7 +145,8 @@ export async function createPayment(input: {
     .single();
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[saas-payments] createPayment failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   // Log
@@ -201,7 +202,8 @@ export async function updatePaymentStatus(
     .eq("id", paymentId);
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[saas-payments] updatePaymentStatus failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   // Log

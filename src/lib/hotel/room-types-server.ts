@@ -73,7 +73,8 @@ export async function createRoomType(
     .single();
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[room-types] createRoomType failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   return { success: true, id: data.id };
@@ -108,7 +109,8 @@ export async function updateRoomType(
     .eq("establishment_id", establishmentId); // sécurité : ne modifie que si appartient à l'établissement
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[room-types] updateRoomType failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   return { success: true };
@@ -141,7 +143,8 @@ export async function deleteRoomType(
     .eq("establishment_id", establishmentId);
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[room-types] deleteRoomType failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   return { success: true };

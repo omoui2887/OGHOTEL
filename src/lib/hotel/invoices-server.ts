@@ -272,7 +272,8 @@ export async function generateInvoice(
     .single();
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[invoices] generateInvoice failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   // 6. Log
@@ -310,7 +311,8 @@ export async function cancelInvoice(
     .neq("status", "cancelled"); // ne pas annuler une facture déjà annulée
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[invoices] cancelInvoice failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   await supabase.from("activity_logs").insert({

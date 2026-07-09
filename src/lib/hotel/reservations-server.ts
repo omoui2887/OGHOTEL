@@ -342,7 +342,8 @@ export async function createReservation(
     .single();
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[reservations] createReservation failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   // Log
@@ -469,7 +470,8 @@ export async function updateReservation(
     .eq("establishment_id", establishmentId);
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[reservations] updateReservation failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   // Log
@@ -503,7 +505,34 @@ export async function cancelReservation(
     .in("status", ["pending", "confirmed"]); // ne peut annuler que si pas encore arrivé
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[reservations] cancelReservation failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
+  }
+
+  // Libérer la chambre si elle était juste « reserved »
+  // (si occupée / cleaning / maintenance, on ne touche pas)
+  const { data: reservation } = await supabase
+    .from("reservations")
+    .select("room_id")
+    .eq("id", id)
+    .eq("establishment_id", establishmentId)
+    .single();
+
+  if (reservation?.room_id) {
+    const { data: room } = await supabase
+      .from("rooms")
+      .select("status")
+      .eq("id", reservation.room_id)
+      .eq("establishment_id", establishmentId)
+      .single();
+
+    if (room && room.status === "reserved") {
+      await supabase
+        .from("rooms")
+        .update({ status: "available", updated_at: new Date().toISOString() })
+        .eq("id", reservation.room_id)
+        .eq("establishment_id", establishmentId);
+    }
   }
 
   await supabase.from("activity_logs").insert({

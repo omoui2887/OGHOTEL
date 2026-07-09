@@ -93,7 +93,8 @@ export async function createHousekeepingTask(
     .single();
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[housekeeping] createHousekeepingTask failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   await supabase.from("activity_logs").insert({
@@ -140,7 +141,8 @@ export async function updateHousekeepingTask(
     .eq("establishment_id", establishmentId);
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[housekeeping] updateHousekeepingTask failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   // Si la tâche passe à "inspected", remettre la chambre en "available"
@@ -187,8 +189,17 @@ export async function deleteHousekeepingTask(
     .eq("establishment_id", establishmentId);
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[housekeeping] deleteHousekeepingTask failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
+
+  await supabase.from("activity_logs").insert({
+    establishment_id: establishmentId,
+    user_id: userId,
+    action: "housekeeping_task_deleted",
+    entity_type: "housekeeping_task",
+    entity_id: id,
+  });
 
   return { success: true };
 }

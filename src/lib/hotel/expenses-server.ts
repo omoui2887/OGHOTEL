@@ -213,7 +213,8 @@ export async function createExpense(
     .single();
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[expenses] createExpense failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   // Log
@@ -263,7 +264,8 @@ export async function updateExpense(
     .eq("establishment_id", establishmentId);
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[expenses] updateExpense failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   await supabase.from("activity_logs").insert({
@@ -291,7 +293,8 @@ export async function deleteExpense(
     .eq("establishment_id", establishmentId);
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[expenses] deleteExpense failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   await supabase.from("activity_logs").insert({

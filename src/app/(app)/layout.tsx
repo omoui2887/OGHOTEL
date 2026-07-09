@@ -21,14 +21,14 @@ export default async function AppLayout({
 }) {
   const profile = await getCurrentProfile();
 
-  // En sandbox sans Supabase, on laisse passer (middleware gère).
-  if (profile && !isHotelUser(profile.role)) {
-    redirect("/unauthorized");
-  }
-
+  // En production, si pas de profil (Supabase mal configuré, session expirée,
+  // etc.), on redirige vers /login au lieu de rendre le shell sans auth.
+  // En dev (sandbox sans Supabase), on laisse passer pour permettre le dev.
   if (!profile) {
-    // Soit pas connecté (middleware devrait rediriger), soit Supabase non configuré
-    // On rend quand même pour permettre le dev sans auth
+    if (process.env.NODE_ENV === "production") {
+      redirect("/login?redirect=/app/dashboard");
+    }
+    // Dev : rend le shell sans establishmentName (middleware gère)
     return (
       <HotelShell
         profile={null}
@@ -38,6 +38,10 @@ export default async function AppLayout({
         {children}
       </HotelShell>
     );
+  }
+
+  if (!isHotelUser(profile.role)) {
+    redirect("/unauthorized");
   }
 
   // Récupérer l'établissement + features du plan + notifications

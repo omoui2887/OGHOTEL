@@ -135,7 +135,8 @@ export async function updateEstablishmentSettings(
     .eq("id", establishmentId);
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[settings] updateEstablishmentSettings failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   // Log

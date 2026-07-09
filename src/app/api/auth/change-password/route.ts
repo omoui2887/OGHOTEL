@@ -84,8 +84,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (updateError) {
+      console.error("[change-password] updateUser failed:", updateError.message);
       return NextResponse.json(
-        { error: updateError.message || "Erreur lors du changement de mot de passe" },
+        { error: "Une erreur est survenue. Réessayez ou contactez le support." },
         { status: 400 }
       );
     }

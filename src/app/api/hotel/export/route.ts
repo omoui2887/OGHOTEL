@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { isSafeUrl } from "@/lib/security/url";
 import * as XLSX from "xlsx";
 
 /**
@@ -46,6 +47,15 @@ export async function GET(request: NextRequest) {
 
       if (!est?.logo_url) {
         return NextResponse.json({ error: "Aucun logo configuré" }, { status: 404 });
+      }
+
+      // 🔒 Sécurité SSRF : valider l'URL avant de la fetch côté serveur.
+      // Empêche l'accès au réseau interne (169.254.169.254, localhost, IPs privées).
+      if (!isSafeUrl(est.logo_url)) {
+        return NextResponse.json(
+          { error: "URL du logo non autorisée (doit être HTTPS et publique)" },
+          { status: 400 }
+        );
       }
 
       // Télécharger l'image depuis l'URL

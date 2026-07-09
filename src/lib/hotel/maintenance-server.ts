@@ -110,7 +110,8 @@ export async function createMaintenanceTicket(
     .single();
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[maintenance] createMaintenanceTicket failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   // Si demandé, passer la chambre en maintenance
@@ -174,7 +175,8 @@ export async function updateMaintenanceTicket(
     .eq("establishment_id", establishmentId);
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[maintenance] updateMaintenanceTicket failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   // Gérer le statut de la chambre
@@ -238,8 +240,17 @@ export async function deleteMaintenanceTicket(
     .eq("establishment_id", establishmentId);
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[maintenance] deleteMaintenanceTicket failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
+
+  await supabase.from("activity_logs").insert({
+    establishment_id: establishmentId,
+    user_id: userId,
+    action: "maintenance_ticket_deleted",
+    entity_type: "maintenance_ticket",
+    entity_id: id,
+  });
 
   return { success: true };
 }

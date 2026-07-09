@@ -178,7 +178,8 @@ export async function generateActivationCode(input: {
     .single();
 
   if (insertErr || !newCode) {
-    return { success: false, error: insertErr?.message ?? "Erreur d'insertion" };
+    console.error("[activation-codes] generateActivationCode insert failed:", insertErr?.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   // 6. Log l'activité
@@ -215,7 +216,20 @@ export async function generateActivationCode(input: {
 
 /**
  * Met à jour le statut d'un code (marquer comme envoyé, annuler).
+ *
+ * 🔒 Machine à états : on ne peut PAS réveiller un code "used", "expired"
+ * ou "cancelled" (sinon un admin pourrait remettre un code "used" en "sent"
+ * et permettre sa réutilisation → création d'un 2e établissement pour un
+ * seul paiement).
  */
+const ALLOWED_CODE_TRANSITIONS: Record<string, string[]> = {
+  generated: ["sent", "cancelled", "expired"],
+  sent: ["used", "cancelled", "expired"],
+  used: [], // terminal — ne peut plus changer
+  expired: [], // terminal
+  cancelled: [], // terminal
+};
+
 export async function updateCodeStatus(
   codeId: string,
   newStatus: ActivationCodeStatus,
@@ -233,13 +247,34 @@ export async function updateCodeStatus(
     return { success: false, error: "Code introuvable" };
   }
 
-  const { error } = await supabase
+  // Vérifier la transition autorisée
+  const allowed = ALLOWED_CODE_TRANSITIONS[current.status] ?? [];
+  if (!allowed.includes(newStatus)) {
+    return {
+      success: false,
+      error: `Transition impossible : un code "${current.status}" ne peut pas passer à "${newStatus}".`,
+    };
+  }
+
+  // Update conditionnel : ne modifie QUE si le statut courant n'a pas changé
+  // entre le SELECT et l'UPDATE (protection TOCTOU).
+  const { data: updated, error } = await supabase
     .from("activation_codes")
     .update({ status: newStatus })
-    .eq("id", codeId);
+    .eq("id", codeId)
+    .eq("status", current.status)
+    .select("id");
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[activation-codes] updateCodeStatus failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
+  }
+
+  if (!updated || updated.length === 0) {
+    return {
+      success: false,
+      error: "Le code a été modifié par une autre session. Rechargez la page.",
+    };
   }
 
   // Log
@@ -343,7 +378,8 @@ export async function generateTrialCode(input: {
     .single();
 
   if (insertErr || !newCode) {
-    return { success: false, error: insertErr?.message ?? "Erreur d'insertion" };
+    console.error("[activation-codes] generateTrialCode insert failed:", insertErr?.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   // 5. Log

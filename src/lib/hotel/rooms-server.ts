@@ -83,7 +83,8 @@ export async function createRoom(
     if (error.code === "23505") {
       return { success: false, error: "Une chambre avec ce numéro existe déjà" };
     }
-    return { success: false, error: error.message };
+    console.error("[rooms] createRoom failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   return { success: true, id: data.id };
@@ -134,7 +135,8 @@ export async function updateRoom(
     if (error.code === "23505") {
       return { success: false, error: "Une chambre avec ce numéro existe déjà" };
     }
-    return { success: false, error: error.message };
+    console.error("[rooms] updateRoom failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   return { success: true };
@@ -167,7 +169,8 @@ export async function deleteRoom(
     .eq("establishment_id", establishmentId);
 
   if (error) {
-    return { success: false, error: error.message };
+    console.error("[rooms] deleteRoom failed:", error.message);
+    return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
   return { success: true };
