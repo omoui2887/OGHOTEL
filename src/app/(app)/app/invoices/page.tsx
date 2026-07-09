@@ -3,6 +3,8 @@ import { getCurrentProfile } from "@/lib/auth";
 import { getInvoices } from "@/lib/hotel/invoices-server";
 import { getReservations } from "@/lib/hotel/reservations-server";
 import { InvoicesList } from "@/components/hotel/invoices-list";
+import { PermissionDenied } from "@/components/hotel/permission-denied";
+import { canAccessModule } from "@/lib/roles";
 
 export const metadata = {
   title: "Factures & Reçus",
@@ -34,6 +36,10 @@ export default async function InvoicesPage({
         <p className="text-sm text-muted-foreground">Aucun établissement associé.</p>
       </div>
     );
+  }
+
+  if (!canAccessModule(profile.role, "/app/invoices")) {
+    return <PermissionDenied />;
   }
 
   const [result, reservationsResult] = await Promise.all([

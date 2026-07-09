@@ -25,7 +25,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
-    if (!["hotel_admin", "manager", "receptionist", "maintenance"].includes(profile.role)) {
+    if (!["hotel_admin", "manager", "maintenance"].includes(profile.role)) {
       return NextResponse.json({ error: "Permission refusée" }, { status: 403 });
     }
 

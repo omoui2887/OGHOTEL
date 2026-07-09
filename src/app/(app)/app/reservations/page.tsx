@@ -4,6 +4,8 @@ import { getReservations } from "@/lib/hotel/reservations-server";
 import { getRooms } from "@/lib/hotel/rooms-server";
 import { getGuests } from "@/lib/hotel/guests-server";
 import { ReservationsList } from "@/components/hotel/reservations-list";
+import { PermissionDenied } from "@/components/hotel/permission-denied";
+import { canAccessModule } from "@/lib/roles";
 import type { Reservation } from "@/lib/hotel/reservations";
 import type { Room } from "@/lib/hotel/rooms";
 import type { Guest } from "@/lib/hotel/guests";
@@ -38,6 +40,10 @@ export default async function ReservationsPage({
         <p className="text-sm text-muted-foreground">Aucun établissement associé.</p>
       </div>
     );
+  }
+
+  if (!canAccessModule(profile.role, "/app/reservations")) {
+    return <PermissionDenied />;
   }
 
   // Fetch défensif : si une erreur survient (Supabase indisponible, table

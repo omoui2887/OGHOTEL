@@ -22,6 +22,8 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { canAccessModule } from "@/lib/roles";
+import type { UserRole } from "@/types";
 
 type NavItem = {
   href: string;
@@ -50,6 +52,7 @@ type SidebarProps = {
   onClose: () => void;
   establishmentName: string | null;
   features?: Record<string, boolean>;
+  role?: UserRole | null;
 };
 
 export function HotelSidebar({
@@ -57,11 +60,20 @@ export function HotelSidebar({
   onClose,
   establishmentName,
   features,
+  role,
 }: SidebarProps) {
   const pathname = usePathname();
 
-  // Filtrer les modules selon les features du plan
+  // Filtrer les modules selon :
+  // 1. Le rôle (ROLE_NAV_PERMISSIONS) — un housekeeping ne voit que Ménage
+  // 2. Les features du plan — un plan Essentiel masque Dépenses/Ménage/etc.
   const navItems = ALL_NAV_ITEMS.filter((item) => {
+    // 1. Check rôle (sauf dashboard qui est toujours visible)
+    if (item.href !== "/app/dashboard" && !canAccessModule(role, item.href)) {
+      return false;
+    }
+
+    // 2. Check features du plan
     if (item.href === "/app/dashboard") return true;
     if (item.href === "/app/rooms") return features?.chambres !== false;
     if (item.href === "/app/calendar" || item.href === "/app/reservations")

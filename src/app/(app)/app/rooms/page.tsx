@@ -2,6 +2,8 @@ import { getCurrentProfile } from "@/lib/auth";
 import { getRoomTypes } from "@/lib/hotel/room-types-server";
 import { getRooms } from "@/lib/hotel/rooms-server";
 import { RoomsList } from "@/components/hotel/rooms-list";
+import { PermissionDenied } from "@/components/hotel/permission-denied";
+import { canAccessModule } from "@/lib/roles";
 
 export const metadata = {
   title: "Chambres",
@@ -19,6 +21,10 @@ export default async function RoomsPage() {
         </p>
       </div>
     );
+  }
+
+  if (!canAccessModule(profile.role, "/app/rooms")) {
+    return <PermissionDenied />;
   }
 
   const [rooms, roomTypes] = await Promise.all([

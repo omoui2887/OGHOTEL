@@ -3,6 +3,8 @@ import { getCurrentProfile } from "@/lib/auth";
 import { getHousekeepingTasks } from "@/lib/hotel/housekeeping-server";
 import { getRooms } from "@/lib/hotel/rooms-server";
 import { HousekeepingList } from "@/components/hotel/housekeeping-list";
+import { PermissionDenied } from "@/components/hotel/permission-denied";
+import { canAccessModule } from "@/lib/roles";
 
 export const metadata = {
   title: "Ménage",
@@ -30,6 +32,10 @@ export default async function HousekeepingPage({
         <p className="text-sm text-muted-foreground">Aucun établissement associé.</p>
       </div>
     );
+  }
+
+  if (!canAccessModule(profile.role, "/app/housekeeping")) {
+    return <PermissionDenied />;
   }
 
   const [result, rooms] = await Promise.all([

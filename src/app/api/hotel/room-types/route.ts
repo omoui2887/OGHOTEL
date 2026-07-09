@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
-    if (!["hotel_admin", "manager", "receptionist", "housekeeping"].includes(profile.role)) {
+    if (!["hotel_admin", "manager", "receptionist"].includes(profile.role)) {
       return NextResponse.json(
         { error: "Vous n'avez pas la permission de créer un type de chambre" },
         { status: 403 }

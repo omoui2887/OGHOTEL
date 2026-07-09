@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { getCurrentProfile } from "@/lib/auth";
 import { getExpenses } from "@/lib/hotel/expenses-server";
 import { ExpensesList } from "@/components/hotel/expenses-list";
+import { PermissionDenied } from "@/components/hotel/permission-denied";
+import { canAccessModule } from "@/lib/roles";
 
 export const metadata = {
   title: "Dépenses",
@@ -33,6 +35,10 @@ export default async function ExpensesPage({
         <p className="text-sm text-muted-foreground">Aucun établissement associé.</p>
       </div>
     );
+  }
+
+  if (!canAccessModule(profile.role, "/app/expenses")) {
+    return <PermissionDenied />;
   }
 
   const result = await getExpenses(profile.establishment_id, {

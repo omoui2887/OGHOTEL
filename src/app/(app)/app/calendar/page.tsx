@@ -5,6 +5,8 @@ import {
   getRoomTypesForCalendar,
 } from "@/lib/hotel/calendar-server";
 import { CalendarView } from "@/components/hotel/calendar-view";
+import { PermissionDenied } from "@/components/hotel/permission-denied";
+import { canAccessModule } from "@/lib/roles";
 
 export const metadata = {
   title: "Calendrier",
@@ -31,6 +33,10 @@ export default async function CalendarPage({
         <p className="text-sm text-muted-foreground">Aucun établissement associé.</p>
       </div>
     );
+  }
+
+  if (!canAccessModule(profile.role, "/app/calendar")) {
+    return <PermissionDenied />;
   }
 
   // Calculer la plage de dates (mois courant + marge pour la vue mois)

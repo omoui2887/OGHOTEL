@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth";
 import { getInvoiceById } from "@/lib/hotel/invoices-server";
 import { PrintableInvoice } from "@/components/hotel/printable-invoice";
+import { PermissionDenied } from "@/components/hotel/permission-denied";
+import { canAccessModule } from "@/lib/roles";
 
 export const metadata = {
   title: "Facture",
@@ -15,6 +17,10 @@ export default async function InvoiceDetailPage({ params }: { params: Params }) 
 
   if (!profile || !profile.establishment_id) {
     notFound();
+  }
+
+  if (!canAccessModule(profile.role, "/app/invoices")) {
+    return <PermissionDenied />;
   }
 
   // Fetch défensif : si Supabase mal configuré, on affiche notFound au lieu

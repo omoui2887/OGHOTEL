@@ -5,12 +5,13 @@ import { HotelSidebar } from "@/components/hotel/sidebar";
 import { HotelTopbar } from "@/components/hotel/topbar";
 
 import type { Notification } from "@/lib/notifications";
+import type { UserRole } from "@/types";
 
 type HotelShellProps = {
   profile: {
     full_name: string | null;
     email: string;
-    role: string;
+    role: UserRole;
   } | null;
   establishmentName: string | null;
   features?: Record<string, boolean>;
@@ -36,6 +37,7 @@ export function HotelShell({
         onClose={() => setSidebarOpen(false)}
         establishmentName={establishmentName}
         features={features}
+        role={profile?.role ?? null}
       />
 
       <div className="flex min-h-screen flex-col md:pl-64">

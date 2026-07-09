@@ -3,6 +3,8 @@ import { getCurrentProfile } from "@/lib/auth";
 import { getStayPayments } from "@/lib/hotel/payments-server";
 import { getReservations } from "@/lib/hotel/reservations-server";
 import { PaymentsList } from "@/components/hotel/payments-list";
+import { PermissionDenied } from "@/components/hotel/permission-denied";
+import { canAccessModule } from "@/lib/roles";
 
 export const metadata = {
   title: "Paiements",
@@ -32,6 +34,10 @@ export default async function PaymentsPage({
         <p className="text-sm text-muted-foreground">Aucun établissement associé.</p>
       </div>
     );
+  }
+
+  if (!canAccessModule(profile.role, "/app/payments")) {
+    return <PermissionDenied />;
   }
 
   const [result, reservationsResult] = await Promise.all([

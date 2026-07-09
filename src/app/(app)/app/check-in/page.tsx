@@ -1,6 +1,8 @@
 import { getCurrentProfile } from "@/lib/auth";
 import { getConfirmedArrivals } from "@/lib/hotel/stay-server";
 import { CheckInList } from "@/components/hotel/check-in-list";
+import { PermissionDenied } from "@/components/hotel/permission-denied";
+import { canAccessModule } from "@/lib/roles";
 
 export const metadata = {
   title: "Check-in",
@@ -15,6 +17,10 @@ export default async function CheckInPage() {
         <p className="text-sm text-muted-foreground">Aucun établissement associé.</p>
       </div>
     );
+  }
+
+  if (!canAccessModule(profile.role, "/app/reservations")) {
+    return <PermissionDenied />;
   }
 
   const arrivals = await getConfirmedArrivals(profile.establishment_id);

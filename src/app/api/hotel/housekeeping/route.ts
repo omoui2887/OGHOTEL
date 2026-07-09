@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
-    if (!["hotel_admin", "manager", "receptionist", "housekeeping"].includes(profile.role)) {
+    if (!["hotel_admin", "manager", "housekeeping"].includes(profile.role)) {
       return NextResponse.json({ error: "Permission refusée" }, { status: 403 });
     }
 

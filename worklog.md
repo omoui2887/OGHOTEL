@@ -2291,3 +2291,354 @@ Stage Summary:
 - 8 fichiers modifiés + 1 fichier supprimé (migration doublon)
 - 0 erreur lint, 0 erreur TypeScript
 - Le funnel d'acquisition prospects + l'activation des comptes fonctionnent maintenant pour le type "Autre"
+
+---
+Task ID: AUDIT-BUSINESS-RULES
+Agent: Explore (audit règles métier)
+Task: Audit règles métier — activation, réservations, paiements, permissions
+
+Work Log:
+- Lu 24 fichiers (lib + api routes + composants + pages) pour vérifier 4 catégories de règles métier
+- Vérifié le flux complet d'activation SaaS (paiement → code → activation → établissement + profil + abonnement)
+- Vérifié les règles de réservation (BLOCKING_STATUSES, check-in/out, housekeeping auto, conflict checks)
+- Vérifié les paiements séjour (balance, historisation, invoice numbers, race conditions)
+- Cartographié les allow-lists de TOUS les routes /api/hotel/* (25 fichiers)
+- Vérifié le filtrage par rôle du sidebar et des pages /app/*
+- Croisé avec le schéma SQL (migrations 001 + 003) pour valider les contraintes DB
+
+## 1. ACTIVATION SAAS FLOW — ✅ CONFORME
+
+| # | Règle | Statut | Preuve |
+|---|-------|--------|--------|
+| 1 | Paiement validé requis avant génération code | ✅ | `generateActivationCode` ligne 109 : `if (payment.status !== "validated")` rejette |
+| 2 | Code trial sans paiement | ✅ | `generateTrialCode` (ligne 307) n'exige pas payment_id |
+| 3 | Code unique (DB constraint) | ✅ | `001_initial_schema.sql:145` `code text not null unique` |
+| 4 | Code unique (retry logic) | ✅ | Boucle 10 tentatives (ligne 135-145) + 357-347 trial |
+| 5 | Code single-use (statut) | ✅ | `activateAccount` ligne 263 update conditionnel `.in("status", ["generated","sent"])` |
+| 6 | Race condition protégée | ✅ | Si 0 ligne mise à jour → rollback complet (ligne 269-283) |
+| 7 | Code expire | ✅ | `verifyActivationCode` ligne 86-96 check `expires_at < now()` + auto-update "expired" |
+| 8 | Code expires_at calculé | ✅ | +30 jours (ligne 152-153), +24h pour trial (ligne 354-355) |
+| 9 | Établissement créé | ✅ | `activateAccount` ligne 198-216 |
+| 10 | Profil hotel_admin créé | ✅ | ligne 230-238 `role: "hotel_admin"` |
+| 11 | Abonnement actif créé | ✅ | ligne 209 `subscription_status: isTrial ? "trial" : "active"` |
+| 12 | Code marqué "used" après activation | ✅ | ligne 257-264 update status + used_at + establishment_id |
+| 13 | Machine à états empêche réveil code "used" | ✅ | `ALLOWED_CODE_TRANSITIONS` ligne 225-231 (tableau vide pour used/expired/cancelled) |
+
+Verdict: Aucun issue sur l'activation SaaS. Flux complet et sécurisé.
+
+## 2. RÉSERVATIONS RULES — ✅ CONFORME (1 LOW)
+
+| # | Règle | Statut | Preuve |
+|---|-------|--------|--------|
+| 1 | BLOCKING_STATUSES correct | ✅ | `reservations.ts:98-105` = `["pending","confirmed","checked_in"]` (pas checked_out, cancelled, no_show) |
+| 2 | checkRoomAvailability filtre par BLOCKING_STATUSES | ✅ | `reservations-server.ts:238` `.in("status", BLOCKING_STATUSES)` |
+| 3 | Filtre dates côté applicatif (datesOverlap) | ✅ | `reservations-server.ts:251-260` (pas SQL only) |
+| 4 | Check AVANT insert dans createReservation | ✅ | `checkRoomAvailability` ligne 294, `insert` ligne 320 |
+| 5 | Check aussi sur updateReservation | ✅ | `reservations-server.ts:406-427` (avec excludeReservationId) |
+| 6 | performCheckIn → room.status = "occupied" | ✅ | `stay-server.ts:200-204` |
+| 7 | performCheckOut → room.status = "cleaning" | ✅ | `stay-server.ts:320-324` |
+| 8 | performCheckOut → housekeeping task auto | ✅ | `stay-server.ts:331-338` (`status: "dirty"`) |
+| 9 | Check-out vérifie solde (sauf forceUnpaid) | ✅ | `stay-server.ts:277-282` (forceUnpaid réservé à hotel_admin/manager via route line 58) |
+| 10 | cancelReservation ne bloque que pending/confirmed | ✅ | `reservations-server.ts:505` `.in("status", ["pending","confirmed"])` |
+
+**LOW-1 : Race condition TOCTOU sur createReservation (réservation double possible)**
+- Fichiers : `src/lib/hotel/reservations-server.ts` lignes 294-342
+- Description : Entre `checkRoomAvailability` (SELECT) ligne 294 et `insert` ligne 320, une seconde requête concurrente peut créer une réservation en conflit. Aucune contrainte DB (exclusion constraint sur `(room_id, date_range)` avec `EXCLUDE USING GIST`) n'existe pour rattraper ce cas au niveau DB. La fenêtre est étroite (qq ms) mais le risque existe en cas de double-clic ou de deux réceptionnistes simultanés.
+- Impact : Double réservation d'une même chambre sur des dates qui se chevauchent — exactement ce que `checkRoomAvailability` est censé empêcher.
+- Sévérité : LOW (fenêtre étroite ; seul `createReservation` est touché, pas `updateReservation` qui exclut l'ID courant).
+- Fix recommandé : Ajouter une exclusion constraint PostgreSQL : `alter table reservations add constraint no_overlap_excl exclude using gist (room_id with =, daterange(check_in_date, check_out_date, '[]') with &&) where (status in ('pending','confirmed','checked_in'))`. Le code applicatif doit aussi catcher l'erreur DB 23P01 (exclusion_violation) et la remonter proprement.
+
+## 3. STAY PAYMENTS — ✅ CONFORME (1 LOW, 1 MEDIUM)
+
+| # | Règle | Statut | Preuve |
+|---|-------|--------|--------|
+| 1 | balance = total_amount - paid_amount | ✅ | `createStayPayment` ligne 172-173 ; `performCheckIn` ligne 181 ; `performCheckOut` ligne 273 |
+| 2 | Chaque paiement inséré dans stay_payments | ✅ | `createStayPayment` ligne 151-164 ; `performCheckIn` ligne 164-172 ; `performCheckOut` ligne 286-294 |
+| 3 | paid_amount mis à jour sur reservation | ✅ | `createStayPayment` ligne 175-182 ; `performCheckIn` ligne 184-192 ; `performCheckOut` ligne 303-312 |
+| 4 | Invoice number unique par établissement | ✅ | SQL `uq_invoices_establishment_number` (001:302-303) `unique(establishment_id, invoice_number)` |
+| 5 | Invoice number préfixe FAC/REC + année | ✅ | `generateInvoice` ligne 248-251 ; `performCheckOut` ligne 345 |
+| 6 | Anti-doublon : 1 facture active par réservation+type | ✅ | `generateInvoice` ligne 232-245 check `maybeSingle` |
+
+**MEDIUM-1 : Race condition sur la règle "1 facture active par réservation+type"**
+- Fichiers : `src/lib/hotel/invoices-server.ts` lignes 232-272
+- Description : La vérification `maybeSingle` (ligne 232-238) et l'insert (ligne 258-272) ne sont pas atomiques. Deux appels simultanés à `generateInvoice` pour la même réservation+type peuvent tous deux passer le check et insérer 2 factures (avec numéros différents car basés sur `Date.now().slice(-6)`). La contrainte `uq_invoices_establishment_number` ne rattrape pas ce cas car les numéros diffèrent. Une même réservation pourrait donc avoir 2 factures actives simultanées.
+- Impact : Doubles factures possibles (soucis comptable, doublon PDF client).
+- Sévérité : MEDIUM.
+- Fix recommandé : Ajouter une contrainte DB `unique (reservation_id, type) where (status in ('issued','paid'))` OU envelopper le check+insert dans une transaction verrouillante (SELECT FOR UPDATE sur la réservation).
+
+**LOW-2 : Invoice number basé sur Date.now().slice(-6) → risque théorique de collision**
+- Fichiers : `src/lib/hotel/invoices-server.ts:250` ; `src/lib/hotel/stay-server.ts:345`
+- Description : `String(Date.now()).slice(-6)` prend les 6 derniers chiffres du timestamp ms. Si deux factures sont créées dans la même milliseconde pour le même établissement, le numéro collissionne et la DB rejette la 2e via `uq_invoices_establishment_number` → l'utilisateur voit le message générique "Une erreur est survenue" (pas de retry automatique).
+- Impact : Échec sporadique sans message exploitable (rare en pratique).
+- Sévérité : LOW.
+- Fix recommandé : Soit utiliser un compteur SQL par établissement (`SELECT count(*)+1`), soit ajouter une retry loop similaire à `generateActivationCode` qui régénère un numéro si l'insert échoue avec code 23505 (unique_violation).
+
+## 4. PERMISSIONS BY ROLE — ❌ ISSUES CRITICAL + HIGH
+
+### Réponses aux 6 questions spécifiques
+
+| # | Question | Réponse attendue | Réponse observée | Statut |
+|---|----------|------------------|------------------|--------|
+| 1 | housekeeping peut accéder à /api/hotel/reservations ? | NON | NON (route ligne 43 : `["hotel_admin","manager","receptionist"]`) | ✅ |
+| 2 | maintenance peut accéder à /api/hotel/guests ? | NON | NON (route ligne 36 : `["hotel_admin","manager","receptionist"]`) | ✅ |
+| 3 | receptionist peut accéder à /api/hotel/expenses ? | NON | NON (route ligne 35 : `["hotel_admin","manager","accountant"]`) | ✅ |
+| 4 | accountant peut accéder à /api/hotel/reservations ? | NON | NON (route ligne 43 : `["hotel_admin","manager","receptionist"]`) | ✅ |
+| 5 | receptionist peut créer stay-payments ? | OUI | OUI (route ligne 27 : `["hotel_admin","manager","receptionist","accountant"]`) | ✅ |
+| 6 | Sidebar n'affiche que les modules autorisés par rôle ? | OUI | NON — sidebar filtre uniquement par `features` du plan, JAMAIS par `role` | ❌ CRITICAL |
+
+### Tableau récapitulatif API routes vs rôles (25 routes)
+
+| Route | Méthode | Rôles autorisés (code) | Conforme spec ? |
+|-------|---------|------------------------|-----------------|
+| /api/hotel/check-in | POST | hotel_admin, manager, receptionist | ✅ |
+| /api/hotel/check-out | POST | hotel_admin, manager, receptionist (+ force_unpaid: hotel_admin, manager) | ✅ |
+| /api/hotel/expenses | POST | hotel_admin, manager, accountant | ✅ |
+| /api/hotel/expenses/[id] | PATCH | hotel_admin, manager, accountant | ✅ |
+| /api/hotel/expenses/[id] | DELETE | hotel_admin | ✅ |
+| /api/hotel/export | GET | variables selon type (reservations/payments/expenses/reports) | ✅ |
+| /api/hotel/guests | POST | hotel_admin, manager, receptionist | ✅ |
+| /api/hotel/guests/[id] | PATCH | hotel_admin, manager, receptionist | ✅ |
+| /api/hotel/guests/[id] | DELETE | hotel_admin, manager | ✅ |
+| /api/hotel/housekeeping | POST | hotel_admin, manager, receptionist, housekeeping | ⚠️ HIGH-3 (receptionist) |
+| /api/hotel/housekeeping/[id] | PATCH | hotel_admin, manager, receptionist, housekeeping | ⚠️ HIGH-3 (receptionist) |
+| /api/hotel/housekeeping/[id] | DELETE | hotel_admin, manager | ✅ |
+| /api/hotel/invoices/generate | POST | hotel_admin, manager, receptionist, accountant | ⚠️ Spec receptionist = "paiements simples" (facturation non listée) |
+| /api/hotel/invoices/[id]/cancel | POST | hotel_admin, manager | ✅ |
+| /api/hotel/maintenance | POST | hotel_admin, manager, receptionist, maintenance | ⚠️ HIGH-4 (receptionist) |
+| /api/hotel/maintenance/[id] | PATCH | hotel_admin, manager, receptionist, maintenance | ⚠️ HIGH-4 (receptionist) |
+| /api/hotel/maintenance/[id] | DELETE | hotel_admin, manager | ✅ |
+| /api/hotel/reservations | POST | hotel_admin, manager, receptionist | ✅ |
+| /api/hotel/reservations/[id] | PATCH | hotel_admin, manager, receptionist | ✅ |
+| /api/hotel/reservations/availability | POST | (aucun check de rôle — tous hotel users) | ⚠️ LOW-3 |
+| /api/hotel/room-types | POST | hotel_admin, manager, receptionist, housekeeping | ❌ HIGH-2 (housekeeping) |
+| /api/hotel/room-types/[id] | PATCH | hotel_admin, manager, receptionist, housekeeping | ❌ HIGH-2 (housekeeping) |
+| /api/hotel/room-types/[id] | DELETE | hotel_admin, manager | ✅ |
+| /api/hotel/rooms | POST | hotel_admin, manager, receptionist, housekeeping | ❌ HIGH-1 (housekeeping) |
+| /api/hotel/rooms/[id] | PATCH | hotel_admin, manager, receptionist, housekeeping, maintenance | ✅ (tous les staff peuvent changer statut chambre) |
+| /api/hotel/rooms/[id] | DELETE | hotel_admin, manager | ✅ |
+| /api/hotel/settings | PATCH | hotel_admin, manager | ✅ |
+| /api/hotel/stay-payments | POST | hotel_admin, manager, receptionist, accountant | ✅ |
+| /api/hotel/users | POST | hotel_admin | ✅ |
+| /api/hotel/users/[id] | PATCH | hotel_admin | ✅ |
+| /api/hotel/users/[id] | DELETE | hotel_admin | ✅ |
+| /api/hotel/users/[id]/reset-password | POST | hotel_admin | ✅ |
+
+### Issues trouvées (Permissions par rôle)
+
+#### 🔴 CRITICAL-1 : Sidebar affiche TOUS les modules à TOUS les rôles hôtel
+- Fichiers : `src/components/hotel/sidebar.tsx` lignes 64-79
+- Description : Le filtre `ALL_NAV_ITEMS.filter(item => ...)` ne prend en entrée QUE `features` (les features du plan). Aucune variable `role` n'est filtrée. Donc un utilisateur `housekeeping` voit dans la sidebar : Tableau de bord, Chambres, Calendrier, Réservations, Clients, Paiements, Factures, Dépenses, Ménage, Maintenance, Rapports, Personnel, Paramètres — soit TOUS les modules.
+- Impact : Un utilisateur `housekeeping` (qui ne devrait voir que "Ménage" selon spec) est exposé à toute la navigation. S'il clique sur "Paiements" ou "Factures", il accède à la page correspondante (voir CRITICAL-2).
+- Sévérité : CRITICAL (UX + élargissement de la surface d'attaque ; violation directe de la spec "housekeeping: ménage uniquement" / "maintenance: maintenance uniquement").
+- Fix recommandé : Ajouter un filtre par rôle en plus du filtre par features. Soit via un mapping `{ href: allowedRoles[] }` dans sidebar.tsx, soit en passant `profile.role` au shell et en filtrant :
+
+```ts
+const ROLE_NAV: Record<UserRole, string[]> = {
+  hotel_admin: ["*"],  // tous
+  manager: ["*"],
+  receptionist: ["/app/dashboard","/app/rooms","/app/calendar","/app/reservations","/app/guests","/app/payments","/app/invoices","/app/check-in","/app/check-out"],
+  accountant: ["/app/dashboard","/app/payments","/app/invoices","/app/expenses","/app/reports"],
+  housekeeping: ["/app/dashboard","/app/rooms","/app/housekeeping"],
+  maintenance: ["/app/dashboard","/app/rooms","/app/maintenance"],
+  super_admin: [],
+};
+const navItems = ALL_NAV_ITEMS.filter(item =>
+  (ROLE_NAV[profile.role]?.includes("*") || ROLE_NAV[profile.role]?.includes(item.href)) &&
+  /* + filtre features existant */
+);
+```
+
+#### 🔴 CRITICAL-2 : Pages /app/* laissent TOUS les rôles hôtel LIRE les données
+- Fichiers affectés (pages sans garde de rôle, fetch direct server-side) :
+  - `src/app/(app)/app/reservations/page.tsx` ligne 54 — `getReservations` appelé sans check rôle
+  - `src/app/(app)/app/guests/page.tsx` ligne 36 — `getGuests`
+  - `src/app/(app)/app/payments/page.tsx` ligne 37 — `getStayPayments`
+  - `src/app/(app)/app/expenses/page.tsx` ligne 38 — `getExpenses`
+  - `src/app/(app)/app/invoices/page.tsx` — pattern identique
+  - `src/app/(app)/app/housekeeping/page.tsx` ligne 35 — `getHousekeepingTasks`
+  - `src/app/(app)/app/maintenance/page.tsx` — pattern identique
+  - `src/app/(app)/app/rooms/page.tsx` ligne 24 — `getRooms` + `getRoomTypes`
+  - `src/app/(app)/app/calendar/page.tsx` ligne 46 — `getCalendarData` (contient toutes les réservations)
+- Description : Ces pages ne font que `getCurrentProfile()` + `if (!profile.establishment_id) return <empty/>`. Ensuite elles calculent `canEdit = [...allowed_roles...].includes(profile.role)` et passent ce booléen au composant client pour masquer les boutons d'action. Mais les **données elles-mêmes sont déjà fetchées et passées au client** (RSC payload HTML) — visibles par l'utilisateur via View Source, DevTools, ou simplement rendues dans la page (la liste des réservations est affichée en read-only, mais elle est bel et bien affichée).
+- Pages correctement protégées (à imiter comme pattern) :
+  - `src/app/(app)/app/reports/page.tsx` ligne 33-43 — early return avec message "Vous n'avez pas la permission"
+  - `src/app/(app)/app/users/page.tsx` ligne 21-30 — early return
+- Impact : Un `housekeeping` peut lire toutes les réservations (nom client, téléphone, dates, montants), tous les paiements (montants, méthodes, références), toutes les factures, toutes les dépenses, tous les clients (PII : email, téléphone, CNI/passeport). Idem pour `maintenance` et `accountant` (ce dernier est légitime sur payments+expenses mais PAS sur reservations/guests/invoices/housekeeping/maintenance).
+- Sévérité : CRITICAL — divulgation d'informations personnelles (PII clients) et financières à des rôles non autorisés. Totalement contraire à la spec "housekeeping: ménage uniquement" / "maintenance: maintenance uniquement".
+- Fix recommandé : Pour chaque page sensible, ajouter un early-return avec message "permission refusée" AVANT le fetch, en miroir du pattern `reports/page.tsx:33-43` :
+
+```ts
+const profile = await getCurrentProfile();
+if (!profile || !profile.establishment_id) return <EmptyState />;
+if (!["hotel_admin","manager","receptionist"].includes(profile.role)) {
+  return <PermissionDenied module="Réservations" allowedRoles={["hotel_admin","manager","receptionist"]} />;
+}
+// ensuite seulement : fetch
+```
+
+#### 🟠 HIGH-1 : housekeeping peut CRÉER des chambres (POST /api/hotel/rooms)
+- Fichier : `src/app/api/hotel/rooms/route.ts` ligne 38
+- Allow-list : `["hotel_admin","manager","receptionist","housekeeping"]`
+- Spec : housekeeping = "ménage uniquement"
+- Impact : Un employé ménage peut créer de nouvelles chambres (avec prix, capacité, etc.) — action qui devrait être réservée à hotel_admin/manager.
+- Sévérité : HIGH.
+- Fix recommandé : Restreindre à `["hotel_admin","manager","receptionist"]` pour POST. Garder housekeeping uniquement pour PATCH /api/hotel/rooms/[id] (changement de statut chambre, légitime pour le ménage).
+
+#### 🟠 HIGH-2 : housekeeping peut CRÉER et MODIFIER des types de chambres
+- Fichiers :
+  - `src/app/api/hotel/room-types/route.ts` ligne 35 (POST create)
+  - `src/app/api/hotel/room-types/[id]/route.ts` ligne 30 (PATCH update)
+- Allow-list : `["hotel_admin","manager","receptionist","housekeeping"]`
+- Spec : housekeeping = "ménage uniquement"
+- Impact : Un employé ménage peut créer/modifier des types de chambres (prix par défaut, capacité) — paramétrage stratégique.
+- Sévérité : HIGH.
+- Fix recommandé : Restreindre à `["hotel_admin","manager","receptionist"]` pour POST et PATCH. La lecture (GET) reste ouverte à tous les rôles hôtel (déjà le cas).
+
+#### 🟡 MEDIUM-3 : receptionist peut CRÉER/MODIFIER des tâches ménage et tickets maintenance
+- Fichiers :
+  - `src/app/api/hotel/housekeeping/route.ts` ligne 18 (POST create)
+  - `src/app/api/hotel/housekeeping/[id]/route.ts` ligne 23 (PATCH update)
+  - `src/app/api/hotel/maintenance/route.ts` ligne 22 (POST create)
+  - `src/app/api/hotel/maintenance/[id]/route.ts` ligne 28 (PATCH update)
+- Allow-list : `["hotel_admin","manager","receptionist","housekeeping"]` (housekeeping) et `["hotel_admin","manager","receptionist","maintenance"]` (maintenance)
+- Spec : receptionist = "clients, réservations, check-in/out, paiements simples" (ni ménage ni maintenance)
+- Impact : Un réceptionniste peut créer des tâches de ménage ou tickets de maintenance et changer leur statut. Débattable d'un point de vue opérationnel (un réceptionniste qui signale une fuite d'eau ou un lit défait est utile), mais strictement non conforme à la spec.
+- Sévérité : MEDIUM (escalade possible : receptionist peut marquer une tâche ménage "inspected" sans réelle inspection → risque qualité ; peut fermer un ticket maintenance "resolved" sans réelle réparation).
+- Fix recommandé : Pour POST housekeeping/maintenance : retirer "receptionist" (seuls hotel_admin/manager/housekeeping ou hotel_admin/manager/maintenance créent). Pour PATCH : autoriser "receptionist" uniquement sur certains champs (ex: ajouter une note "j'ai signalé X") pas sur le `status` (qui devrait rester réservé au rôle métier correspondant).
+
+#### 🟢 LOW-3 : /api/hotel/reservations/availability ne check pas le rôle
+- Fichier : `src/app/api/hotel/reservations/availability/route.ts`
+- Description : La route POST ne fait que `if (!profile || !profile.establishment_id) return 401`. Aucun check de rôle. Donc housekeeping/maintenance/accountant peuvent appeler `checkRoomAvailability` pour n'importe quelle chambre de l'établissement.
+- Impact : Faible (la route ne retourne que des infos de conflit, pas de PII sensible). Mais c'est une incohérence avec les autres routes /api/hotel/reservations qui, elles, exigent hotel_admin/manager/receptionist.
+- Sévérité : LOW.
+- Fix recommandé : Ajouter le même allow-list `["hotel_admin","manager","receptionist"]` (ou élargir à tous les hotel users si l'objectif est de laisser le calendrier consulter la dispo).
+
+## CONCLUSION GÉNÉRALE
+
+| Catégorie | Verdict | Issues |
+|-----------|---------|--------|
+| 1. Activation SaaS | ✅ CONFORME | 0 issue (13/13 règles vérifiées) |
+| 2. Réservations | ✅ CONFORME | 1 LOW (race TOCTOU createReservation) |
+| 3. Stay payments | ✅ CONFORME | 1 MEDIUM (race sur 1 facture/résa) + 1 LOW (collision invoice number) |
+| 4. Permissions par rôle | ❌ NON CONFORME | 2 CRITICAL + 2 HIGH + 1 MEDIUM + 1 LOW |
+
+**Bilan global** :
+- Les flux critiques (activation SaaS, double réservation, paiements séjour) sont correctement implémentés côté serveur avec protections anti race-condition sur l'activation.
+- Les API routes /api/hotel/* ont majoritairement des allow-lists correctes (28/32 endpoints conformes).
+- **Le point noir** est l'application de la matrice de permissions côté UI : la sidebar ne filtre pas par rôle et les pages /app/* laissent n'importe quel hotel_user LIRE les données de n'importe quel module via le rendu serveur. Cela contredit directement la spec "housekeeping: ménage uniquement" / "maintenance: maintenance uniquement".
+- 4 endpoints autorisent housekeeping ou receptionist à des actions hors spec (créer chambres, créer/modifier types chambres, créer/modifier tâches ménage et tickets maintenance).
+
+Stage Summary:
+- 6 issues trouvés (2 CRITICAL + 2 HIGH + 1 MEDIUM + 1 LOW supplémentaire pour race invoice + 1 LOW pour race réservation + 1 LOW pour availability non protégée)
+- 0 modification de fichier effectuée (audit en lecture seule)
+- Correctifs prioritaires recommandés :
+  1. CRITICAL-1 + CRITICAL-2 : implémenter le filtrage par rôle côté sidebar ET côté pages /app/* (early return PermissionDenied avant tout fetch)
+  2. HIGH-1 + HIGH-2 : retirer housekeeping des allow-lists POST/PATCH de /api/hotel/rooms et /api/hotel/room-types
+  3. MEDIUM-3 : retirer receptionist des allow-lists POST /api/hotel/housekeeping et /api/hotel/maintenance (ou limiter le PATCH à certains champs)
+  4. MEDIUM-1 : ajouter contrainte unique DB `(reservation_id, type) where (status in ('issued','paid'))` pour éliminer la race sur la génération de facture
+  5. LOW-1 : ajouter une exclusion constraint GiST sur (room_id, daterange) pour rattraper la race TOCTOU createReservation au niveau DB
+
+---
+Task ID: FIX-PERMISSIONS
+Agent: full-stack-developer
+Task: Fix permissions — pages early-return + API role lists
+
+Work Log:
+- Créé `src/components/hotel/permission-denied.tsx` (composant réutilisable PermissionDenied avec icône ShieldX, titre "Permission refusée", message personnalisable)
+- Ajouté un early-return `<PermissionDenied />` APRÈS le check `establishment_id` mais AVANT tout fetch dans 14 pages /app/* :
+  * `src/app/(app)/app/rooms/page.tsx` — module "/app/rooms"
+  * `src/app/(app)/app/calendar/page.tsx` — module "/app/calendar"
+  * `src/app/(app)/app/reservations/page.tsx` — module "/app/reservations"
+  * `src/app/(app)/app/reservations/[id]/page.tsx` — module "/app/reservations"
+  * `src/app/(app)/app/guests/page.tsx` — module "/app/guests"
+  * `src/app/(app)/app/guests/[id]/page.tsx` — module "/app/guests"
+  * `src/app/(app)/app/payments/page.tsx` — module "/app/payments"
+  * `src/app/(app)/app/invoices/page.tsx` — module "/app/invoices"
+  * `src/app/(app)/app/invoices/[id]/page.tsx` — module "/app/invoices"
+  * `src/app/(app)/app/expenses/page.tsx` — module "/app/expenses"
+  * `src/app/(app)/app/housekeeping/page.tsx` — module "/app/housekeeping"
+  * `src/app/(app)/app/maintenance/page.tsx` — module "/app/maintenance"
+  * `src/app/(app)/app/check-in/page.tsx` — module "/app/reservations"
+  * `src/app/(app)/app/check-out/page.tsx` — module "/app/reservations"
+  Toutes utilisent `canAccessModule(profile.role, "<module>")` de `@/lib/roles` (qui s'appuie sur `ROLE_NAV_PERMISSIONS`).
+- Corrigé 9 allow-lists de rôles sur 7 routes API :
+  * `src/app/api/hotel/rooms/route.ts` (POST) : retiré "housekeeping" → `["hotel_admin", "manager", "receptionist"]` (HIGH-1)
+  * `src/app/api/hotel/room-types/route.ts` (POST) : retiré "housekeeping" → `["hotel_admin", "manager", "receptionist"]` (HIGH-2)
+  * `src/app/api/hotel/room-types/[id]/route.ts` (PATCH) : retiré "housekeeping" → `["hotel_admin", "manager", "receptionist"]` (HIGH-2)
+  * `src/app/api/hotel/housekeeping/route.ts` (POST) : retiré "receptionist" → `["hotel_admin", "manager", "housekeeping"]` (MEDIUM-3)
+  * `src/app/api/hotel/housekeeping/[id]/route.ts` (PATCH) : retiré "receptionist" → `["hotel_admin", "manager", "housekeeping"]` (MEDIUM-3)
+  * `src/app/api/hotel/maintenance/route.ts` (POST) : retiré "receptionist" → `["hotel_admin", "manager", "maintenance"]` (MEDIUM-3)
+  * `src/app/api/hotel/maintenance/[id]/route.ts` (PATCH) : retiré "receptionist" → `["hotel_admin", "manager", "maintenance"]` (MEDIUM-3)
+  * `src/app/api/hotel/reservations/availability/route.ts` (POST) : ajouté check de rôle `["hotel_admin", "manager", "receptionist"]` après le check `establishment_id` (LOW-3)
+- Bonus : corrigé une erreur TypeScript pré-existante dans `src/components/hotel/sidebar.tsx` (introduite par l'agent précédent) :
+  * Changé `role?: string | null` → `role?: UserRole | null` dans SidebarProps (avec import de `UserRole` depuis `@/types`)
+  * Mis à jour `src/components/hotel/shell.tsx` : importé `UserRole` et changé `role: string` → `role: UserRole` dans HotelShellProps.profile pour propager le bon type depuis `Profile.role` (qui est `UserRole`)
+- Vérifications finales :
+  * `bun run lint` → 0 erreur, exit code 0
+  * `npx tsc --noEmit 2>&1 | grep -E "^src/" | grep -v examples | grep -v skills` → 0 erreur dans src/ (hors examples/skills)
+
+Stage Summary:
+- 14 pages /app/* sécurisées avec early-return PermissionDenied (basé sur ROLE_NAV_PERMISSIONS — un housekeeping ne voit plus que Dashboard + Ménage, un maintenance ne voit plus que Dashboard + Maintenance, un accountant ne voit plus que Dashboard + Paiements + Factures + Dépenses + Rapports, etc.)
+- 9 endpoints API corrigés (7 routes, dont 2 ont 2 méthodes chacune) — housekeeping ne peut plus créer/modifier chambres ni types de chambres, receptionist ne peut plus créer/modifier tâches ménage ni tickets maintenance, availability route exige désormais un rôle autorisé
+- 1 bug TS bonus corrigé (sidebar.tsx + shell.tsx — typage UserRole cohérent avec le reste du codebase)
+- Lint : 0 erreur
+- TypeScript : 0 erreur dans src/ (hors examples/skills)
+
+
+---
+Task ID: 42
+Agent: main-orchestrator
+Task: Audit règles métier + correction permissions (2 CRITICAL + 2 HIGH + 3 MEDIUM + 1 LOW)
+
+Work Log:
+- Audit complet par subagent : activation SaaS ✅ conforme, réservations ✅ conforme, paiements ✅ conforme, permissions ❌ NON CONFORME
+- 8 issues identifiées : 2 CRITICAL (sidebar + pages), 2 HIGH (housekeeping rooms/room-types), 3 MEDIUM (receptionist housekeeping/maintenance + factures), 1 LOW (availability)
+
+CORRECTIONS CRITICAL (2) :
+1. Sidebar affichait TOUS les modules à TOUS les rôles
+   - Problème : ALL_NAV_ITEMS.filter ne filtrait que par features (plan), jamais par rôle → housekeeping voyait Réservations, Paiements, Factures, Personnel...
+   - Fix : créé ROLE_NAV_PERMISSIONS dans roles.ts (mapping rôle → modules autorisés) + canAccessModule() + ajout prop role à HotelSidebar + filtrage par rôle AVANT filtrage par features
+2. Pages /app/* laissaient TOUS les rôles LIRE les données (PII + financier)
+   - Problème : pages faisaient getCurrentProfile + fetch données (sans check rôle) → housekeeping/maintenance pouvaient LIRE réservations, paiements, clients (email, téléphone, CNI)
+   - Fix par subagent : créé PermissionDenied component + ajout early-return <PermissionDenied /> AVANT tout fetch dans 14 pages sensibles (rooms, calendar, reservations, reservations/[id], guests, guests/[id], payments, invoices, invoices/[id], expenses, housekeeping, maintenance, check-in, check-out)
+
+CORRECTIONS HIGH (2) :
+3. housekeeping pouvait CRÉER des chambres (POST /api/hotel/rooms)
+   - Fix : retiré housekeeping de l'allow-list POST → ["hotel_admin","manager","receptionist"]
+   - (Gardé housekeeping dans PATCH /rooms/[id] pour changement de statut — légitime)
+4. housekeeping pouvait CRÉER/MODIFIER des types de chambres (POST/PATCH /api/hotel/room-types)
+   - Fix : retiré housekeeping de l'allow-list POST + PATCH → ["hotel_admin","manager","receptionist"]
+
+CORRECTIONS MEDIUM (3) :
+5. receptionist pouvait CRÉER/MODIFIER tâches ménage et tickets maintenance
+   - Fix : retiré receptionist de POST + PATCH /api/hotel/housekeeping → ["hotel_admin","manager","housekeeping"]
+   - Fix : retiré receptionist de POST + PATCH /api/hotel/maintenance → ["hotel_admin","manager","maintenance"]
+6. Race TOCTOU sur génération de factures (doubles factures possibles)
+   - Fix : créé migration 006_unique_constraints.sql avec contrainte unique (reservation_id, type) WHERE status IN ('issued','paid') + gestion erreur 23505 côté applicatif
+7. Race TOCTOU sur createReservation (double-booking possible)
+   - Fix : ajout exclusion constraint GiST (room_id, daterange) WHERE status IN ('pending','confirmed','checked_in') + extension btree_gist + gestion erreur 23P01 côté applicatif dans createReservation ET updateReservation
+
+CORRECTION LOW (1) :
+8. /api/hotel/reservations/availability ne checkait pas le rôle
+   - Fix : ajout check ["hotel_admin","manager","receptionist"]
+
+Règles métier vérifiées CONFORMES :
+- Activation SaaS : paiement validé → code généré → activation crée establishment + profile hotel_admin + abonnement actif → code devient used
+- Code unique (DB constraint + retry 10x), usage unique (machine à états + update conditionnel + rollback), expire (expires_at checké)
+- Réservations : BLOCKING_STATUSES = [pending, confirmed, checked_in] (cancelled/no_show ne bloquent pas), checkRoomAvailability AVANT insert, check-in → room "occupied", check-out → room "cleaning" + tâche ménage auto
+- Paiements : balance = total - paid, chaque paiement dans stay_payments, paid_amount mis à jour, facture numéro unique par établissement (uq_invoices_establishment_number)
+
+Vérifications finales :
+- Lint : 0 erreur, 0 warning
+- TypeScript (npx tsc --noEmit) : 0 erreur dans src/
+- Compilation : 17 pages testées, toutes 200 ou 307 (redirect auth)
+- Nouveau fichier : supabase/migrations/006_unique_constraints.sql (2 contraintes anti-race)
+- Nouveau fichier : src/components/hotel/permission-denied.tsx
+
+Stage Summary:
+- 8 bugs corrigés (2 CRITICAL + 2 HIGH + 3 MEDIUM + 1 LOW)
+- 14 pages sécurisées avec early-return PermissionDenied
+- 9 endpoints API corrigés (7 routes)
+- 2 contraintes DB ajoutées (anti double-booking + anti double-facture)
+- 0 erreur lint, 0 erreur TypeScript
+- L'utilisateur doit redéployer sur Vercel ET appliquer la migration 006 sur Supabase

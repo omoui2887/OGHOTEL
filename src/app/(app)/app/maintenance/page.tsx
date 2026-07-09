@@ -3,6 +3,8 @@ import { getCurrentProfile } from "@/lib/auth";
 import { getMaintenanceTickets } from "@/lib/hotel/maintenance-server";
 import { getRooms } from "@/lib/hotel/rooms-server";
 import { MaintenanceList } from "@/components/hotel/maintenance-list";
+import { PermissionDenied } from "@/components/hotel/permission-denied";
+import { canAccessModule } from "@/lib/roles";
 
 export const metadata = {
   title: "Maintenance",
@@ -32,6 +34,10 @@ export default async function MaintenancePage({
         <p className="text-sm text-muted-foreground">Aucun établissement associé.</p>
       </div>
     );
+  }
+
+  if (!canAccessModule(profile.role, "/app/maintenance")) {
+    return <PermissionDenied />;
   }
 
   const [result, rooms] = await Promise.all([

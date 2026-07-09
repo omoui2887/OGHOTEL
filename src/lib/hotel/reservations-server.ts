@@ -343,6 +343,24 @@ export async function createReservation(
 
   if (error) {
     console.error("[reservations] createReservation failed:", error.message);
+    // 23P01 = exclusion_violation (contrainte no_overlap_reservations)
+    // → la race TOCTOU a été rattrapée par la DB : un autre utilisateur
+    //   a réservé la chambre entre le check et l'insert.
+    if (error.code === "23P01") {
+      return {
+        success: false,
+        error:
+          "Cette chambre vient d'être réservée pour ces dates par un autre utilisateur. " +
+          "Veuillez rafraîchir les disponibilités et réessayer.",
+      };
+    }
+    // 23505 = unique_violation (contrainte d'unicité)
+    if (error.code === "23505") {
+      return {
+        success: false,
+        error: "Une réservation identique existe déjà.",
+      };
+    }
     return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 
@@ -471,6 +489,20 @@ export async function updateReservation(
 
   if (error) {
     console.error("[reservations] updateReservation failed:", error.message);
+    if (error.code === "23P01") {
+      return {
+        success: false,
+        error:
+          "Cette chambre vient d'être réservée pour ces dates par un autre utilisateur. " +
+          "Veuillez rafraîchir les disponibilités et réessayer.",
+      };
+    }
+    if (error.code === "23505") {
+      return {
+        success: false,
+        error: "Une réservation identique existe déjà.",
+      };
+    }
     return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 

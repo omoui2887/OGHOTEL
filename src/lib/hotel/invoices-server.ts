@@ -273,6 +273,17 @@ export async function generateInvoice(
 
   if (error) {
     console.error("[invoices] generateInvoice failed:", error.message);
+    // 23505 = unique_violation (uq_invoices_active_per_reservation_type)
+    // → la race TOCTOU a été rattrapée par la DB : une facture active
+    //   existe déjà pour cette réservation + type.
+    if (error.code === "23505") {
+      return {
+        success: false,
+        error:
+          "Une facture active existe déjà pour cette réservation. " +
+          "Annulez la facture existante avant d'en générer une nouvelle.",
+      };
+    }
     return { success: false, error: "Une erreur est survenue. Réessayez ou contactez le support." };
   }
 

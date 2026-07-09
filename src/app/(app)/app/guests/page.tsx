@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { getCurrentProfile } from "@/lib/auth";
 import { getGuests } from "@/lib/hotel/guests-server";
 import { GuestsList } from "@/components/hotel/guests-list";
+import { PermissionDenied } from "@/components/hotel/permission-denied";
+import { canAccessModule } from "@/lib/roles";
 
 export const metadata = {
   title: "Clients",
@@ -31,6 +33,10 @@ export default async function GuestsPage({
         </p>
       </div>
     );
+  }
+
+  if (!canAccessModule(profile.role, "/app/guests")) {
+    return <PermissionDenied />;
   }
 
   const result = await getGuests(profile.establishment_id, {

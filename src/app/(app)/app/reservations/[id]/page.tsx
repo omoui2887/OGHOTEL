@@ -21,6 +21,8 @@ import { getCurrentProfile } from "@/lib/auth";
 import { getReservationById } from "@/lib/hotel/reservations-server";
 import { getPaymentsByReservation } from "@/lib/hotel/payments-server";
 import { ReservationDetailActions } from "@/components/hotel/reservation-detail-actions";
+import { PermissionDenied } from "@/components/hotel/permission-denied";
+import { canAccessModule } from "@/lib/roles";
 import {
   RESERVATION_STATUS_LABELS,
   RESERVATION_SOURCE_LABELS,
@@ -49,6 +51,10 @@ export default async function ReservationDetailPage({ params }: { params: Params
 
   if (!profile || !profile.establishment_id) {
     notFound();
+  }
+
+  if (!canAccessModule(profile.role, "/app/reservations")) {
+    return <PermissionDenied />;
   }
 
   // Fetch défensif : si Supabase mal configuré ou erreur, on affiche des

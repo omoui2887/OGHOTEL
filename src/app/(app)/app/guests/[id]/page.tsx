@@ -28,6 +28,8 @@ import {
 } from "@/lib/hotel/guests-server";
 import { GuestFormDialog } from "@/components/hotel/guest-form-dialog";
 import { GuestDetailActions } from "@/components/hotel/guest-detail-actions";
+import { PermissionDenied } from "@/components/hotel/permission-denied";
+import { canAccessModule } from "@/lib/roles";
 import { ID_TYPE_LABELS } from "@/lib/hotel/guests";
 import { formatDate, formatDateTime, formatFCFA } from "@/lib/utils";
 
@@ -62,6 +64,10 @@ export default async function GuestDetailPage({ params }: { params: Params }) {
 
   if (!profile || !profile.establishment_id) {
     notFound();
+  }
+
+  if (!canAccessModule(profile.role, "/app/guests")) {
+    return <PermissionDenied />;
   }
 
   const [guest, reservations, payments] = await Promise.all([

@@ -92,3 +92,88 @@ export function hasRole(
   const list = Array.isArray(allowed) ? allowed : [allowed];
   return list.includes(role);
 }
+
+/**
+ * Permissions par rôle — modules accessibles dans la sidebar /app/*.
+ *
+ * Règles métier (PRD §5) :
+ * - receptionist : clients, réservations, check-in/out, paiements simples
+ * - accountant   : paiements, dépenses, rapports
+ * - housekeeping : ménage uniquement
+ * - maintenance  : maintenance uniquement
+ * - manager      : gestion opérationnelle avancée (tous sauf personnel/paramètres)
+ * - hotel_admin  : accès complet établissement
+ */
+export const ROLE_NAV_PERMISSIONS: Record<string, string[]> = {
+  hotel_admin: [
+    "/app/dashboard",
+    "/app/rooms",
+    "/app/calendar",
+    "/app/reservations",
+    "/app/guests",
+    "/app/payments",
+    "/app/invoices",
+    "/app/expenses",
+    "/app/housekeeping",
+    "/app/maintenance",
+    "/app/reports",
+    "/app/users",
+    "/app/settings",
+  ],
+  manager: [
+    "/app/dashboard",
+    "/app/rooms",
+    "/app/calendar",
+    "/app/reservations",
+    "/app/guests",
+    "/app/payments",
+    "/app/invoices",
+    "/app/expenses",
+    "/app/housekeeping",
+    "/app/maintenance",
+    "/app/reports",
+  ],
+  receptionist: [
+    "/app/dashboard",
+    "/app/calendar",
+    "/app/reservations",
+    "/app/guests",
+    "/app/payments",
+    "/app/invoices",
+    "/app/check-in",
+    "/app/check-out",
+  ],
+  accountant: [
+    "/app/dashboard",
+    "/app/payments",
+    "/app/invoices",
+    "/app/expenses",
+    "/app/reports",
+  ],
+  housekeeping: [
+    "/app/dashboard",
+    "/app/housekeeping",
+  ],
+  maintenance: [
+    "/app/dashboard",
+    "/app/maintenance",
+  ],
+};
+
+/**
+ * Vérifie si un rôle peut accéder à un module (path) donné.
+ */
+export function canAccessModule(
+  role: UserRole | undefined | null,
+  modulePath: string
+): boolean {
+  if (!role) return false;
+  if (role === "super_admin") return true; // super_admin n'est pas dans /app/*
+  const allowed = ROLE_NAV_PERMISSIONS[role];
+  if (!allowed) return false;
+  // Un rôle peut accéder à un module si son path exact est listé,
+  // ou si un path parent est listé (ex: /app/reservations/123 → /app/reservations).
+  return allowed.some(
+    (p) => modulePath === p || modulePath.startsWith(p + "/")
+  );
+}

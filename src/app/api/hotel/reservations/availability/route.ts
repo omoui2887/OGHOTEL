@@ -29,6 +29,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
+    if (!["hotel_admin", "manager", "receptionist"].includes(profile.role)) {
+      return NextResponse.json({ error: "Permission refusée" }, { status: 403 });
+    }
+
     const body = await request.json();
     const parsed = schema.safeParse(body);
     if (!parsed.success) {

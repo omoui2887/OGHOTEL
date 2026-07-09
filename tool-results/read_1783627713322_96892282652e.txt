@@ -1861,3 +1861,142 @@
   1861→- Toutes les pages compilent et rendent correctement
   1862→- L'utilisateur doit redéployer sur Vercel pour bénéficier de tous les correctifs
   1863→
+  1864→---
+  1865→Task ID: SEC-AUDIT-2
+  1866→Agent: Explore (security audit: RLS, roles, validation, logs)
+  1867→Task: Audit sécurité — RLS, rôles, validation, logs, conflits, codes
+  1868→
+  1869→Work Log:
+  1870→- Lu /home/z/my-project/worklog.md (contexte projet : Next.js 16 + Supabase + RLS applicative)
+  1871→- Lu /home/z/my-project/supabase/migrations/001_initial_schema.sql (16 tables métier)
+  1872→- Lu /home/z/my-project/supabase/migrations/003_rls_policies.sql (893 lignes, 16 tables RLS + 13 fonctions SECURITY DEFINER + 65 politiques)
+  1873→- Lu /home/z/my-project/supabase/migrations/005_test_rls_isolation.sql (tests d'isolation multi-tenant)
+  1874→- Lu /home/z/my-project/src/lib/auth.ts (helpers getCurrentProfile/requireRole/requireSuperAdmin/requireHotelUser)
+  1875→- Lu /home/z/my-project/src/lib/roles.ts (7 rôles définis, helpers isSuperAdmin/isHotelUser)
+  1876→- Lu /home/z/my-project/src/lib/supabase/server.ts (createSupabaseServerClient + createSupabaseAdminClient avec service_role)
+  1877→- Lu /home/z/my-project/src/lib/supabase/middleware.ts (refresh session + redirect /login si non auth)
+  1878→- Lu /home/z/my-project/src/middleware.ts (matcher global sauf assets statiques)
+  1879→- Lu /home/z/my-project/src/app/(app)/layout.tsx (layout hôtel, defense-in-depth sur rôle)
+  1880→- Lu /home/z/my-project/src/app/(super-admin)/layout.tsx (layout super-admin, vérifie is_active + isSuperAdmin)
+  1881→- Audité les 38 routes API de src/app/api/ (auth + Zod + isolation establishment_id)
+  1882→- Lu src/lib/activation/server.ts (verifyActivationCode + activateAccount)
+  1883→- Lu src/lib/super-admin/activation-codes-server.ts (generateActivationCode + updateCodeStatus + generateTrialCode)
+  1884→- Lu src/lib/super-admin/activation-codes.ts (format OGH-YYYY-XXXXXX, 32^6 combinaisons)
+  1885→- Lu src/lib/hotel/reservations-server.ts + reservations.ts (checkRoomAvailability + BLOCKING_STATUSES + datesOverlap)
+  1886→- Lu src/lib/hotel/stay-server.ts (performCheckIn + performCheckOut avec génération facture)
+  1887→- Lu src/lib/hotel/invoices-server.ts (generateInvoice + cancelInvoice)
+  1888→- Lu src/lib/hotel/expenses-server.ts + maintenance-server.ts + housekeeping-server.ts + users-server.ts + payments-server.ts + settings-server.ts + rooms-server.ts
+  1889→- Lu src/lib/super-admin/payments-server.ts + logs-server.ts + plans-server.ts
+  1890→- Lu src/app/api/leads/route.ts + activation/verify + activation/register + auth/sign-in + auth/change-password + auth/sign-out
+  1891→- Lu src/app/api/super-admin/{payments,activation-codes,activation-codes/trial,leads,plans}/...
+  1892→- Lu src/app/api/hotel/{reservations,check-in,check-out,expenses,maintenance,housekeeping,rooms,room-types,guests,settings,users,stay-payments,invoices,export}/...
+  1893→- Greppé activity_logs pour vérifier que toutes les actions sensibles sont loggées
+  1894→- Greppé storage.from / upload / FormData pour chercher des uploads fichiers (AUCUN trouvé — URLs uniquement)
+  1895→
+  1896→Stage Summary:
+  1897→- 2 CRITICAL
+  1898→- 2 HIGH
+  1899→- 4 MEDIUM
+  1900→- 5 LOW
+  1901→
+  1902→
+  1903→---
+  1904→Task ID: SEC-AUDIT-1
+  1905→Agent: Explore (security audit: secrets + errors)
+  1906→Task: Audit sécurité — exposition secrets + erreurs SQL + trust boundaries
+  1907→
+  1908→Work Log:
+  1909→- Lu /home/z/my-project/worklog.md (contexte projet : Next.js 16 + Supabase + RLS applicative)
+  1910→- Lu /home/z/my-project/src/lib/supabase/server.ts (createSupabaseServerClient + createSupabaseAdminClient avec service_role + import "server-only")
+  1911→- Lu /home/z/my-project/src/lib/supabase/client.ts (createSupabaseBrowserClient — anon key uniquement)
+  1912→- Lu /home/z/my-project/src/lib/supabase/middleware.ts (refresh session, redirect /login)
+  1913→- Lu /home/z/my-project/src/middleware.ts (matcher global sauf assets statiques)
+  1914→- Lu /home/z/my-project/src/lib/auth.ts (getCurrentProfile/requireRole — ⚠️ pas de "server-only" explicite)
+  1915→- Lu /home/z/my-project/.gitignore (exclut .env*)
+  1916→- Lu /home/z/my-project/.env (tracké par git, contient uniquement DATABASE_URL SQLite — non sensible)
+  1917→- Vérifié createSupabaseAdminClient importé uniquement dans 30+ fichiers serveur (pages server, API routes, libs *-server.ts avec import "server-only")
+  1918→- Croisé "use client" files avec importers de createSupabaseAdminClient : AUCUN chevauchement ✓
+  1919→- Vérifié createSupabaseBrowserClient défini mais JAMAIS importé (aucun accès DB direct côté client) ✓
+  1920→- Audité 38 routes API : src/app/api/{auth,activation,leads,hotel,super-admin}/**
+  1921→- Audité 18 fichiers lib/*-server.ts pour le pattern `return { success: false, error: error.message }` → 35 instances trouvées
+  1922→- Vérifié establishment_id : toutes les routes hotel/* utilisent `profile.establishment_id` (session), jamais du body ✓
+  1923→- Vérifié les routes super-admin/* (payments, plans, leads, activation-codes) : établissent le rôle super_admin via profile + utilisent createSupabaseAdminClient côté serveur ✓
+  1924→- Lu src/app/api/hotel/export/route.ts (SSRF potentiel via fetch(est.logo_url) ligne 53)
+  1925→- Lu src/app/api/hotel/settings/route.ts (logo_url: z.string().url() — accepte n'importe quelle URL)
+  1926→- Lu src/app/error.tsx (n'expose que error.digest, pas error.message ✓)
+  1927→- Lu next.config.ts (typescript.ignoreBuildErrors: true — risque qualité)
+  1928→- Lu src/app/api/leads/route.ts (route publique, gère les erreurs proprement ✓)
+  1929→- Lu src/app/api/activation/{verify,register}/route.ts
+  1930→- Lu src/app/api/auth/{sign-in,sign-out,change-password}/route.ts
+  1931→
+  1932→Stage Summary:
+  1933→- 0 CRITICAL
+  1934→- 4 HIGH (1 fuite SQL sur route publique + 1 SSRF + 2 patterns systémiques)
+  1935→- 3 MEDIUM
+  1936→- 3 LOW
+  1937→
+  1938→Détail des findings (voir rapport complet dans la réponse de l'agent) :
+  1939→- HIGH-1 : src/lib/activation/server.ts lignes 173, 221, 243 — fuite authError.message / estError.message / profileError.message sur route PUBLIQUE /api/activation/register (peut révéler schéma DB)
+  1940→- HIGH-2 : 32 instances `error.message` retournées au client à travers 17 fichiers lib/*-server.ts → transitent via `NextResponse.json({ error: result.error })` dans les routes API (peut révéler noms de contraintes/colonnes Postgres)
+  1941→- HIGH-3 : src/app/api/hotel/export/route.ts:53 — fetch(est.logo_url) SSRF (URL non validée côté serveur, permet http://169.254.169.254/ ou services internes)
+  1942→- HIGH-4 : src/app/api/auth/change-password/route.ts:88 — retourne updateError.message au client
+  1943→- MEDIUM-1 : src/app/api/auth/sign-in/route.ts:73 — logique `errMsg.includes("Invalid login credentials")` morte (les deux branches retournent le même message) — code mort qui pourrait masquer une vraie fuite future
+  1944→- MEDIUM-2 : src/lib/hotel/users-server.ts:86,104,159 — fuites error.message sur opérations staff (peut révéler schéma auth.users)
+  1945→- MEDIUM-3 : next.config.ts:6 — typescript.ignoreBuildErrors: true (peut masquer des erreurs de type liées à la sécurité)
+  1946→- LOW-1 : src/lib/auth.ts n'a pas de `import "server-only"` explicite (mais transitivement protégé via @/lib/supabase/server)
+  1947→- LOW-2 : .env tracké dans git (contient uniquement DATABASE_URL SQLite — non critique)
+  1948→- LOW-3 : src/lib/db.ts (PrismaClient) inutilisé mais instancié au runtime — code mort qui pourrait accidentellement être branché
+  1949→
+  1950→Recommandations prioritaires :
+  1951→1. Remplacer toutes les fuites `error.message` par des messages génériques côté API ; logger server-side avec console.error
+  1952→2. Côté /api/activation/register (PUBLIC) : ne JAMAIS retourner authError.message, estError.message, profileError.message
+  1953→3. Valider logo_url côté serveur (whitelist domaines + refuser localhost/IPs privées) avant fetch
+  1954→4. Ajouter `import "server-only"` en tête de src/lib/auth.ts
+  1955→5. Retirer `typescript.ignoreBuildErrors: true` avant mise en production
+  1956→
+  1957→---
+  1958→Task ID: SEC-FIX-SQL-LEAKS
+  1959→Agent: full-stack-developer
+  1960→Task: Fix SQL error leaks (35 instances) + missing activity logs + cancelReservation room release
+  1961→
+  1962→Work Log:
+  1963→- src/lib/hotel/users-server.ts: 4 fixes (createStaffUser auth+profile, updateStaffUser, resetStaffPassword)
+  1964→- src/lib/hotel/room-types-server.ts: 3 fixes (createRoomType, updateRoomType, deleteRoomType)
+  1965→- src/lib/hotel/rooms-server.ts: 3 fixes (createRoom, updateRoom, deleteRoom) — preserved 23505 unique constraint user messages
+  1966→- src/lib/hotel/payments-server.ts: 1 fix (createStayPayment)
+  1967→- src/lib/hotel/housekeeping-server.ts: 3 fixes (createTask, updateTask, deleteTask) + added "housekeeping_task_deleted" activity log on delete
+  1968→- src/lib/hotel/reservations-server.ts: 3 fixes (createReservation, updateReservation, cancelReservation) + cancelReservation now releases room back to "available" if it was in "reserved" status (does not touch occupied/cleaning/maintenance)
+  1969→- src/lib/hotel/settings-server.ts: 1 fix (updateEstablishmentSettings)
+  1970→- src/lib/hotel/maintenance-server.ts: 3 fixes (createTicket, updateTicket, deleteTicket) + added "maintenance_ticket_deleted" activity log on delete
+  1971→- src/lib/hotel/invoices-server.ts: 2 fixes (generateInvoice, cancelInvoice)
+  1972→- src/lib/hotel/guests-server.ts: 3 fixes (createGuest, updateGuest, deleteGuest)
+  1973→- src/lib/hotel/expenses-server.ts: 3 fixes (createExpense, updateExpense, deleteExpense)
+  1974→- src/lib/hotel/stay-server.ts: 4 fixes (performCheckIn payment, performCheckIn reservation update, performCheckOut payment, performCheckOut reservation update) — were leaking via concatenated messages
+  1975→- src/lib/super-admin/activation-codes-server.ts: 3 fixes (generateActivationCode, updateCodeStatus, generateTrialCode)
+  1976→- src/lib/super-admin/payments-server.ts: 2 fixes (createPayment, updatePaymentStatus)
+  1977→- src/lib/super-admin/plans-server.ts: 1 fix (updatePlan)
+  1978→- src/app/api/auth/change-password/route.ts: 1 fix (supabase.auth.updateUser error no longer leaks message)
+  1979→
+  1980→Stage Summary:
+  1981→- 38 error leaks fixed (35 listed + 3 concatenation-style leaks in users-server.ts and stay-server.ts that also exposed error.message)
+  1982→- All fixes follow the pattern: console.error("[module] operation failed:", error.message) server-side + generic "Une erreur est survenue. Réessayez ou contactez le support." returned to client
+  1983→- Preserved business-logic user messages: unique constraint 23505 ("Une chambre avec ce numéro existe déjà"), auth duplicate email ("Un compte existe déjà avec cet email"), TOCTOU conflict ("Le code a été modifié par une autre session"), zod validation messages — all these are intentional and safe (not raw SQL)
+  1984→- Added missing activity logs:
+  1985→  - maintenance_ticket_deleted in deleteMaintenanceTicket
+  1986→  - housekeeping_task_deleted in deleteHousekeepingTask
+  1987→- Implemented cancelReservation room release: when reservation transitions to "cancelled", if the linked room status was "reserved", it is reset to "available"; occupied/cleaning/maintenance rooms are left untouched
+  1988→- `bun run lint` → 0 errors
+  1989→- `npx tsc --noEmit` → 0 errors in src/ (excluding examples/skills)
+  1990→- No function signatures or return types changed; no other logic modified
+  1991→
+  1992→Return summary:
+  1993→All 16 files patched successfully. 38 SQL/Supabase error.message leaks replaced with generic user-facing message + server-side console.error with [module] prefix. 2 missing activity logs added (maintenance_ticket_deleted, housekeeping_task_deleted). cancelReservation now releases the room back to "available" if it was in "reserved" status. Lint and TypeScript checks both pass with 0 errors.
+  1994→
+  1995→---
+  1996→Task ID: 40
+  1997→Agent: main-orchestrator
+  1998→Task: Audit sécurité complet + correction de toutes les vulnérabilités
+  1999→
+  2000→Work Log:
+
+[showing lines 1-2000 of 2294; use offset=2001 with limit to continue reading]
