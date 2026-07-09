@@ -6,17 +6,21 @@
 -- 2. Exclusion constraint sur les réservations pour empêcher le
 --    double-booking au niveau base de données (rattrape la race TOCTOU
 --    entre checkRoomAvailability et INSERT).
+--
+-- ⚠️ PostgreSQL ne supporte pas `ALTER TABLE ... ADD CONSTRAINT ... UNIQUE ... WHERE`
+--    (partial unique constraint). Il faut utiliser `CREATE UNIQUE INDEX ... WHERE`.
 
 -- 1. Facture active unique par (réservation, type)
 --    Permet plusieurs factures annulées, mais une seule active.
+--    Utilise un INDEX partiel (pas une contrainte) car les contraintes UNIQUE
+--    partielles ne sont pas supportées en syntaxe ALTER TABLE.
 do $$
 begin
   if not exists (
-    select 1 from pg_constraint where conname = 'uq_invoices_active_per_reservation_type'
+    select 1 from pg_indexes where indexname = 'uq_invoices_active_per_reservation_type'
   ) then
-    alter table public.invoices
-      add constraint uq_invoices_active_per_reservation_type
-      unique (reservation_id, type)
+    create unique index uq_invoices_active_per_reservation_type
+      on public.invoices (reservation_id, type)
       where (status in ('issued', 'paid'));
   end if;
 end $$;
