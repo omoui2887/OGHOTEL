@@ -4,6 +4,9 @@ import { getReservations } from "@/lib/hotel/reservations-server";
 import { getRooms } from "@/lib/hotel/rooms-server";
 import { getGuests } from "@/lib/hotel/guests-server";
 import { ReservationsList } from "@/components/hotel/reservations-list";
+import type { Reservation } from "@/lib/hotel/reservations";
+import type { Room } from "@/lib/hotel/rooms";
+import type { Guest } from "@/lib/hotel/guests";
 
 export const metadata = {
   title: "Réservations",
@@ -39,13 +42,16 @@ export default async function ReservationsPage({
 
   // Fetch défensif : si une erreur survient (Supabase indisponible, table
   // manquante, etc.), on affiche la page avec des listes vides au lieu de
-  // planter toute la page.
-  let result = { reservations: [], total: 0, page: 1, totalPages: 0 };
-  let rooms: any[] = [];
-  let guestsResult = { guests: [], total: 0, page: 1, pageSize: 200, totalPages: 0 };
+  // planter toute la page via l'error boundary global.
+  let reservations: Reservation[] = [];
+  let total = 0;
+  let resultPage = 1;
+  let totalPages = 0;
+  let rooms: Room[] = [];
+  let guests: Guest[] = [];
 
   try {
-    [result, rooms, guestsResult] = await Promise.all([
+    const [result, roomsData, guestsData] = await Promise.all([
       getReservations(profile.establishment_id, {
         search,
         status,
@@ -56,6 +62,12 @@ export default async function ReservationsPage({
       getRooms(profile.establishment_id),
       getGuests(profile.establishment_id, { pageSize: 200 }),
     ]);
+    reservations = result.reservations;
+    total = result.total;
+    resultPage = result.page;
+    totalPages = result.totalPages;
+    rooms = roomsData;
+    guests = guestsData.guests;
   } catch (err) {
     console.error("Erreur chargement réservations:", err);
   }
@@ -76,12 +88,12 @@ export default async function ReservationsPage({
 
       <Suspense fallback={null}>
         <ReservationsList
-          reservations={result.reservations}
-          total={result.total}
-          page={result.page}
-          totalPages={result.totalPages}
+          reservations={reservations}
+          total={total}
+          page={resultPage}
+          totalPages={totalPages}
           rooms={rooms}
-          guests={guestsResult.guests}
+          guests={guests}
           initialSearch={search}
           initialStatus={status}
           initialRoomId={roomId}

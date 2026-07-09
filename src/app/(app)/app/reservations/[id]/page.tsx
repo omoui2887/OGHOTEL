@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { getCurrentProfile } from "@/lib/auth";
 import { getReservationById } from "@/lib/hotel/reservations-server";
-import { getGuestPayments } from "@/lib/hotel/guests-server";
+import { getPaymentsByReservation } from "@/lib/hotel/payments-server";
 import { ReservationDetailActions } from "@/components/hotel/reservation-detail-actions";
 import {
   RESERVATION_STATUS_LABELS,
@@ -51,10 +51,19 @@ export default async function ReservationDetailPage({ params }: { params: Params
     notFound();
   }
 
-  const [reservation, payments] = await Promise.all([
-    getReservationById(id, profile.establishment_id),
-    getGuestPayments(id, profile.establishment_id).catch(() => []),
-  ]);
+  // Fetch défensif : si Supabase mal configuré ou erreur, on affiche des
+  // listes vides au lieu de planter la page via l'error boundary global.
+  let reservation: Awaited<ReturnType<typeof getReservationById>> = null;
+  let payments: Awaited<ReturnType<typeof getPaymentsByReservation>> = [];
+
+  try {
+    [reservation, payments] = await Promise.all([
+      getReservationById(id, profile.establishment_id),
+      getPaymentsByReservation(id, profile.establishment_id),
+    ]);
+  } catch (err) {
+    console.error("Erreur chargement détail réservation:", err);
+  }
 
   if (!reservation) {
     notFound();

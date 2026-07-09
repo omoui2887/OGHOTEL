@@ -208,6 +208,8 @@ export function ReservationWizardDialog({
         source,
         notes,
       };
+
+      // Étape 1 : créer la réservation (status = "confirmed" par défaut)
       const res = await fetch("/api/hotel/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -218,11 +220,40 @@ export function ReservationWizardDialog({
         toast.error(data.error ?? "Erreur");
         return;
       }
-      toast.success(
-        isWalkIn
-          ? "Séjour enregistré — client arrivé"
-          : "Réservation créée avec succès"
-      );
+
+      const reservationId = data.id;
+
+      // Étape 2 (walk-in uniquement) : effectuer le check-in immédiat
+      // La réservation passe à "checked_in", la chambre à "occupied", log activité.
+      if (isWalkIn && reservationId) {
+        const checkInBody: Record<string, unknown> = {
+          reservation_id: reservationId,
+        };
+        // Si un acompte a été saisi, on l'enregistre avec le check-in
+        if (paidAmount > 0) {
+          checkInBody.payment = {
+            amount: paidAmount,
+            method: "cash",
+          };
+        }
+        const checkInRes = await fetch("/api/hotel/check-in", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(checkInBody),
+        });
+        const checkInData = await checkInRes.json();
+        if (!checkInRes.ok) {
+          // La réservation est créée mais le check-in a échoué — on informe l'utilisateur
+          toast.warning(
+            `Réservation créée mais le check-in automatique a échoué : ${checkInData.error ?? "erreur"}. Effectuez le check-in manuellement.`
+          );
+        } else {
+          toast.success("Séjour enregistré — client arrivé et installé");
+        }
+      } else {
+        toast.success("Réservation créée avec succès");
+      }
+
       onOpenChange(false);
       router.push("/app/reservations");
       router.refresh();

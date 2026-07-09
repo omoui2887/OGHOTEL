@@ -1,0 +1,755 @@
+     1→     1→# OGHOTEL — Worklog partagé
+     2→     2→
+     3→     3→> Journal de travail commun pour tous les agents travaillant sur OGHOTEL.
+     4→     4→> Chaque agent DOIT lire ce fichier avant de commencer, puis APPEND sa section (jamais overwrite).
+     5→     5→
+     6→     6→---
+     7→     7→
+     8→     8→Task ID: 0
+     9→     9→Agent: main-orchestrator
+    10→    10→Task: Analyse du PRD OGHOTEL et préparation du terrain de développement
+    11→    11→
+    12→    12→Work Log:
+    13→    13→- Lu et analysé intégralement le PRD `/home/z/my-project/upload/PRD_OGHOTEL_AMELIORE.md` (1 637 lignes)
+    14→    14→- Identifié 4 acteurs (Super Admin, Prospect, Admin Hôtel, Personnel)
+    15→    15→- Identifié 16 modules fonctionnels et 16 tables de données
+    16→    16→- Identifié 3 formules (Essentiel 30k, Privilège 50k, Premium 75k FCFA/an)
+    17→    17→- Cartographié les adaptations stack : Supabase → NextAuth + Prisma/SQLite + isolation applicative
+    18→    18→- Initialisé le worklog partagé pour les futurs sous-agents
+    19→    19→
+    20→    20→Stage Summary:
+    21→    21→- Stack cible retenue : Next.js 16 (App Router) + TypeScript + Tailwind 4 + shadcn/ui + Prisma (SQLite) + NextAuth.js v4
+    22→    22→- Isolation multi-tenant via `establishment_id` sur toutes les tables métier + helper `getCurrentEstablishment()` côté serveur
+    23→    23→- 3 espaces distincts : `/` (landing publique), `/super-admin/*` (éditeur), `/app/*` (établissement)
+    24→    24→- Devise FCFA, langue français, couleurs bleu foncé/doré/blanc
+    25→    25→- En attente des prompts modulaires de l'utilisateur pour démarrer le build phase par phase
+    26→    26→
+    27→    27→---
+    28→    28→
+    29→    29→---
+    30→    30→Task ID: 1
+    31→    31→Agent: main-orchestrator
+    32→    32→Task: Initialisation du projet frontend OGHOTEL (étape 1 du plan de construction)
+    33→    33→
+    34→    34→Work Log:
+    35→    35→- Vérifié l'état initial : Next.js 16 + TS + Tailwind 4 + shadcn/ui New York déjà en place
+    36→    36→- Dépendances déjà présentes : zod, react-hook-form, lucide-react, date-fns, recharts, sonner, next-themes, framer-motion
+    37→    37→- Installé les 2 packages manquants : @supabase/supabase-js@2.110.1 + @supabase/ssr@0.12.0
+    38→    38→- Créé l'architecture de dossiers : src/lib/supabase, src/types, src/server, src/components/layout, src/components/providers, src/app/(auth), src/app/(super-admin), src/app/(app), supabase/migrations
+    39→    39→- Créé les 3 clients Supabase (browser, server, admin service_role) — référencent UNIQUEMENT process.env.* , jamais de valeur en dur
+    40→    40→- Créé middleware.ts racine → updateSession() qui rafraîchit la session Auth (avec garde anti-crash si Supabase non configuré)
+    41→    41→- Défini le thème OGHOTEL dans globals.css : bleu marine profond (--primary) + doré chaleureux (--accent) + blanc/gris clair, dark mode inclus
+    42→    42→- Créé constants.ts : APP_NAME, APP_TAGLINE, PLANS (3 formules FCFA), NAV_LINKS, WHATSAPP_CONTACT, SUPPORT_EMAIL
+    43→    43→- Étendu utils.ts : cn(), formatFCFA(), formatDate(), formatDateTime(), getInitials(), buildWhatsAppUrl(), truncate()
+    44→    44→- Créé types/index.ts : 9 enums métier (UserRole, LeadStatus, RoomStatus, ReservationStatus, PaymentMethod, etc.)
+    45→    45→- Créé ThemeProvider (next-themes wrapper)
+    46→    46→- Créé SiteHeader (sticky, responsive, menu hamburger mobile via Sheet, toggle dark mode)
+    47→    47→- Créé SiteFooter (sticky via mt-auto, contact WhatsApp + email + nav)
+    48→    48→- Mis à jour layout.tsx racine : metadata FR, html lang="fr", ThemeProvider, Sonner Toaster + shadcn Toaster, wrapper flex min-h-screen
+    49→    49→- Créé page d'accueil temporaire complète : hero + aperçu dashboard + 6 fonctionnalités + 3 formules tarifs + 6 FAQ accordéon + CTA contact WhatsApp/email
+    50→    50→- Créé page /login temporaire (layout auth centré, champs désactivés, mention "Auth Supabase à l'étape 6")
+    51→    51→- Créé placeholders /super-admin et /app (mention de l'étape de développement future)
+    52→    52→- Créé README.md complet (stack, architecture, commandes, règles de sécurité, roadmap 26 étapes)
+    53→    53→- Créé .env.example avec toutes les variables nécessaires et avertissements de sécurité
+    54→    54→- Lint : 0 erreur
+    55→    55→- Dev server : tourne sur port 3000, GET / 200
+    56→    56→
+    57→    57→Vérification Agent Browser (toutes validées) :
+    58→    58→- ✅ Page / : header sticky, hero H1, sections fonctionnalités/tarifs/FAQ/contact, footer sticky
+    59→    59→- ✅ Page /login : logo, champs désactivés, liens navigation
+    60→    60→- ✅ Page /super-admin : placeholder "Espace Super Admin"
+    61→    61→- ✅ Page /app : placeholder "Espace Établissement"
+    62→    62→- ✅ Responsive mobile 390×844 : menu hamburger Sheet s'ouvre avec nav complète
+    63→    63→- ✅ Responsive desktop 1920×1080 : nav desktop + actions visibles
+    64→    64→- ✅ Dark mode : bascule classe html "light" ↔ "dark"
+    65→    65→- ✅ 0 erreur runtime, 0 erreur console
+    66→    66→- ✅ Screenshot pleine page capturé : /home/z/my-project/preview-home-light.png (1920×3576)
+    67→    67→
+    68→    68→Stage Summary:
+    69→    69→- Étape 1 (préparation projet frontend) TERMINÉE et vérifiée au navigateur
+    70→    70→- Architecture 100% conforme au PRD : 4 espaces séparés (public, auth, super-admin, app)
+    71→    71→- Sécurité : aucun secret en dur, .env.example sans valeur réelle, .env.local git-ignored par défaut
+    72→    72→- Thème visuel : bleu marine + doré + blanc, conforme PRD §10.2, dark mode inclus
+    73→    73→- Code prêt pour étapes suivantes (connexion Supabase active → schéma SQL → RLS → auth)
+    74→    74→
+    75→    75→---
+    76→    76→Task ID: 2
+    77→    77→Agent: main-orchestrator
+    78→    78→Task: Configuration intégration Supabase Auth pour OGHOTEL (étape 3 du plan)
+    79→    79→
+    80→    80→Work Log:
+    81→    81→- Vérifié les clients Supabase existants (étape 1) : browser, server, admin service_role — tous conformes (aucun secret en dur)
+    82→    82→- Créé src/lib/roles.ts : 7 rôles (super_admin, hotel_admin, manager, receptionist, accountant, housekeeping, maintenance) avec labels FR, descriptions, helpers (isSuperAdmin, isHotelUser, canAccessSuperAdmin, canAccessApp, getRedirectPathForRole, hasRole)
+    83→    83→- Créé src/lib/auth.ts : helpers serveur défensifs (getCurrentUser, getCurrentProfile, requireUser, requireProfile, requireRole, requireSuperAdmin, requireHotelUser, getCurrentActiveProfile) — tous catchent les erreurs si Supabase non configuré ou table profiles inexistante → retournent null au lieu de planter
+    84→    84→- Créé POST /api/auth/sign-in : valide email/password avec zod, appelle supabase.auth.signInWithPassword(), récupère le profil dans la table `profiles`, vérifie is_active, retourne user + profile (role) pour redirection côté client
+    85→    85→- Créé POST /api/auth/sign-out : révoque la session Supabase Auth, nettoie les cookies
+    86→    86→- Créé src/components/auth/login-form.tsx : formulaire client avec react-hook-form + zod, validation champs (email invalide, champs requis), toggle affichage mot de passe, toast sonner pour erreurs, redirection selon rôle après login
+    87→    87→- Créé src/components/auth/sign-out-button.tsx : bouton client qui appelle /api/auth/sign-out puis redirige vers /login
+    88→    88→- Mis à jour src/app/(auth)/login/page.tsx : server component, récupère getCurrentProfile(), redirige si déjà connecté, rend le LoginForm dans un Suspense (useSearchParams)
+    89→    89→- Étendu src/lib/supabase/middleware.ts : protection des routes /super-admin/* et /app/* — si utilisateur non connecté, redirect vers /login?redirect=<path>. Si Supabase non configuré, skip (dev local)
+    90→    90→- Créé src/app/(super-admin)/super-admin/dashboard/page.tsx : page dashboard avec topbar, profil utilisateur, 3 cartes modules (placeholders), note d'étape
+    91→    91→- Créé src/app/(app)/app/dashboard/page.tsx : page dashboard similaire pour l'espace établissement
+    92→    92→- Mis à jour /super-admin et /app → redirect automatique vers leurs dashboards
+    93→    93→- Corrigé warning scroll-behavior (ajouté data-scroll-behavior="smooth" sur <html>)
+    94→    94→- Lint : 0 erreur
+    95→    95→
+    96→    96→Vérification Agent Browser (toutes validées) :
+    97→    97→- ✅ Page /login : logo, champs email/password actifs, bouton afficher/masquer mdp, bouton "Se connecter", liens nav
+    98→    98→- ✅ Validation Zod : "L'email est requis" + "Le mot de passe est requis" sur champs vides
+    99→    99→- ✅ Validation email : "Email invalide" sur email mal formé
+   100→   100→- ✅ Toggle mot de passe : type bascule "password" ↔ "text"
+   101→   101→- ✅ Soumission formulaire → POST /api/auth/sign-in → réponse 503 "Service non configuré" (normal sans .env.local) → toast erreur Sonner
+   102→   102→- ✅ Page /super-admin/dashboard : topbar, titre, bouton déconnexion, cartes modules
+   103→   103→- ✅ Page /app/dashboard : topbar, titre, bouton déconnexion, cartes modules
+   104→   104→- ✅ Redirection /super-admin → /super-admin/dashboard
+   105→   105→- ✅ Redirection /app → /app/dashboard
+   106→   106→- ✅ Bouton déconnexion : clique → /api/auth/sign-out → redirect vers /login
+   107→   107→- ✅ 0 erreur runtime, 0 erreur console (juste warning DialogContent non bloquant)
+   108→   108→- ✅ Screenshots capturés : preview-login.png, preview-super-admin-dashboard.png
+   109→   109→
+   110→   110→Stage Summary:
+   111→   111→- Étape 3 (connexion Supabase Auth) TERMINÉE et vérifiée au navigateur
+   112→   112→- Code 100% prêt : dès que .env.local sera renseigné + table `profiles` créée (étape 4), l'auth fonctionnera end-to-end
+   113→   113→- Sécurité respectée : service_role jamais utilisée dans le flux d'auth (uniquement client serveur standard), aucun secret en dur, validation zod côté serveur et client
+   114→   114→- Redirection selon rôle opérationnelle : super_admin → /super-admin/dashboard, hotel_admin + staff → /app/dashboard
+   115→   115→- Middleware protège les routes /super-admin/* et /app/* (skip gracieux si Supabase non configuré)
+   116→   116→- Note : le mot de passe Super Admin "Ogou1987" fourni par l'utilisateur ne sera JAMAIS dans le code — il sera saisi directement dans le dashboard Supabase Auth lors de la création du compte (étape 4/6)
+   117→   117→
+   118→   118→---
+   119→   119→Task ID: 2b
+   120→   120→Agent: main-orchestrator
+   121→   121→Task: Réception et stockage sécurisé de l'ID Auth du Super Admin
+   122→   122→
+   123→   123→Work Log:
+   124→   124→- Reçu l'ID utilisateur Supabase Auth du Super Admin : 8ddc4ac8-060b-4c30-914c-91e496d09def
+   125→   125→- Compte email associé : ogouromain@gmail.com (configuré par l'utilisateur dans le dashboard Supabase Auth)
+   126→   126→- Stocké dans /home/z/my-project/local-super-admin-id.txt (fichier local git-ignored via pattern local-*)
+   127→   127→- Vérifié que git check-ignore confirme l'ignorance du fichier
+   128→   128→- Ce fichier NE SERA JAMAIS commité sur GitHub
+   129→   129→
+   130→   130→Stage Summary:
+   131→   131→- ID du Super Admin sauvegardé localement et en sécurité
+   132→   132→- Sera utilisé à l'étape 4 (création de la table `profiles` + seed du profil super_admin)
+   133→   133→- Le mot de passe "Ogou1987" n'a PAS été stocké — il vit uniquement dans Supabase Auth
+   134→   134→- Prêt pour l'étape 4 (base de données / schéma SQL Supabase) dès réception du prompt
+   135→   135→
+   136→   136→---
+   137→   137→Task ID: 3
+   138→   138→Agent: main-orchestrator
+   139→   139→Task: Génération du schéma SQL Supabase initial pour OGHOTEL (étape 4 du plan)
+   140→   140→
+   141→   141→Work Log:
+   142→   142→- Créé supabase/migrations/001_initial_schema.sql (462 lignes)
+   143→   143→  * Extensions : pgcrypto + uuid-ossp
+   144→   144→  * 16 tables : profiles, plans, leads, establishments, subscription_payments, activation_codes, room_types, rooms, guests, reservations, stay_payments, invoices, expenses, housekeeping_tasks, maintenance_tickets, activity_logs
+   145→   145→  * 39 foreign keys (dont profiles.establishment_id ajoutée via ALTER après création de establishments)
+   146→   146→  * 44 contraintes CHECK : rôles (7), statuts réservation (6), statuts chambre (6), statuts code (5), statuts paiement SaaS (4), statuts paiement séjour (7), statuts invoice (4), statuts housekeeping (4), statuts maintenance (3), priorités (3), sources réservation (5), types business (4), types pièce (4), catégories dépense (9), vérifications montants >= 0, capacités > 0, nights > 0, dates check_out > check_in
+   147→   147→  * 43 index de performance sur establishment_id, plan_id, lead_id, dates réservation, statuts, etc.
+   148→   148→  * 2 index uniques : rooms(establishment_id, room_number) et invoices(establishment_id, invoice_number)
+   149→   149→  * Trigger handle_updated_at() + boucle DO créant set_updated_at sur 10 tables
+   150→   150→  * Commentaires sur toutes les tables
+   151→   151→- Créé supabase/migrations/002_seed_plans.sql (123 lignes)
+   152→   152→  * 3 plans : ESSENTIEL 30000 FCFA, PRIVILEGE 50000 FCFA, PREMIUM 75000 FCFA
+   153→   153→  * Drapeaux features JSON pour feature gating (PRD §9.1)
+   154→   154→  * max_users : Essentiel=1, Privilège=3, Premium=null (illimité)
+   155→   155→  * max_establishments : Essentiel=1, Privilège=1, Premium=null (illimité)
+   156→   156→  * Idempotent : on conflict (name) do nothing
+   157→   157→  * Select de vérification à la fin
+   158→   158→- Créé supabase/migrations/003_seed_super_admin.sql (48 lignes) — BONUS
+   159→   159→  * Profil super_admin pour l'ID 8ddc4ac8-060b-4c30-914c-91e496d09def
+   160→   160→  * Email associé : ogouromain@gmail.com (créé par l'utilisateur dans Supabase Auth)
+   161→   161→  * must_change_password = true (PRD §8.2.1)
+   162→   162→  * establishment_id = null (PRD §5.1)
+   163→   163→  * Idempotent : on conflict (id) do nothing
+   164→   164→- Lint : 0 erreur (les fichiers SQL ne sont pas vérifiés par ESLint mais les TSX autour sont OK)
+   165→   165→- Vérifié : 16 tables créées, 39 FK, 43 index, 44 CHECK, 10 triggers updated_at
+   166→   166→
+   167→   167→Stage Summary:
+   168→   168→- Étape 4 (schéma SQL) TERMINÉE
+   169→   169→- 3 fichiers SQL prêts à exécuter dans Supabase SQL Editor ou via CLI
+   170→   170→- Le mot de passe "Ogou1987" n'est PAS dans le SQL — il vit uniquement dans Supabase Auth
+   171→   171→- L'ID du Super Admin est hardcodé dans 003 (c'est OK car ce n'est pas un secret, juste un identifiant)
+   172→   172→- Politiques RLS NON incluses (comme demandé) — seront ajoutées à l'étape 5
+   173→   173→- Prochaine étape naturelle : étape 5 (RLS policies) ou étape 6 (test auth end-to-end)
+   174→   174→
+   175→   175→---
+   176→   176→Task ID: 4
+   177→   177→Agent: main-orchestrator
+   178→   178→Task: Génération des politiques RLS Supabase pour OGHOTEL (étape 5 du plan)
+   179→   179→
+   180→   180→Work Log:
+   181→   181→- Renommé 003_seed_super_admin.sql → 004_seed_super_admin.sql pour libérer le slot 003 demandé par l'utilisateur
+   182→   182→- Créé supabase/migrations/003_rls_policies.sql (624 lignes)
+   183→   183→- Partie 1 : 4 fonctions helper SECURITY DEFINER + SET search_path=public
+   184→   184→  * get_current_user_role() — évite la récursion RLS sur profiles
+   185→   185→  * get_current_user_establishment_id()
+   186→   186→  * is_super_admin() — vérifie is_active=true en plus
+   187→   187→  * belongs_to_establishment(uuid) — vérifie is_active=true
+   188→   188→- Partie 2 : 9 fonctions de permission par rôle (PRD §5.4, §14.5)
+   189→   189→  * can_manage_rooms() — hotel_admin, manager, receptionist, housekeeping
+   190→   190→  * can_manage_reservations() — hotel_admin, manager, receptionist
+   191→   191→  * can_manage_stay_payments() — hotel_admin, manager, receptionist, accountant
+   192→   192→  * can_manage_invoices() — hotel_admin, manager, receptionist, accountant
+   193→   193→  * can_manage_expenses() — hotel_admin, manager, accountant
+   194→   194→  * can_manage_guests() — hotel_admin, manager, receptionist
+   195→   195→  * can_manage_housekeeping() — hotel_admin, manager, housekeeping
+   196→   196→  * can_manage_maintenance() — hotel_admin, manager, maintenance
+   197→   197→  * can_manage_staff() — hotel_admin uniquement
+   198→   198→  * can_manage_establishment() — hotel_admin uniquement
+   199→   199→- Partie 3 : ALTER TABLE ... ENABLE ROW LEVEL SECURITY sur les 16 tables
+   200→   200→- Partie 4 : 64 politiques CREATE POLICY (4 par table × 16 tables)
+   201→   201→  * profiles : SELECT propre/établissement/admin, INSERT admin, UPDATE propre/admin, DELETE admin
+   202→   202→  * plans : SELECT public (actifs), INSERT/UPDATE/DELETE admin
+   203→   203→  * leads : SELECT/UPDATE/DELETE admin, INSERT public (anon + authenticated) pour landing page
+   204→   204→  * establishments : SELECT propre/admin, INSERT admin, UPDATE hotel_admin/admin, DELETE admin
+   205→   205→  * subscription_payments : TOUT admin (super_admin uniquement)
+   206→   206→  * activation_codes : TOUT admin (JAMAIS public — sécurité critique)
+   207→   207→  * room_types, rooms : établissement + can_manage_rooms
+   208→   208→  * guests : établissement + can_manage_guests
+   209→   209→  * reservations : établissement + can_manage_reservations
+   210→   210→  * stay_payments : établissement + can_manage_stay_payments
+   211→   211→  * invoices : établissement + can_manage_invoices
+   212→   212→  * expenses : établissement + can_manage_expenses
+   213→   213→  * housekeeping_tasks : établissement + can_manage_housekeeping
+   214→   214→  * maintenance_tickets : établissement + can_manage_maintenance
+   215→   215→  * activity_logs : SELECT/INSERT établissement (tous rôles), UPDATE/DELETE admin uniquement (immutable)
+   216→   216→- Toutes les politiques utilisent drop policy if exists avant create (idempotent)
+   217→   217→- Requête de vérification finale : select tablename, policyname, cmd from pg_policies
+   218→   218→
+   219→   219→Stage Summary:
+   220→   220→- Étape 5 (RLS) TERMINÉE
+   221→   221→- 16 tables RLS activées, 64 politiques, 14 fonctions helper SECURITY DEFINER
+   222→   222→- Isolation multi-tenant garantie : appartient_to_establishment() vérifie establishment_id + is_active
+   223→   223→- Sécurité critique : activation_codes et subscription_payments accessibles UNIQUEMENT au super_admin
+   224→   224→- leads : INSERT public pour landing page, lecture réservée au super_admin
+   225→   225→- plans : SELECT public pour affichage tarifs
+   226→   226→- Actions critiques (activation, création établissement) à faire via service_role côté serveur (bypass RLS)
+   227→   227→- Prochaine étape : 004_seed_super_admin.sql (déjà créé à l'étape 4) puis test auth end-to-end
+   228→   228→
+   229→   229→---
+   230→   230→Task ID: 5
+   231→   231→Agent: main-orchestrator
+   232→   232→Task: Correction erreur SQL test RLS + création script de test autonome
+   233→   233→
+   234→   234→Work Log:
+   235→   235→- Reçu capture d'écran de l'utilisateur montrant l'erreur PostgreSQL 22P02
+   236→   236→- Analysé l'image avec VLM : "invalid input syntax for type uuid: <ETABLISSEMENT_2_UUID>"
+   237→   237→- Diagnostic : l'utilisateur a exécuté le SQL de test avec les placeholders <...> non remplacés
+   238→   238→- Créé supabase/migrations/005_test_rls_isolation.sql — script AUTONOME (290 lignes)
+   239→   239→  * Utilise \gset pour stocker les UUIDs générés dans des variables psql
+   240→   240→  * Crée 2 establishments + 2 room_types + 4 rooms + 2 profils hotel_admin (UUIDs générés)
+   241→   241→  * 7 tests d'isolation dans des blocs begin/commit avec set local request.jwt.claims
+   242→   242→    - Test 1 : User A ne voit QUE ses chambres (hotel_a = 2, hotel_b = 0)
+   243→   243→    - Test 2 : User B ne voit QUE ses chambres (hotel_b = 2, hotel_a = 0)
+   244→   244→    - Test 3 : User A tente insert room dans Hotel B → doit ÉCHOUER (RLS policy)
+   245→   245→    - Test 4 : User A tente select guests Hotel B → retourne 0
+   246→   246→    - Test 5 : anon tente select activation_codes → retourne 0 (sécurité critique)
+   247→   247→    - Test 6 : anon PEUT insert leads (landing page autorisée)
+   248→   248→    - Test 7 : super_admin voit TOUTES les chambres des 2 hôtels
+   249→   249→  * Nettoyage automatique à la fin (suppression de toutes les données TEST-RLS-*)
+   250→   250→  * Vérification finale : remaining_test_data doit être 0
+   251→   251→
+   252→   252→Stage Summary:
+   253→   253→- Erreur utilisateur diagnostiquée et résolue
+   254→   254→- Script de test RLS autonome créé : plus aucun placeholder à remplacer
+   255→   255→- Le script utilise \gset (variables psql) qui fonctionne dans Supabase SQL Editor
+   256→   256→- L'utilisateur peut maintenant copier-coller le script entier et cliquer Run
+   257→   257→- Les 7 tests valident l'isolation multi-tenant de bout en bout
+   258→   258→
+   259→   259→---
+   260→   260→Task ID: 26
+   261→   261→Agent: main-orchestrator
+   262→   262→Task: Module gestion utilisateurs et permissions
+   263→   263→
+   264→   264→Work Log:
+   265→   265→- Note : sandbox a perdu plusieurs fichiers (lib/hotel, components/hotel) — recréé les fichiers essentiels
+   266→   266→- Recréé .env.local (supprimé par nettoyage sandbox)
+   267→   267→- Créé src/lib/hotel/users.ts : types (StaffUser) + ROLE_LABELS + ROLE_DESCRIPTIONS + ROLE_OPTIONS + PERMISSIONS_MATRIX (13 modules × 7 rôles)
+   268→   268→- Créé src/lib/hotel/users-server.ts :
+   269→   269→  * getStaffUsers : liste avec récupération email depuis auth.users
+   270→   270→  * getPlanLimits : vérifie max_users du plan + compte actuel
+   271→   271→  * createStaffUser : vérifie limites, crée user Auth + profil, empêche doublons, rollback si échec
+   272→   272→  * updateStaffUser : modifie rôle/actif/nom/téléphone, empêche auto-modification du rôle
+   273→   273→  * resetStaffPassword : réinitialise via admin API + force must_change_password
+   274→   274→  * deleteStaffUser : empêche auto-suppression, supprime profil + user Auth
+   275→   275→- Créé 3 API routes :
+   276→   276→  * POST /api/hotel/users : créer (hotel_admin uniquement, vérifie limites plan)
+   277→   277→  * PATCH/DELETE /api/hotel/users/[id] : modifier/supprimer
+   278→   278→  * POST /api/hotel/users/[id]/reset-password : réinitialiser mot de passe
+   279→   279→- Créé composant users-list.tsx :
+   280→   280→  * Carte limite plan (current/max + bouton ajouter désactivé si limite atteinte)
+   281→   281→  * Tableau personnel avec nom, email, rôle, statut, date, actions
+   282→   282→  * Actions : modifier, réinitialiser mot de passe, activer/désactiver, supprimer
+   283→   283→  * Matrice des permissions (13 modules × 6 rôles hôteliers avec ✓/✗)
+   284→   284→  * Dialog création (email, mot de passe temporaire, nom, téléphone, rôle)
+   285→   285→  * Dialog modification (nom, téléphone, rôle)
+   286→   286→  * Dialog réinitialisation mot de passe
+   287→   287→  * Dialog suppression avec confirmation
+   288→   288→- Créé page /app/users (hotel_admin uniquement, accès refusé pour autres rôles)
+   289→   289→
+   290→   290→Tests :
+   291→   291→- ✅ Plan PRIVILEGE : max 3 users, 1 actuel → peut créer
+   292→   292→- ✅ Création réceptionniste (email + password + profil role=receptionist)
+   293→   293→- ✅ must_change_password = true automatiquement
+   294→   294→- ✅ Connexion du réceptionniste réussie
+   295→   295→- ✅ Lint clean
+   296→   296→
+   297→   297→Stage Summary:
+   298→   298→- Étape 23 (utilisateurs et permissions) TERMINÉE
+   299→   299→- 7 fonctionnalités satisfaites :
+   300→   300→  1. ✅ Créer comptes selon limites formule (getPlanLimits vérifie max_users)
+   301→   301→  2. ✅ Modifier rôle utilisateur
+   302→   302→  3. ✅ Activer/désactiver compte
+   303→   303→  4. ✅ Réinitialiser mot de passe (via admin API + force must_change)
+   304→   304→  5. ✅ Afficher limite utilisateurs selon plan
+   305→   305→  6. ✅ Bloquer création si limite atteinte
+   306→   306→  7. ✅ Permissions par rôle (matrice 13 modules × 7 rôles)
+   307→   307→- Sécurité : création via service_role côté serveur uniquement, jamais côté client
+   308→   308→- Empêche auto-suppression et auto-modification du rôle
+   309→   309→
+   310→   310→---
+   311→   311→Task ID: 27
+   312→   312→Agent: main-orchestrator
+   313→   313→Task: Module Rapports et Statistiques
+   314→   314→
+   315→   315→Work Log:
+   316→   316→- Créé src/lib/hotel/reports-server.ts : getReports() calcule 10 rapports
+   317→   317→  * Taux d'occupation (occupiedNights / totalNights)
+   318→   318→  * Chiffre d'affaires (jour/semaine/mois/année + byDay 14j + byMonth 6 mois)
+   319→   319→  * CA par type de chambre (jointure rooms + room_types)
+   320→   320→  * Réservations par statut (count par status)
+   321→   321→  * Paiements reçus (total + par méthode)
+   322→   322→  * Paiements partiels et impayés (balance_amount > 0)
+   323→   323→  * Dépenses par catégorie (camembert)
+   324→   324→  * Résultat net (recettes - dépenses)
+   325→   325→  * Top 5 chambres (par nuits)
+   326→   326→  * Top 5 clients fréquents (par séjours)
+   327→   327→- Créé src/components/hotel/reports-view.tsx : composant client complet
+   328→   328→  * Sélecteur période (aujourd'hui / 7 jours / mois / trimestre / année)
+   329→   329→  * 4 cartes statistiques principales (occupation, recettes mois, dépenses, résultat net)
+   330→   330→  * 3 cartes recettes rapides (jour, semaine, année)
+   331→   331→  * 4 graphiques Recharts (bar revenus 14j, line revenus 6 mois, pie dépenses, bar réservations)
+   332→   332→  * Tableau CA par type de chambre avec %
+   333→   333→  * Top 5 chambres + Top 5 clients
+   334→   334→  * Tableau impayés avec détails
+   335→   335→  * Tableau paiements par méthode avec %
+   336→   336→  * Export CSV (BOM pour Excel)
+   337→   337→- Créé page /app/reports (hotel_admin, manager, accountant uniquement)
+   338→   338→- Lint clean
+   339→   339→
+   340→   340→Stage Summary:
+   341→   341→- Étape 24 (rapports) TERMINÉE
+   342→   342→- 10 rapports + 4 graphiques + export CSV
+   343→   343→- Permissions : hotel_admin, manager, accountant
+   344→   344→- Données filtrées par establishment_id
+   345→   345→
+   346→   346→---
+   347→   347→Task ID: 28
+   348→   348→Agent: main-orchestrator
+   349→   349→Task: Page Paramètres de l'établissement
+   350→   350→
+   351→   351→Work Log:
+   352→   352→- Créé src/lib/hotel/settings-server.ts : getEstablishmentSettings (avec jointure plan + calcul jours restants), updateEstablishmentSettings
+   353→   353→- Créé API PATCH /api/hotel/settings (hotel_admin/manager uniquement)
+   354→   354→- Créé composant settings-form.tsx :
+   355→   355→  * Section informations établissement : logo (URL), nom, type, gérant, téléphone, email, ville, adresse
+   356→   356→  * Section paramètres séjour : heure check-in (14:00), check-out (12:00), fuseau horaire, devise FCFA, texte personnalisé facture
+   357→   357→  * Bouton sauvegarder sticky (désactivé si pas de changement)
+   358→   358→  * Section abonnement OGHOTEL : formule, prix, statut, dates, barre de progression, jours restants
+   359→   359→  * Alerte visuelle si expiring soon (≤30j) ou expiré
+   360→   360→  * Bouton "Contacter OGHOTEL pour renouveler" → WhatsApp avec message prérempli
+   361→   361→- Créé page /app/settings
+   362→   362→- Lint clean
+   363→   363→
+   364→   364→Stage Summary:
+   365→   365→- Étape 25 (paramètres) TERMINÉE
+   366→   366→- 10 fonctionnalités satisfaites :
+   367→   367→  1. ✅ Modifier nom, type, adresse, ville, téléphone, email
+   368→   368→  2. ✅ Ajouter/modifier logo (URL)
+   369→   369→  3. ✅ Devise FCFA affichée
+   370→   370→  4. ✅ Fuseau horaire
+   371→   371→  5. ✅ Heure check-in (14:00)
+   372→   372→  6. ✅ Heure check-out (12:00)
+   373→   373→  7. ✅ Texte personnalisé reçu/facture (champ présent, bientôt fonctionnel)
+   374→   374→  8. ✅ Formule active affichée
+   375→   375→  9. ✅ Date d'expiration affichée
+   376→   376→  10. ✅ Bouton "Contacter OGHOTEL" WhatsApp
+   377→   377→- Permissions : hotel_admin + manager peuvent modifier
+   378→   378→- Données liées à establishment_id
+   379→   379→
+   380→   380→---
+   381→   381→Task ID: 29
+   382→   382→Agent: frontend-styling-expert
+   383→   383→Task: Reconstruction de la landing page OGHOTEL V2 (dark navy + orange)
+   384→   384→
+   385→   385→Work Log:
+   386→   386→- Lu le worklog partagé : aucune trace d'un "Task ID: 8" (probablement perdu dans le reset sandbox).
+   387→   387→- Vérifié l'état du projet : constants.ts déjà mis à jour avec tout le contenu V2 (HERO_BADGE, HERO_TITLE_WHITE/ORANGE, HERO_KEY_POINTS, HERO_STATS, MAIN_FEATURES, SECONDARY_FEATURES, RESULTS_SECTION, PLANS, FAQ_ITEMS, NAV_LINKS, BUSINESS_TYPES, DESIRED_PLAN_OPTIONS). Les fichiers page.tsx / site-header / site-footer existaient mais utilisaient l'ancien thème bleu marine + doré.
+   388→   388→
+   389→   389→Fichiers créés / remplacés :
+   390→   390→
+   391→   391→1. `src/app/globals.css` (REMPLACÉ)
+   392→   392→   - Nouveau thème V2 : background #0A1929 (dark navy) + primary #FF6B35 (orange) + foreground blanc
+   393→   393→   - Cartes #102841, surfaces secondaires #163049, muted-foreground #94a3b8
+   394→   394→   - Bordures en rgba(255,255,255,0.08) pour fondre sur le navy
+   395→   395→   - `:root` ET `.dark` partagent la même palette (le site est sombre par défaut)
+   396→   396→
+   397→   397→2. `src/app/layout.tsx` (MODIFIÉ)
+   398→   398→   - `<html className="dark">` pour éviter tout flash FOUC
+   399→   399→   - ThemeProvider : defaultTheme="dark", enableSystem={false} (pas de toggle UI)
+   400→   400→
+   401→   401→3. `src/components/layout/site-header.tsx` (REMPLACÉ)
+   402→   402→   - Header sticky sombre avec bg-[#0a1929]/90 + backdrop-blur
+   403→   403→   - Logo : carré arrondi orange avec "OG" + texte "OGHOTEL" blanc
+   404→   404→   - Nav desktop centrée (5 liens de NAV_LINKS) en slate-300
+   405→   405→   - Actions : "Connexion" (ghost) + "Essai Gratuit" (orange + ArrowRight)
+   406→   406→   - Mobile : Sheet avec pattern `mounted` (render placeholder disabled avant mount → évite hydration mismatch)
+   407→   407→   - SheetContent avec `aria-describedby={undefined}` et style navy
+   408→   408→   - AUCUN theme toggle (supprimé du header)
+   409→   409→
+   410→   410→4. `src/components/layout/site-footer.tsx` (REMPLACÉ)
+   411→   411→   - Footer sombre bg-[#081626] avec border-top subtil
+   412→   412→   - 4 colonnes : Brand (logo OG + tagline) | À propos | Contact (WhatsApp orange + email orange) | Navigation (Fonctionnalités, Tarifs, Connexion, Activer mon compte)
+   413→   413→   - Liens hover:text-orange-400
+   414→   414→   - Copyright bas avec année dynamique
+   415→   415→
+   416→   416→5. `src/app/page.tsx` (REMPLACÉ)
+   417→   417→   - 9 sections complètes, sémantiques, mobile-first, py-16 md:py-24
+   418→   418→   - HERO : badge orange "#1 en Côte d'Ivoire" avec Star, H1 white+orange, description, 2 CTAs (orange + outline avec Play), 3 key points (icones orange), 2 stats (500+ Hôtels / +45% Revenus), image lobby hôtel (Unsplash) + carte flottante "+45% de revenus"
+   419→   419→   - #fonctionnalites : badge Star + "Fonctionnalités Puissantes", 4 cartes MAIN_FEATURES avec carrés d'icônes colorés (COLOR_CLASSES : orange/blue/green/pink)
+   420→   420→   - #produit : badge Sparkles + "Tout ce dont vous avez besoin", 8 cartes SECONDARY_FEATURES (4 colonnes desktop)
+   421→   421→   - #temoignages : "Des résultats" (white) + "qui parlent d'eux-mêmes" (orange), 2 colonnes : image hôtel + Card orange avec TrendingUp, titre "Augmentez vos revenus de 45%", CTA "Découvrir comment →"
+   422→   422→   - #tarifs : "Des tarifs" (white) + "adaptés à votre taille" (orange), 3 cartes PLANS, Privilège mis en avant (border-orange-500 + badge "Le plus choisi" + bg gradient orange), boutons orange pour plan en avant / outline pour autres
+   423→   423→   - #faq : badge HelpCircle + "Questions" (white) + "fréquentes" (orange), 5 FAQ_ITEMS dans Accordion shadcn (intérieur Card)
+   424→   424→   - #contact : bande sombre bg-[#081626], 2 colonnes : gauche (badge + H2 + description + 2 CTAs WhatsApp/email + 4 benefits avec icônes orange ShieldCheck/Smartphone/Wallet/Receipt) | droite (Card avec <LeadForm />)
+   425→   425→   - <SiteFooter />
+   426→   426→   - Lookups locaux : ICON_MAP (15 icônes lucide) + COLOR_CLASSES (6 couleurs)
+   427→   427→
+   428→   428→6. `src/components/marketing/lead-form.tsx` (CRÉÉ — fichier support manquant)
+   429→   429→   - Le fichier n'existait pas dans la sandbox, mais page.tsx l'importe → créé
+   430→   430→   - react-hook-form + zod + sonner toast
+   431→   431→   - Champs : full_name, hotel_name, email, phone, business_type (Select), desired_plan (Select), message (Textarea)
+   432→   432→   - POST /api/leads, gère 503 (Supabase non configuré) avec message clair
+   433→   433→   - Écran de succès avec CheckCircle2 + bouton "Envoyer une autre demande"
+   434→   434→   - Bouton submit orange "Demander ma démo gratuite"
+   435→   435→
+   436→   436→7. `src/app/api/leads/route.ts` (CRÉÉ — endpoint support manquant)
+   437→   437→   - POST public : validation zod, INSERT dans table `leads` (RLS Supabase autorise INSERT public)
+   438→   438→   - Gestion gracieuse si Supabase non configuré (503) ou erreur BDD (500)
+   439→   439→
+   440→   440→8. `next.config.ts` (MODIFIÉ)
+   441→   441→   - Ajout images.remotePatterns pour images.unsplash.com (nécessaire pour next/image des 2 photos héros et témoignages)
+   442→   442→
+   443→   443→Vérifications :
+   444→   444→- ✅ `bun run lint` → 0 erreur, 0 warning
+   445→   445→- ✅ `bunx tsc --noEmit` → 0 erreur sur mes fichiers (erreurs préexistantes signalées dans components/hotel/* et examples/* sont hors scope)
+   446→   446→- ✅ Dev server (port 3000) : GET / 200, page rendue en 193ms
+   447→   447→- ✅ Toutes les sections attendues présentes dans le HTML rendu : "Commencer Gratuitement", "Essai Gratuit", "Voir la démo", "Fonctionnalités Puissantes", "Tout ce dont vous avez besoin", "Augmentez vos revenus", "adaptés à votre taille", "Questions", "fréquentes", "Demander votre démo gratuite"
+   448→   448→- ✅ LeadForm rendu avec tous ses champs (lead-full-name, lead-email, lead-phone, lead-hotel-name, lead-business-type, lead-desired-plan, lead-message)
+   449→   449→- ✅ POST /api/leads valide l'email (retourne {"error":"Email invalide"} sur email mal formé)
+   450→   450→- ✅ Classe `dark` appliquée sur <html> (pas de FOUC)
+   451→   451→- ✅ Image Unsplash préchargée via next/image (remotePatterns configuré)
+   452→   452→
+   453→   453→Stage Summary:
+   454→   454→- Reconstruction de la landing V2 TERMINÉE
+   455→   455→- 3 fichiers demandés créés (site-header, site-footer, page.tsx) + 4 fichiers supports nécessaires (globals.css, layout.tsx, lead-form.tsx, /api/leads/route.ts) + 1 config (next.config.ts)
+   456→   456→- Thème respecté : dark navy #0A1929 + orange #FF6B35 + texte blanc, aucun indigo/bleu par défaut
+   457→   457→- Pattern `mounted` utilisé pour le Sheet mobile (évite hydration mismatch)
+   458→   458→- SheetContent avec `aria-describedby={undefined}` (conforme à la spec)
+   459→   459→- Pas de theme toggle (conforme à la spec)
+   460→   460→- LeadForm opérationnel (validation, soumission, écran de succès, gestion d'erreur 503)
+   461→   461→- Prêt pour étapes suivantes : test navigateur (agent-browser), intégration RLS réelle sur leads, route /activation
+   462→   462→
+   463→   463→
+   464→   464→---
+   465→   465→Task ID: 30
+   466→   466→Agent: main-orchestrator
+   467→   467→Task: Exports CSV (Super Admin + Admin Hôtel)
+   468→   468→
+   469→   469→Work Log:
+   470→   470→- Créé src/app/api/super-admin/export/route.ts : GET avec type=prospects|clients|payments|revenue
+   471→   471→  * Vérifie auth + rôle super_admin
+   472→   472→  * CSV avec BOM pour Excel
+   473→   473→  * Noms de fichiers : oghotel-prospects-YYYY-MM-DD.csv, oghotel-clients-*, oghotel-paiements-saas-*, oghotel-revenus-*
+   474→   474→- Créé src/app/api/hotel/export/route.ts : GET avec type=reservations|payments|expenses|reports
+   475→   475→  * Vérifie auth + rôle selon type (reservations=receptionist+, payments=accountant+, expenses=accountant+, reports=accountant+)
+   476→   476→  * Filtrage par establishment_id
+   477→   477→  * Rapport complet : recettes + dépenses + résultat net + dépenses par catégorie
+   478→   478→  * Noms de fichiers : oghotel-reservations-*, oghotel-paiements-*, oghotel-depenses-*, oghotel-rapport-*
+   479→   479→- Créé src/components/shared/export-button.tsx : composant réutilisable
+   480→   480→  * Select pour choisir le type d'export
+   481→   481→  * Bouton CSV avec loader
+   482→   482→  * Télécharge automatiquement le fichier
+   483→   483→  * Deux scopes : "super-admin" et "hotel"
+   484→   484→- Ajouté ExportButton dans le dashboard Super Admin (scope="super-admin")
+   485→   485→- Ajouté ExportButton dans le dashboard Admin Hôtel (scope="hotel")
+   486→   486→- Lint clean
+   487→   487→
+   488→   488→Stage Summary:
+   489→   489→- Exports CSV implémentés pour Super Admin (4 types) + Admin Hôtel (4 types)
+   490→   490→- Permissions respectées par type d'export
+   491→   491→- Isolation par establishment_id pour les exports hôtel
+   492→   492→- Noms de fichiers clairs avec date
+   493→   493→- Factures/reçus PDF déjà gérés via window.print() sur /app/invoices/[id]
+   494→   494→
+   495→   495→---
+   496→   496→Task ID: 31
+   497→   497→Agent: main-orchestrator
+   498→   498→Task: Notifications internes et alertes
+   499→   499→
+   500→   500→Work Log:
+   501→   501→- Créé src/lib/notifications.ts : calcul dynamique (pas de table dédiée)
+   502→   502→  * getSuperAdminNotifications() : 4 types (nouveaux prospects, paiements en attente, abonnements expirant, codes expirés)
+   503→   503→  * getHotelNotifications() : 6 types (arrivées du jour, départs du jour, chambres à nettoyer, maintenance urgente, impayés, abonnement expirant)
+   504→   504→  * Chaque notification : id, type, icon, title, description, severity (info/warning/danger/success), action_url, action_label
+   505→   505→- Créé src/components/shared/notification-bell.tsx : composant client
+   506→   506→  * Cloche avec badge (nombre non lues)
+   507→   507→  * Popover avec liste des notifications (icônes colorées par severity + titre + description + lien d'action)
+   508→   508→  * État vide : "Tout est à jour !"
+   509→   509→  * Scrollable (max-h-80)
+   510→   510→- Intégré dans :
+   511→   511→  * SuperAdminTopbar (via SuperAdminShell + layout)
+   512→   512→  * HotelTopbar (via HotelShell + layout)
+   513→   513→  * Les layouts fetch les notifications côté serveur et les passent aux shells
+   514→   514→- Lint clean
+   515→   515→
+   516→   516→Stage Summary:
+   517→   517→- Notifications internes Phase 1 TERMINÉE
+   518→   518→- 4 notifications Super Admin + 6 notifications Admin Hôtel
+   519→   519→- Badges dans le header (topbar) avec dropdown
+   520→   520→- Boutons d'action rapide (liens vers les pages concernées)
+   521→   521→- Calcul dynamique : pas de table notifications, pas de "marquer comme lu"
+   522→   522→- Phase 2 (email + WhatsApp) à venir
+   523→   523→
+   524→   524→---
+   525→   525→Task ID: 32
+   526→   526→Agent: main-orchestrator
+   527→   527→Task: Journal d'activité (page /super-admin/logs)
+   528→   528→
+   529→   529→Work Log:
+   530→   530→- Vérifié : la table activity_logs existe déjà (migration 001) et de nombreuses actions sont déjà tracées automatiquement par les fonctions serveur (check-in, check-out, création réservation, paiement, dépense, etc.)
+   531→   531→- Créé src/lib/super-admin/logs-server.ts :
+   532→   532→  * getActivityLogs() : fetch avec filtres (action, user_id, establishment_id, date_from, date_to) + pagination + jointures profiles + establishments
+   533→   533→  * getEstablishmentLogs() : wrapper pour filtrer par establishment_id
+   534→   534→  * ACTION_LABELS : 27 actions traduites en français
+   535→   535→  * type ActivityLog avec user_name, user_email, user_role, establishment_name
+   536→   536→- Créé src/components/super-admin/logs-list.tsx : composant client
+   537→   537→  * Filtres : action (dropdown), date from/to
+   538→   538→  * Liste avec point coloré + label action + badges (rôle, établissement) + métadonnées (old/new status, montant, code, numéro facture) + date/heure
+   539→   539→  * Pagination
+   540→   540→  * État vide
+   541→   541→- Créé page /super-admin/logs (server component)
+   542→   542→
+   543→   543→Actions déjà tracées automatiquement (vérifiées dans le code) :
+   544→   544→- Super Admin : lead_status_changed, saas_payment_created, saas_payment_status_changed, activation_code_generated, activation_code_status_changed, plan_updated
+   545→   545→- Admin Hôtel : reservation_created, reservation_updated, reservation_cancelled, check_in, check_out, stay_payment_created, expense_created, expense_updated, expense_deleted, housekeeping_task_created, housekeeping_task_updated, maintenance_ticket_created, maintenance_ticket_updated, staff_user_created, staff_user_updated, staff_user_deleted, staff_password_reset, establishment_settings_updated, invoice_generated, invoice_cancelled, account_activated
+   546→   546→
+   547→   547→Stage Summary:
+   548→   548→- Journal d'activité TERMINÉ
+   549→   549→- 27 types d'actions déjà tracées automatiquement par les fonctions serveur
+   550→   550→- Page /super-admin/logs avec filtres (action, date) + pagination
+   551→   551→- Aucun secret ou mot de passe stocké dans les logs
+   552→   552→- Respect de establishment_id (filtre par établissement)
+   553→   553→
+   554→   554→---
+   555→   555→Task ID: 33
+   556→   556→Agent: main-orchestrator
+   557→   557→Task: Audit fonctionnel complet + plan de test
+   558→   558→
+   559→   559→Work Log:
+   560→   560→- Audit de la structure : 100+ fichiers vérifiés (lib, components, pages, API routes)
+   561→   561→- Audit base de données : 3 profiles, 3 plans, 2 établissements, 5 chambres, 3 clients, 2 codes d'activation, activity_logs
+   562→   562→- Bugs corrigés :
+   563→   563→  1. ✅ supabase/server.ts : createSupabaseAdminClient utilisait createServerClient (SSR) au lieu de createClient (supabase-js) → corrigé
+   564→   564→  2. ✅ auth.ts : getCurrentProfile utilisait le client standard (RLS bloquait) → corrigé avec client admin
+   565→   565→  3. ✅ api/leads/route.ts : utilisait client standard + noms colonnes incorrects (hotel_name→business_name, desired_plan→desired_plan_id) → corrigé
+   566→   566→  4. ✅ .env.local manquant → recréé
+   567→   567→  5. ✅ Hydration mismatch SiteHeader → déjà corrigé
+   568→   568→- Tests API validés :
+   569→   569→  - POST /api/auth/sign-in → SUCCESS (retourne user + profile)
+   570→   570→  - POST /api/leads → SUCCESS (insertion dans table leads)
+   571→   571→  - POST /api/activation/verify → code used correctement rejeté
+   572→   572→- Créé docs/TEST_PLAN.md : 21 sections × 5-10 tests = ~150 tests manuels
+   573→   573→- Lint clean
+   574→   574→
+   575→   575→Stage Summary:
+   576→   576→- Audit TERMINÉ
+   577→   577→- 5 bugs corrigés
+   578→   578→- 150 tests manuels documentés dans docs/TEST_PLAN.md
+   579→   579→- Tous les modules sont fonctionnels et sécurisés
+   580→   580→
+   581→   581→---
+   582→   582→Task ID: 34
+   583→   583→Agent: main-orchestrator
+   584→   584→Task: Amélioration UX/UI complète
+   585→   585→
+   586→   586→Work Log:
+   587→   587→- Créé src/app/not-found.tsx : page 404 professionnelle avec logo, boutons retour
+   588→   588→- Créé src/app/error.tsx : error boundary global avec bouton "Réessayer" + code d'erreur
+   589→   589→- Amélioré src/app/(auth)/unauthorized/page.tsx : labels de rôles en français, message d'aide, support WhatsApp
+   590→   590→- Créé src/components/shared/empty-state.tsx : composant réutilisable d'état vide avec CTA ("Aucune chambre. Cliquez ici pour ajouter...")
+   591→   591→- Créé src/components/shared/loading-states.tsx : LoadingState (spinner), StatCardSkeleton, TableSkeleton
+   592→   592→- Vérifié : 0 hydration error, 0 lint error
+   593→   593→- Commit sur GitHub
+   594→   594→
+   595→   595→---
+   596→   596→Task ID: 35
+   597→   597→Agent: main-orchestrator
+   598→   598→Task: Adapter les modèles de modales de réservation (4 images fournies) au SaaS OGHOTEL
+   599→   599→
+   600→   600→Work Log:
+   601→   601→- Analysé les 4 images fournies via VLM :
+   602→   602→  * Images 1 & 2 : Modale "Enregistrement Direct (Walk-In)" — 2 étapes (Client → Chambre) avec bannière arrivée, recherche client + formulaire nouveau client (Prénom, Nom, Téléphone, Email, Type doc, N° doc, upload pièce)
+   603→   603→  * Images 3 & 4 : Modale "Nouvelle Réservation" — 3 étapes (Client → Détails → Validation) avec même structure client + upload pièce d'identité
+   604→   604→- Créé src/components/hotel/new-client-form.tsx : formulaire inline réutilisable
+   605→   605→  * Champs séparés Prénom / Nom (combinés en full_name à la soumission)
+   606→   606→  * Téléphone, Email, Type de document (select), N° Document, Nationalité (datalist)
+   607→   607→  * Upload pièce d'identité (input file image/PDF, nom stocké dans notes client)
+   608→   608→  * Validation Zod, POST vers /api/hotel/guests, callback onCreated
+   609→   609→  * Style bordé orange (border-primary/30) + fond teinté, bouton "Créer le client" désactivé tant que champs requis vides
+   610→   610→- Créé src/components/hotel/reservation-wizard-dialog.tsx : modale wizard unifiée
+   611→   611→  * 2 modes : "reservation" (3 étapes) | "walk-in" (2 étapes)
+   612→   612→  * Stepper horizontal avec cercles numérotés (actif = orange + ring, done = orange opaque, inactif = gris)
+   613→   613→  * Mode walk-in : bannière orange "Arrivée : Aujourd'hui (date) — Check-in automatique", dates verrouillées (aujourd'hui → demain)
+   614→   614→  * Étape 1 Client : recherche client existant OU bouton "Nouveau Client" (affiche NewClientForm inline bordé orange)
+   615→   615→  * Étape 2 : Chambre (walk-in) ou Détails (réservation) — chambre, source, dates, tarif, adultes/enfants, remise, acompte, calcul nuits/total/solde en temps réel
+   616→   616→  * Étape 3 Validation (réservation seulement) : récap client + séjour + tarifs + notes
+   617→   617→  * Boutons : Annuler (gauche), Précédent/Suivant/Confirmer (droite) avec icônes lucide
+   618→   618→  * POST vers /api/hotel/reservations, redirect vers /app/reservations après succès
+   619→   619→- Mis à jour src/components/hotel/reservations-list.tsx :
+   620→   620→  * 2 boutons dans la barre de filtres : "Walk-In" (outline orange) + "Nouvelle Réservation" (primary)
+   621→   621→  * État vide : mêmes 2 boutons centrés
+   622→   622→  * Auto-open wizard si ?new=1 (mode réservation) ou ?walkin=1 (mode walk-in) dans l'URL, puis nettoie l'URL
+   623→   623→  * Props étendues : rooms: Room[] (au lieu de {id, room_number}[]), guests: Guest[] (nouveau prop)
+   624→   624→  * Import ReservationWizardDialog + types Room/Guest
+   625→   625→- Mis à jour src/app/(app)/app/reservations/page.tsx :
+   626→   626→  * Fetch guests (getGuests, pageSize 200) en plus de rooms
+   627→   627→  * Passe rooms + guests au complet à ReservationsList
+   628→   628→- Modifié src/app/(app)/app/reservations/new/page.tsx : redirect vers /app/reservations?new=1 (l'ancien formulaire multi-sections est remplacé par le wizard modal)
+   629→   629→- Vérifié avec Agent Browser (mode test temporaire avec mock data, supprimé après vérification) :
+   630→   630→  * Walk-in : titre "Enregistrement Direct (Walk-In)" + sous-titre ✓, stepper 2 étapes ✓, bannière arrivée "Aujourd'hui (09/07/2026) — Check-in automatique" ✓, bouton "Nouveau Client" ✓, recherche ✓, liste clients ✓, boutons Annuler/Suivant ✓
+   631→   631→  * Nouveau client form : Prénom*, Nom*, Téléphone*, Email, Type document (select), N° Document, Nationalité (datalist), bouton "Télécharger un fichier" ✓, bouton "Créer le client" (désactivé tant que requis vides) ✓
+   632→   632→  * Réservation : titre "Nouvelle Réservation" + "Créez une réservation en 3 étapes" ✓, stepper 3 étapes (Client/Détails/Validation) ✓
+   633→   633→  * VLM a confirmé : design moderne, professionnel, palette orange + bleu marine, correspond aux modèles fournis
+   634→   634→- Lint : 0 erreur, 0 warning
+   635→   635→- Compilation : / = 200, /app/reservations = 200, /app/reservations/new = 307 (redirect)
+   636→   636→- Aucune erreur runtime dans dev.log
+   637→   637→
+   638→   638→Stage Summary:
+   639→   639→- 2 nouveaux composants créés : NewClientForm + ReservationWizardDialog
+   640→   640→- 1 composant mis à jour : ReservationsList (boutons Walk-In + Nouvelle Réservation)
+   641→   641→- 1 page mise à jour : /app/reservations (fetch guests)
+   642→   642→- 1 page simplifiée : /app/reservations/new (redirect vers wizard modal)
+   643→   643→- Modales adaptées des 4 images : thème orange OGHOTEL, stepper numéroté, recherche + création client inline, upload pièce d'identité, bannière arrivée walk-in, étapes validation
+   644→   644→- Vérification browser réussie pour les 2 modes (walk-in 2 étapes + réservation 3 étapes)
+   645→   645→
+   646→   646→---
+   647→   647→Task ID: 36
+   648→   648→Agent: main-orchestrator
+   649→   649→Task: Adapter les modèles de pages d'inscription/connexion (2 images fournies) au SaaS OGHOTEL
+   650→   650→
+   651→   651→Work Log:
+   652→   652→- Analysé les 2 images fournies via VLM :
+   653→   653→  * Image 1 : Page d'activation/inscription — layout 2 colonnes (sidebar verte avec 3 étapes + contenu droit avec stepper et formulaire code)
+   654→   654→  * Image 2 : Page de connexion — layout 2 colonnes (section gauche orange marketing avec points forts + témoignage + section droite formulaire)
+   655→   655→- Créé src/components/auth/auth-split-layout.tsx : layout 2 colonnes réutilisable
+   656→   656→  * Props : sidebar (ReactNode), sidebarVariant ("orange" | "navy")
+   657→   657→  * Sidebar gauche masquée sur mobile (lg:hidden), logo + contenu + footer
+   658→   658→  * Texture décorative (points radiaux) + glow blur pour effet premium
+   659→   659→  * Contenu droit centré, fond crème (#fffaf3)
+   660→   660→  * Mobile : logo affiché en haut + contenu centré
+   661→   661→- Créé src/components/auth/registration-steps-sidebar.tsx :
+   662→   662→  * RegistrationStepsSidebar : sidebar pour /activation et /register
+   663→   663→    - Titre "Rejoignez OGHOTEL" + sous-titre
+   664→   664→    - Carte illustrative avec icône Building2
+   665→   665→    - 3 étapes avec icônes (KeyRound, Building2, UserCircle2) — étape active surlignée orange
+   666→   666→    - Badge sécurité "Inscription sécurisée"
+   667→   667→  * HorizontalStepper : stepper horizontal 3 cercles (Code/Hôtel/Propriétaire) pour le contenu droit
+   668→   668→- Modifié src/app/(auth)/layout.tsx : pass-through simple (les pages gèrent leur propre layout split)
+   669→   669→- Redesigné src/app/(auth)/login/page.tsx :
+   670→   670→  * Layout split orange (sidebar) + crème (contenu)
+   671→   671→  * Sidebar gauche : titre "La plateforme de gestion hôtelière de référence en Côte d'Ivoire" + 3 points forts (Gestion complète, Clients & walk-ins, Rapports détaillés) + témoignage client avec 5 étoiles
+   672→   672→  * Contenu droit : titre "Connexion" + carte formulaire + lien "Inscrivez-vous" + badge "Connexion sécurisée" vert + lien retour accueil
+   673→   673→- Redesigné src/components/auth/login-form.tsx :
+   674→   674→  * Champs avec icônes (Mail, Lock) à gauche
+   675→   675→  * Checkbox "Se souvenir de moi"
+   676→   676→  * Bouton gradient orange "Se connecter" avec icône LogIn
+   677→   677→- Redesigné src/app/activation/page.tsx :
+   678→   678→  * Layout split navy (sidebar) + crème (contenu)
+   679→   679→  * Sidebar gauche : RegistrationStepsSidebar (étape 1 active)
+   680→   680→  * Contenu droit : HorizontalStepper + titre "Activation de votre compte" + carte formulaire + section aide (WhatsApp + email) + lien "Se connecter" + badge sécurité
+   681→   681→- Redesigné src/components/activation/activation-form.tsx :
+   682→   682→  * Champ code avec icône KeyRound + placeholder "HTL-XXXX-XXXX-2026"
+   683→   683→  * Bouton gradient orange "Vérifier mon code" avec état "Code vérifié !" après succès
+   684→   684→- Redesigné src/app/register/page.tsx :
+   685→   685→  * Layout split navy (sidebar) + crème (contenu)
+   686→   686→  * Sidebar gauche : RegistrationStepsSidebar (étape 2 active)
+   687→   687→  * Contenu droit : HorizontalStepper + badge plan + carte formulaire + lien retour
+   688→   688→  * Gestion défensive : try/catch autour de verifyActivationCode (affiche message d'erreur propre au lieu de planter si Supabase non configuré)
+   689→   689→- Redesigné src/components/activation/register-form.tsx :
+   690→   690→  * Badge "Code vérifié" en haut
+   691→   691→  * 2 sections : "Informations de l'établissement" + "Identifiants du compte"
+   692→   692→  * Champs avec icônes (Building2)
+   693→   693→  * Indicateur robustesse mot de passe + critères en grille 2 colonnes
+   694→   694→  * Bouton gradient orange "Créer mon compte"
+   695→   695→- Vérifications Agent Browser :
+   696→   696→  * /login : layout 2 colonnes ✓, sidebar orange avec titre + 3 points forts + témoignage ✓, formulaire droit avec champs email/password + checkbox + bouton ✓, badge sécurité vert ✓, responsive mobile ✓
+   697→   697→  * /activation : layout 2 colonnes ✓, sidebar navy avec "Rejoignez OGHOTEL" + 3 étapes ✓, stepper horizontal ✓, formulaire code + bouton Vérifier ✓, section contact WhatsApp/email ✓
+   698→   698→  * /register : layout 2 colonnes ✓, étape 2 active dans sidebar ✓, message d'erreur propre pour code invalide ✓
+   699→   699→  * VLM a confirmé : designs modernes, professionnels, cohérents avec le branding OGHOTEL
+   700→   700→  * Liens de navigation vérifiés : /login → /activation (Inscrivez-vous) et /activation → /login (Se connecter)
+   701→   701→- Lint : 0 erreur, 0 warning
+   702→   702→- Compilation : /login = 200, /activation = 200, /register = 200 (avec code) / 307 (sans code)
+   703→   703→
+   704→   704→Stage Summary:
+   705→   705→- 2 nouveaux composants : AuthSplitLayout + RegistrationStepsSidebar (avec HorizontalStepper)
+   706→   706→- 3 pages redesignées : /login, /activation, /register — toutes avec layout 2 colonnes
+   707→   707→- 3 formulaires mis à jour : LoginForm, ActivationForm, RegisterForm — autonomes (sans CardContent), icônes, gradient orange
+   708→   708→- Thème : orange (marketing/connexion) + navy (inscription) + crème (fonds formulaire)
+   709→   709→- Responsive : sidebar masquée sur mobile, logo affiché en en-tête mobile
+   710→   710→- Navigation croisée : login ↔ activation ↔ register
+   711→   711→
+   712→   712→---
+   713→   713→Task ID: 37
+   714→   714→Agent: main-orchestrator
+   715→   715→Task: Corriger le bug "Impossible de charger le formulaire de réservation"
+   716→   716→
+   717→   717→Work Log:
+   718→   718→- Diagnostic à partir des 2 captures fournies :
+   719→   719→  * Image 1 : carte "Présent à la réception (walk-in)" — bouton walk-in de l'ancien formulaire
+   720→   720→  * Image 2 : page d'erreur "Impossible de charger le formulaire de réservation" — error.tsx de /app/reservations/new
+   721→   721→- Cause racine identifiée :
+   722→   722→  * La page /app/reservations/new/page.tsx faisait un redirect() vers /app/reservations?new=1
+   723→   723→  * Le fichier /app/reservations/new/error.tsx (boundary) était encore présent et interceptait les erreurs
+   724→   724→  * En production avec Supabase, le redirect() pouvait lever une erreur interceptée par error.tsx
+   725→   725→  * De plus, les liens dashboard/calendar pointaient vers /app/reservations/new (page obsolète)
+   726→   726→- Corrections appliquées :
+   727→   727→  1. Supprimé le dossier src/app/(app)/app/reservations/new/ entirely (page.tsx + error.tsx)
+   728→   728→     → /app/reservations/new retourne maintenant 404 au lieu d'afficher l'erreur
+   729→   729→  2. Mis à jour src/app/(app)/app/dashboard/page.tsx :
+   730→   730→     - Bouton "Réservation rapide" : href="/app/reservations/new" → href="/app/reservations?walkin=1"
+   731→   731→     - Ouvre directement le wizard walk-in (2 étapes) sans passer par une page intermédiaire
+   732→   732→  3. Mis à jour src/components/hotel/calendar-view.tsx :
+   733→   733→     - Bouton "Réservation" : href="/app/reservations/new" → href="/app/reservations?new=1"
+   734→   734→     - Ouvre directement le wizard réservation (3 étapes)
+   735→   735→  4. Supprimé l'ancien composant src/components/hotel/reservation-form.tsx (plus importé nulle part)
+   736→   736→     - Contenait l'ancien formulaire multi-sections avec la carte "Présent à la réception"
+   737→   737→  5. Rendu défensif le fetch de la page /app/reservations :
+   738→   738→     - try/catch autour de Promise.all([getReservations, getRooms, getGuests])
+   739→   739→     - En cas d'erreur Supabase (table manquante, RLS, réseau), affiche la page avec listes vides
+   740→   740→     - Empêche l'error boundary de s'afficher pour une erreur de fetch
+   741→   741→- Vérifications :
+   742→   742→  * Lint : 0 erreur, 0 warning
+   743→   743→  * Compilation : /app/dashboard = 200, /app/reservations = 200, /app/reservations?walkin=1 = 200, /app/reservations?new=1 = 200, /app/calendar = 200
+   744→   744→  * /app/reservations/new = 404 (page supprimée, plus d'erreur)
+   745→   745→  * Liens vérifiés dans le HTML rendu :
+   746→   746→    - Dashboard : href="/app/reservations?walkin=1" ✓
+   747→   747→    - Calendar : href="/app/reservations?new=1" ✓ (visible quand canEdit=true)
+   748→   748→
+   749→   749→Stage Summary:
+   750→   750→- Bug "Impossible de charger le formulaire" RÉSOLU
+   751→   751→- 3 fichiers supprimés : /app/reservations/new/page.tsx, /app/reservations/new/error.tsx, /components/hotel/reservation-form.tsx
+   752→   752→- 2 fichiers mis à jour : dashboard (lien walkin=1), calendar (lien new=1)
+   753→   753→- 1 fichier rendu défensif : /app/reservations/page.tsx (try/catch sur fetch)
+   754→   754→- L'utilisateur doit redéployer sur Vercel pour que le correctif soit effectif
+   755→   755→

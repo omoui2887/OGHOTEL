@@ -41,30 +41,35 @@ export default async function AppLayout({
   }
 
   // Récupérer l'établissement + features du plan + notifications
+  // Défensif : si Supabase mal configuré, on rend le shell sans establishmentName.
   let establishmentName: string | null = null;
   let features: Record<string, boolean> = {};
   let notifications: any[] = [];
   let unreadCount = 0;
 
   if (profile.establishment_id) {
-    const adminClient = createSupabaseAdminClient();
-    const { data: est } = await adminClient
-      .from("establishments")
-      .select(`name, plan:plans(features)`)
-      .eq("id", profile.establishment_id)
-      .single();
-
-    if (est) {
-      establishmentName = est.name;
-      features = (est as any).plan?.features ?? {};
-    }
-
-    // Fetch notifications
     try {
-      const result = await getHotelNotifications(profile.establishment_id);
-      notifications = result.notifications;
-      unreadCount = result.unread_count;
-    } catch {}
+      const adminClient = createSupabaseAdminClient();
+      const { data: est } = await adminClient
+        .from("establishments")
+        .select(`name, plan:plans(features)`)
+        .eq("id", profile.establishment_id)
+        .single();
+
+      if (est) {
+        establishmentName = est.name;
+        features = (est as any).plan?.features ?? {};
+      }
+
+      // Fetch notifications
+      try {
+        const result = await getHotelNotifications(profile.establishment_id);
+        notifications = result.notifications;
+        unreadCount = result.unread_count;
+      } catch {}
+    } catch (err) {
+      console.error("Layout: Supabase non configuré ou erreur:", err);
+    }
   }
 
   return (

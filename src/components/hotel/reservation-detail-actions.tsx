@@ -4,17 +4,16 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Pencil,
   Ban,
   LogIn,
   LogOut,
   ArrowLeft,
   Loader2,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,18 +43,13 @@ export function ReservationDetailActions({ reservation, canEdit }: Props) {
   const canCheckIn = reservation.status === "confirmed";
   const canCheckOut = reservation.status === "checked_in";
 
-  async function handleAction(action: "cancel" | "check_in" | "check_out") {
+  async function handleCancel() {
     setIsLoading(true);
     try {
-      const body =
-        action === "cancel"
-          ? { action: "cancel" }
-          : { status: action };
-
       const res = await fetch(`/api/hotel/reservations/${reservation.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ action: "cancel" }),
       });
 
       const data = await res.json();
@@ -64,7 +58,7 @@ export function ReservationDetailActions({ reservation, canEdit }: Props) {
         return;
       }
 
-      toast.success(data.message);
+      toast.success(data.message ?? "Réservation annulée");
       router.refresh();
     } catch {
       toast.error("Erreur réseau");
@@ -74,21 +68,62 @@ export function ReservationDetailActions({ reservation, canEdit }: Props) {
     }
   }
 
+  async function handleCheckIn() {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/hotel/check-in", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reservation_id: reservation.id }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Erreur");
+        return;
+      }
+
+      toast.success(data.message ?? "Check-in effectué");
+      router.refresh();
+    } catch {
+      toast.error("Erreur réseau");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleCheckOut() {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/hotel/check-out", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reservation_id: reservation.id }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Erreur");
+        return;
+      }
+
+      toast.success(data.message ?? "Check-out effectué");
+      router.refresh();
+    } catch {
+      toast.error("Erreur réseau");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   if (!canEdit) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Button asChild variant="outline" size="sm">
-        <Link href={`/app/reservations/${reservation.id}/edit`}>
-          <Pencil className="mr-2 h-4 w-4" />
-          Modifier
-        </Link>
-      </Button>
-
       {canCheckIn && (
         <Button
           size="sm"
-          onClick={() => handleAction("check_in")}
+          onClick={handleCheckIn}
           disabled={isLoading}
         >
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
@@ -99,7 +134,7 @@ export function ReservationDetailActions({ reservation, canEdit }: Props) {
       {canCheckOut && (
         <Button
           size="sm"
-          onClick={() => handleAction("check_out")}
+          onClick={handleCheckOut}
           disabled={isLoading}
         >
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogOut className="mr-2 h-4 w-4" />}
@@ -131,7 +166,7 @@ export function ReservationDetailActions({ reservation, canEdit }: Props) {
           <AlertDialogFooter>
             <AlertDialogCancel>Retour</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => handleAction("cancel")}
+              onClick={handleCancel}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isLoading}
             >

@@ -752,3 +752,245 @@ Stage Summary:
 - 2 fichiers mis à jour : dashboard (lien walkin=1), calendar (lien new=1)
 - 1 fichier rendu défensif : /app/reservations/page.tsx (try/catch sur fetch)
 - L'utilisateur doit redéployer sur Vercel pour que le correctif soit effectif
+
+---
+Task ID: AUDIT-1
+Agent: Explore (audit)
+Task: Audit complet module Réservations
+
+Work Log:
+- 21 fichiers examinés :
+  * src/app/(app)/app/reservations/page.tsx
+  * src/app/(app)/app/reservations/[id]/page.tsx
+  * src/components/hotel/reservations-list.tsx
+  * src/components/hotel/reservation-wizard-dialog.tsx (814 lignes)
+  * src/components/hotel/new-client-form.tsx
+  * src/components/hotel/reservation-detail-actions.tsx
+  * src/components/hotel/calendar-view.tsx (805 lignes)
+  * src/components/hotel/check-in-list.tsx
+  * src/components/hotel/check-out-list.tsx
+  * src/app/(app)/app/dashboard/page.tsx
+  * src/app/(app)/app/check-in/page.tsx
+  * src/app/(app)/app/check-out/page.tsx
+  * src/app/(app)/layout.tsx
+  * src/app/error.tsx
+  * src/app/api/hotel/reservations/route.ts
+  * src/app/api/hotel/reservations/[id]/route.ts
+  * src/app/api/hotel/reservations/availability/route.ts
+  * src/app/api/hotel/guests/route.ts
+  * src/app/api/hotel/guests/[id]/route.ts
+  * src/app/api/hotel/check-in/route.ts
+  * src/app/api/hotel/check-out/route.ts
+  * src/app/api/hotel/stay-payments/route.ts
+  * src/lib/hotel/reservations-server.ts
+  * src/lib/hotel/reservations.ts
+  * src/lib/hotel/guests-server.ts
+  * src/lib/hotel/guests.ts
+  * src/lib/hotel/rooms-server.ts
+  * src/lib/hotel/rooms.ts
+  * src/lib/hotel/stay-server.ts
+  * src/lib/hotel/payments-server.ts
+  * src/lib/hotel/calendar-server.ts
+  * src/lib/auth.ts
+  * src/lib/supabase/server.ts
+  * src/components/ui/badge.tsx
+- Vérifications :
+  * Glob "**/error.tsx" → 1 seul fichier (src/app/error.tsx) — message "Une erreur est survenue", pas "Impossible de charger le formulaire de réservation"
+  * Grep "Impossible de charger le formulaire de réservation" → 0 occurrence dans src/ (existe seulement dans worklog.md)
+  * Grep "reservations/new" → 0 occurrence dans src/ (supprimé Task 37)
+  * Grep "reservation-form" → 0 occurrence dans src/ (supprimé Task 37)
+  * Glob "**/error.{tsx,ts}" → 1 seul fichier
+  * Git log → commit f491ed9 a bien supprimé /app/reservations/new/ et reservation-form.tsx
+  * find .next → aucun fichier error.tsx résiduel
+  * find src -name "edit" -type d → 0 (page /reservations/[id]/edit inexistante)
+- Analyse TypeScript (bunx tsc --noEmit) : 8 erreurs relevées dans le module réservations
+- Analyse ESLint : 0 erreur, 0 warning
+
+Issues found:
+
+[CRITICAL] src/components/hotel/reservation-detail-actions.tsx:50-54,91,102
+  - handleAction() envoie { status: "check_in" } ou { status: "check_out" }
+  - Mais le schema Zod de PATCH /api/hotel/reservations/[id] attend status ∈ ["pending","confirmed","checked_in","checked_out","cancelled","no_show"]
+  - "check_in" et "check_out" NE SONT PAS dans l'enum → Zod rejette → 400 "Données invalides"
+  - De plus, le workflow check-in/check-out devrait appeler POST /api/hotel/check-in et POST /api/hotel/check-out (qui mettent à jour le statut chambre, créent facture + tâche ménage), pas PATCH /api/hotel/reservations/[id] qui ne fait que modifier le statut réservation
+  - Conséquence : les boutons Check-in et Check-out de la page de détail réservation sont cassés
+
+[CRITICAL] src/app/(app)/app/reservations/[id]/page.tsx:56
+  - Appelle getGuestPayments(id, profile.establishment_id) où `id` est l'ID de réservation (URL param)
+  - Mais getGuestPayments(guestId, establishmentId) filtre par .eq("reservation.guest_id", guestId)
+  - Aucun paiement ne sera jamais retourné (guest_id ≠ reservation_id)
+  - La fonction getPaymentsByReservation existe déjà dans src/lib/hotel/payments-server.ts mais n'est pas utilisée
+
+[CRITICAL] src/app/(app)/layout.tsx:50
+  - Appelle createSupabaseAdminClient() SANS try/catch
+  - createSupabaseAdminClient() lève une erreur si NEXT_PUBLIC_SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY sont manquants
+  - Cette erreur propage à error.tsx (boundary global) → "Une erreur est survenue"
+  - Impact : TOUTES les pages /app/* (dont /app/reservations) plantent si Supabase mal configuré
+
+[CRITICAL] src/app/(app)/app/reservations/[id]/page.tsx:54-57
+  - getReservationById() n'est PAS dans un try/catch
+  - Appelle createSupabaseAdminClient() qui peut throw
+  - Impact : page de détail réservation plante si Supabase mal configuré
+
+[HIGH] src/components/hotel/reservation-wizard-dialog.tsx:336 + reservations-server.ts:336
+  - Mode walk-in : createReservation() insère status="confirmed" (hardcodé)
+  - Le toast affiche "Séjour enregistré — client arrivé" mais le client n'est PAS réellement check-in
+  - La chambre ne passe PAS à "occupied", pas de facture, pas de log check_in
+  - Devrait soit : (a) appeler POST /api/hotel/check-in après création, soit (b) insérer avec status="checked_in" et updater room.status
+  - Le walk-in est censé "enregistrer et attribuer chambre immédiats" mais ne le fait pas
+
+[HIGH] src/components/hotel/reservation-detail-actions.tsx:82
+  - Bouton "Modifier" pointe vers /app/reservations/${reservation.id}/edit
+  - Cette page N'EXISTE PAS (find src -name "edit" -type d → 0 résultat)
+  - Clic → 404
+
+[HIGH] src/components/ui/badge.tsx + reservations.ts
+  - Badge component ne supporte que: default | secondary | destructive | outline
+  - RESERVATION_STATUS_LABELS utilise "warning" (pending) et "success" (checked_in)
+  - À l'exécution, cva() ignore les variants inconnus → badges "En attente" et "Arrivé" rendus sans couleur de fond (illisibles)
+  - Erreurs TS2322 dans 5 fichiers : reservations-list, reservations/[id], calendar-view, check-in-list, check-out-list
+
+[HIGH] src/app/(app)/app/dashboard/page.tsx:52-57
+  - Bouton "Réservation rapide" (href="/app/reservations?walkin=1") visible par TOUS les rôles hôtel
+  - Pas de vérification canEdit
+  - accountant/housekeeping/maintenance voient le bouton, cliquent, mais le wizard ne s'ouvre pas (canEdit=false dans ReservationsList)
+  - UX cassée pour 3 rôles
+
+[MEDIUM] src/app/(app)/app/reservations/page.tsx:43-45
+  - let result = { reservations: [], ... } → TypeScript infère reservations: never[]
+  - Réassignation dans try/catch avec vraie Reservation[] → erreur TS2322
+  - Même problème pour guestsResult.guests
+  - Fix: typer explicitement les variables (let result: { reservations: Reservation[]; ... } = ...)
+
+[MEDIUM] src/components/hotel/reservation-wizard-dialog.tsx:145
+  - availableRooms = rooms.filter((r) => r.status !== "inactive")
+  - N'exclut PAS les chambres occupied/cleaning/maintenance
+  - Un walk-in pourrait réserver une chambre actuellement occupée (si checkout prévu aujourd'hui)
+  - Pas d'empty state si availableRooms est vide → utilisateur voit dropdown vide sans message
+
+[MEDIUM] src/components/hotel/reservations-list.tsx:64
+  - const searchParams = useSearchParams();
+  - Variable assignée mais jamais utilisée (dead code)
+  - Force le Suspense boundary dans la page parente (déjà présent, OK)
+  - À supprimer pour clarté
+
+[MEDIUM] src/components/hotel/new-client-form.tsx:282-328
+  - Champ "Pièce d'identité" : input file, mais fichier JAMAIS uploadé
+  - Seul le NOM du fichier est stocké dans notes client
+  - Texte UI dit "Le fichier est rattaché au dossier client" → trompeur
+  - Devrait soit : (a) désactiver l'input et indiquer "indisponible", soit (b) implémenter upload Supabase Storage
+
+[MEDIUM] src/components/hotel/reservation-wizard-dialog.tsx:117-135
+  - useEffect de reset n'inclut pas todayStr/tomorrowStr dans les deps
+  - Marche dans la pratique (dates stables sur 1 jour) mais non idiomatique
+  - Même issue : guestsList n'est PAS reset quand on rouvre → clients créés précédemment restent dans la liste (probablement OK)
+
+[MEDIUM] src/components/hotel/reservations-list.tsx:103-108
+  - useEffect debounce appelle updateUrl() après 400ms même si rien n'a changé (sur mount)
+  - Déclenche un router.push inutile → re-fetch server-side → flash possible
+  - Devrait skip le premier render (ref initial)
+
+[LOW] src/components/hotel/check-in-list.tsx:31-33
+  - Imports inutilisés : PAYMENT_METHOD_LABELS, type SaaSPayment (du module super-admin/payments)
+  - Le module super-admin/payments ne devrait pas être imported par un composant hôtel (couplage transverse)
+
+[LOW] src/components/hotel/check-out-list.tsx:6,51,61
+  - Import lucide-react FileText inutilisé
+  - État invoiceUrl initialisé puis setInvoiceUrl(null) appelé mais jamais lu/utilisé
+  - Code mort
+
+[LOW] src/lib/hotel/payments-server.ts:140-148
+  - createStayPayment : la vérification "amount > balance*2" est arbitraire
+  - Pour un solde de 0 (réservation déjà payée), l'utilisateur peut enregistrer un paiement de 1 FCFA (min:1) qui créera un solde négatif
+  - Devrait vérifier balance > 0 avant d'accepter un paiement
+
+[LOW] src/components/hotel/reservation-wizard-dialog.tsx:528-539
+  - rate_amount peut être 0 (pas de validation > 0)
+  - L'utilisateur peut créer une réservation gratuite (tarif 0) sans warning
+  - Probablement OK pour offres spéciales, mais pas de garde-fou
+
+[LOW] src/lib/hotel/reservations-server.ts:336
+  - createReservation() insère toujours status="confirmed"
+  - Aucune possibilité de créer une réservation "pending" (en attente de validation/accompte)
+  - Le PRD pourrait prévoir ce cas (réservation en attente d'acompte)
+
+[LOW] src/lib/hotel/guests-server.ts:174-180
+  - getGuestPayments filtre par .eq("reservation.guest_id", guestId) sur une jointure
+  - Cette syntaxe Supabase postgREST peut échouer silencieusement si la relation n'est pas reconnue
+  - Voir bug [CRITICAL] réservations/[id]/page.tsx pour l'usage incorrect
+
+Stage Summary:
+
+Bugs critiques (à corriger en priorité) :
+1. Boutons Check-in/Check-out de la page détail réservation cassés (mauvais status envoyé + mauvais endpoint)
+2. Paiements jamais affichés sur la page détail réservation (getGuestPayments appelé avec reservationId au lieu de guestId)
+3. Layout /app/* plante si Supabase mal configuré (createSupabaseAdminClient sans try/catch)
+4. Page détail réservation plante si Supabase mal configuré (getReservationById sans try/catch)
+5. Walk-in mode ne fait pas de check-in réel (status resté à "confirmed")
+
+Bugs UX/visuels (à corriger ensuite) :
+6. Bouton "Modifier" pointe vers /app/reservations/[id]/edit (page inexistante → 404)
+7. Badge component ne supporte pas "warning"/"success" → badges réservation illisibles
+8. Bouton "Réservation rapide" du dashboard visible par rôles non-éditeurs
+9. Empty state manquant pour chambres dans le wizard
+
+Recommandations de fix :
+1. [P0] reservation-detail-actions.tsx : remplacer handleAction() pour appeler POST /api/hotel/check-in et POST /api/hotel/check-out (au lieu de PATCH)
+2. [P0] reservations/[id]/page.tsx : remplacer getGuestPayments(id, ...) par getPaymentsByReservation(id, ...) (déjà existante dans payments-server.ts)
+3. [P0] (app)/layout.tsx : wrapper createSupabaseAdminClient() dans try/catch, fallback sur HotelShell sans establishmentName
+4. [P0] reservations/[id]/page.tsx : wrapper getReservationById() dans try/catch, notFound() si erreur
+5. [P0] reservation-wizard-dialog.tsx + reservations-server.ts : en mode walk-in, appeler POST /api/hotel/check-in après création OU insérer avec status="checked_in"
+6. [P1] reservation-detail-actions.tsx : supprimer ou corriger le bouton "Modifier" (page edit à créer ou redirect vers wizard)
+7. [P1] badge.tsx : ajouter variants "warning" et "success" (couleurs amber/emerald)
+8. [P1] dashboard/page.tsx : wrapper le bouton "Réservation rapide" dans canEdit check
+9. [P2] reservations-list.tsx : supprimer `const searchParams = useSearchParams()` (dead code)
+10. [P2] reservations/page.tsx : typer explicitement let result et let guestsResult
+11. [P2] reservation-wizard-dialog.tsx : ajouter empty state si availableRooms.length === 0
+12. [P2] reservation-wizard-dialog.tsx : skip debounce updateUrl au premier render
+
+Note sur le bug rapporté ("Impossible de charger le formulaire de réservation") :
+- Cette chaîne N'EXISTE PLUS dans le code source (vérifié par grep)
+- Le fichier /app/reservations/new/error.tsx qui la contenait a été supprimé dans le commit f491ed9 (Task 37)
+- Aucune page /app/reservations/new n'existe plus (404 si accès direct)
+- Si l'utilisateur voit encore ce message, c'est probablement :
+  (a) un déploiement Vercel non mis à jour après le commit f491ed9, OU
+  (b) un cache navigateur/service worker servant l'ancienne page, OU
+  (c) une autre cause à investiguer avec les logs Vercel + hard refresh (Ctrl+Shift+R)
+- MAIS l'audit a révélé 4 bugs CRITICAL qui peuvent faire planter le module réservations via le boundary error.tsx global (layout sans try/catch + [id]/page.tsx sans try/catch si Supabase mal configuré)
+
+---
+Task ID: 38
+Agent: main-orchestrator
+Task: Audit complet module Réservations + correction de 9 bugs (5 CRITICAL + 4 HIGH)
+
+Work Log:
+- Audit complet effectué par subagent (34 fichiers examinés)
+- Bug originel "Impossible de charger le formulaire" déjà résolu (Task 37), mais l'utilisateur a probablement un déploiement Vercel non synchronisé
+- 5 bugs CRITICAL trouvés et corrigés :
+  1. reservation-detail-actions.tsx : check-in/out envoyait {status:"check_in"} à PATCH /api/hotel/reservations/[id] (Zod rejette "check_in" non dans enum) → maintenant appelle POST /api/hotel/check-in et POST /api/hotel/check-out (workflow complet : maj chambre + facture + log)
+  2. reservations/[id]/page.tsx : appelait getGuestPayments(id, ...) avec reservation_id au lieu de guest_id → aucun paiement jamais retourné → maintenant utilise getPaymentsByReservation(id, ...) (filtre par reservation_id)
+  3. (app)/layout.tsx : createSupabaseAdminClient() sans try/catch → TOUTES les pages /app/* plantent si Supabase mal configuré → maintenant wrappé dans try/catch avec fallback
+  4. reservations/[id]/page.tsx : getReservationById() sans try/catch → page plante si erreur Supabase → maintenant wrappé dans try/catch + types explicites
+  5. reservation-wizard-dialog.tsx : mode walk-in créait réservation status="confirmed" mais ne faisait PAS de check-in (chambre restait "available", pas de log) → maintenant après création, appelle POST /api/hotel/check-in (réservation → "checked_in", chambre → "occupied", log activité, acompte enregistré si fourni)
+
+- 4 bugs HIGH trouvés et corrigés :
+  6. reservation-detail-actions.tsx : bouton "Modifier" pointait vers /app/reservations/[id]/edit (page inexistante → 404) → supprimé (le wizard remplace l'édition)
+  7. badge.tsx : variants "warning" et "success" manquants → badges "En attente" (warning) et "Arrivé" (success) rendus sans couleur → ajouté variants warning (amber) et success (emerald) → résout 5 erreurs TS2322
+  8. dashboard/page.tsx : bouton "Réservation rapide" visible par TOUS les rôles (accountant/housekeeping/maintenance voient le bouton mais wizard ne s'ouvre pas) → maintenant wrappé dans canEdit check (hotel_admin/manager/receptionist seulement)
+  9. reservations/page.tsx : let result = {reservations: []} inféré comme never[] → erreurs TS à la réassignation → maintenant variables typées explicitement (Reservation[], Room[], Guest[])
+
+- Vérifications :
+  * Lint : 0 erreur, 0 warning
+  * TypeScript : 0 erreur dans le module réservations (npx tsc --noEmit)
+  * Compilation : /app/reservations = 200, /app/reservations?new=1 = 200, /app/reservations?walkin=1 = 200, /app/reservations/[fake-id] = 404 (notFound), /app/dashboard = 200
+  * Agent Browser : page réservations affiche "Aucun établissement associé" (normal sans Supabase), page détail affiche 404 propre (pas d'error page)
+  * VLM confirme : plus aucun message "Impossible de charger le formulaire"
+
+Stage Summary:
+- 9 bugs corrigés (5 CRITICAL + 4 HIGH) dans le module Réservations
+- Fichiers modifiés : reservation-detail-actions.tsx, reservations/[id]/page.tsx, (app)/layout.tsx, reservation-wizard-dialog.tsx, badge.tsx, dashboard/page.tsx, reservations/page.tsx
+- Le check-in/out fonctionne maintenant correctement (API dédiée + maj chambre + log)
+- Le mode walk-in effectue un VRAI check-in (réservation → checked_in, chambre → occupied)
+- Les pages /app/* ne plantent plus si Supabase est mal configuré (try/catch partout)
+- Les badges de statut affichent maintenant leurs couleurs (warning/success)
+- L'utilisateur doit redéployer sur Vercel pour bénéficier de tous les correctifs
