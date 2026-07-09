@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import * as React from "react";
 
@@ -31,6 +31,7 @@ const HOTEL_EXPORTS: ExportType[] = [
   { value: "payments", label: "Paiements", url: "/api/hotel/export?type=payments" },
   { value: "expenses", label: "Dépenses", url: "/api/hotel/export?type=expenses" },
   { value: "reports", label: "Rapport complet", url: "/api/hotel/export?type=reports" },
+  { value: "logo", label: "Logo (image)", url: "/api/hotel/export?type=logo" },
 ];
 
 type Props = {
@@ -65,7 +66,7 @@ export function ExportButton({ scope }: Props) {
       link.href = url;
       const disposition = res.headers.get("Content-Disposition") ?? "";
       const filenameMatch = disposition.match(/filename="(.+)"/);
-      link.download = filenameMatch ? filenameMatch[1] : `oghotel-export-${Date.now()}.csv`;
+      link.download = filenameMatch ? filenameMatch[1] : `oghotel-export-${Date.now()}.xlsx`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -101,10 +102,12 @@ export function ExportButton({ scope }: Props) {
       >
         {isLoading ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : selected === "logo" ? (
+          <ImageIcon className="mr-2 h-4 w-4" />
         ) : (
           <Download className="mr-2 h-4 w-4" />
         )}
-        CSV
+        {selected === "logo" ? "Image" : "XLSX"}
       </Button>
     </div>
   );
