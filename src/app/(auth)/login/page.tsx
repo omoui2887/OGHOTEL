@@ -117,6 +117,7 @@ export default async function LoginPage() {
               Vous avez un code d&apos;activation ?{" "}
               <Link
                 href="/activation"
+                prefetch
                 className="font-semibold text-primary hover:underline"
               >
                 Inscrivez-vous
@@ -136,6 +137,7 @@ export default async function LoginPage() {
         <div className="mt-4 text-center">
           <Link
             href="/"
+            prefetch
             className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
             ← Retour à l&apos;accueil

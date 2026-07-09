@@ -116,7 +116,7 @@ export default async function AppDashboardPage() {
               </CardHeader>
               <CardContent>
                 <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link href={link.href}>
+                  <Link href={link.href} prefetch>
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     Bientôt disponible
                   </Link>

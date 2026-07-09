@@ -66,7 +66,7 @@ export default async function RegisterPage({
           </div>
           <div className="mt-5 text-center">
             <Button asChild>
-              <Link href="/activation">
+              <Link href="/activation" prefetch>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Retour à la saisie du code
               </Link>
@@ -127,6 +127,7 @@ export default async function RegisterPage({
         <div className="mt-5 text-center">
           <Link
             href="/activation"
+            prefetch
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary"
           >
             <ArrowLeft className="h-4 w-4" />

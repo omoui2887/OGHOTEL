@@ -189,6 +189,7 @@ export function GuestsList({
                       <td className="px-4 py-3">
                         <Link
                           href={`/app/guests/${guest.id}`}
+                          prefetch
                           className="font-medium hover:text-primary"
                         >
                           {guest.full_name}
@@ -223,7 +224,7 @@ export function GuestsList({
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
                           <Button asChild variant="ghost" size="icon" className="h-8 w-8">
-                            <Link href={`/app/guests/${guest.id}`} aria-label="Voir">
+                            <Link href={`/app/guests/${guest.id}`} prefetch aria-label="Voir">
                               <Eye className="h-4 w-4" />
                             </Link>
                           </Button>

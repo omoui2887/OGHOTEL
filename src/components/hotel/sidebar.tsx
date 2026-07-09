@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   BedDouble,
@@ -63,6 +63,21 @@ export function HotelSidebar({
   role,
 }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  // Prefetch au survol pour les pages les plus visitées — donne une
+  // sensation de navigation instantanée (le JS + RSC payload est déjà
+  // chargé avant le clic).
+  const handleHoverPrefetch = React.useCallback(
+    (href: string) => {
+      try {
+        router.prefetch(href);
+      } catch {
+        // noop — prefetch best-effort, ne doit jamais casser le hover
+      }
+    },
+    [router]
+  );
 
   // Filtrer les modules selon :
   // 1. Le rôle (ROLE_NAV_PERMISSIONS) — un housekeeping ne voit que Ménage
@@ -107,7 +122,11 @@ export function HotelSidebar({
         )}
       >
         <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
-          <Link href="/app/dashboard" className="flex items-center gap-2 font-semibold">
+          <Link
+            href="/app/dashboard"
+            prefetch
+            className="flex items-center gap-2 font-semibold"
+          >
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <Hotel className="h-5 w-5" />
             </span>
@@ -136,9 +155,12 @@ export function HotelSidebar({
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch
                 onClick={onClose}
+                onMouseEnter={() => handleHoverPrefetch(item.href)}
+                onFocus={() => handleHoverPrefetch(item.href)}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors active:scale-[0.98]",
                   isActive
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"

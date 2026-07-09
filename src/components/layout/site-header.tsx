@@ -24,7 +24,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#0a1929]/90 backdrop-blur supports-[backdrop-filter]:bg-[#0a1929]/75">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 font-semibold">
+        <Link href="/" prefetch className="flex items-center gap-2 font-semibold">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-500 text-sm font-bold text-white">
             OG
           </span>
@@ -47,13 +47,13 @@ export function SiteHeader() {
         {/* Actions desktop */}
         <div className="hidden items-center gap-2 md:flex">
           <Button asChild variant="ghost" size="sm" className="text-slate-200 hover:bg-white/10 hover:text-white">
-            <Link href="/activation">
+            <Link href="/activation" prefetch>
               <KeyRound className="mr-1.5 h-4 w-4" />
               Activer mon compte
             </Link>
           </Button>
           <Button asChild variant="ghost" size="sm" className="text-slate-200 hover:bg-white/10 hover:text-white">
-            <Link href="/login">Connexion</Link>
+            <Link href="/login" prefetch>Connexion</Link>
           </Button>
           <Button
             asChild

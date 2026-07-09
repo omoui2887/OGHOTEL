@@ -144,7 +144,7 @@ export function CheckInList({ arrivals }: Props) {
               </div>
               <div className="flex gap-2">
                 <Button asChild variant="ghost" size="sm">
-                  <Link href={`/app/reservations/${r.id}`}>
+                  <Link href={`/app/reservations/${r.id}`} prefetch>
                     <Eye className="mr-1 h-4 w-4" />
                     Détail
                   </Link>

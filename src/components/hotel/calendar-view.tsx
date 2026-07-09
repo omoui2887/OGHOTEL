@@ -293,7 +293,7 @@ export function CalendarView({
 
             {canEdit && (
               <Button asChild size="sm">
-                <Link href="/app/reservations?new=1">
+                <Link href="/app/reservations?new=1" prefetch>
                   <Plus className="mr-1 h-4 w-4" />
                   Réservation
                 </Link>

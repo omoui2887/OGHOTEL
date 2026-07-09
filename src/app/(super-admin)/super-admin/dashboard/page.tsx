@@ -106,7 +106,7 @@ export default async function SuperAdminDashboardPage() {
                   <CardDescription className="text-xs">Prospects récents de la landing page</CardDescription>
                 </div>
                 <Button asChild variant="outline" size="sm">
-                  <Link href="/super-admin/leads">Voir tout <ArrowRight className="ml-1.5 h-3.5 w-3.5" /></Link>
+                  <Link href="/super-admin/leads" prefetch>Voir tout <ArrowRight className="ml-1.5 h-3.5 w-3.5" /></Link>
                 </Button>
               </CardHeader>
               <CardContent>
@@ -161,19 +161,19 @@ export default async function SuperAdminDashboardPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href="/super-admin/leads"><Users className="mr-2 h-4 w-4" />Voir les prospects</Link>
+                  <Link href="/super-admin/leads" prefetch><Users className="mr-2 h-4 w-4" />Voir les prospects</Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href="/super-admin/payments"><Wallet className="mr-2 h-4 w-4" />Enregistrer un paiement</Link>
+                  <Link href="/super-admin/payments" prefetch><Wallet className="mr-2 h-4 w-4" />Enregistrer un paiement</Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href="/super-admin/activation-codes"><Ticket className="mr-2 h-4 w-4" />Générer un code</Link>
+                  <Link href="/super-admin/activation-codes" prefetch><Ticket className="mr-2 h-4 w-4" />Générer un code</Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href="/super-admin/clients"><Building2 className="mr-2 h-4 w-4" />Voir les clients</Link>
+                  <Link href="/super-admin/clients" prefetch><Building2 className="mr-2 h-4 w-4" />Voir les clients</Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href="/super-admin/plans"><CheckCircle2 className="mr-2 h-4 w-4" />Gérer les formules</Link>
+                  <Link href="/super-admin/plans" prefetch><CheckCircle2 className="mr-2 h-4 w-4" />Gérer les formules</Link>
                 </Button>
               </CardContent>
             </Card>

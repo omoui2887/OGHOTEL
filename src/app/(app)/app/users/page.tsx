@@ -35,7 +35,7 @@ export default async function UsersPage() {
   ]);
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
           Personnel

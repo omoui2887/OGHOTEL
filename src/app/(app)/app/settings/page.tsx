@@ -34,7 +34,7 @@ export default async function SettingsPage() {
   const canEdit = profile.role === "hotel_admin" || profile.role === "manager";
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
           Paramètres

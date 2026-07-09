@@ -23,7 +23,8 @@ export default async function UnauthorizedPage() {
     : null;
 
   return (
-    <div className="w-full max-w-md space-y-6">
+    <div className="flex min-h-screen w-full items-center justify-center bg-[#fffaf3] p-4 dark:bg-background sm:p-6">
+      <div className="w-full max-w-md space-y-6">
       <Card className="shadow-lg border-destructive/20">
         <CardHeader className="space-y-3 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
@@ -56,20 +57,20 @@ export default async function UnauthorizedPage() {
           <div className="flex flex-col gap-2">
             {dashboardPath && (
               <Button asChild size="lg">
-                <Link href={dashboardPath}>
+                <Link href={dashboardPath} prefetch>
                   <Home className="mr-2 h-4 w-4" />
                   Aller à mon tableau de bord
                 </Link>
               </Button>
             )}
             <Button asChild variant="outline">
-              <Link href="/login">
+              <Link href="/login" prefetch>
                 <LogIn className="mr-2 h-4 w-4" />
                 Changer de compte
               </Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
-              <Link href="/">
+              <Link href="/" prefetch>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Retour à l'accueil
               </Link>
@@ -82,6 +83,7 @@ export default async function UnauthorizedPage() {
         {APP_NAME} — Si vous pensez qu'il s'agit d'une erreur, contactez votre
         administrateur ou le support au +225 05 76 10 32 77.
       </p>
+      </div>
     </div>
   );
 }

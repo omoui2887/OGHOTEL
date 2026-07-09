@@ -285,7 +285,7 @@ export function LeadsTable({
                                 </a>
                               </Button>
                               <Button asChild variant="ghost" size="icon" className="h-8 w-8">
-                                <Link href={`/super-admin/leads/${lead.id}`} aria-label="Voir détail">
+                                <Link href={`/super-admin/leads/${lead.id}`} prefetch aria-label="Voir détail">
                                   <Eye className="h-4 w-4" />
                                 </Link>
                               </Button>
@@ -333,7 +333,7 @@ export function LeadsTable({
                             </a>
                           </Button>
                           <Button asChild variant="ghost" size="icon" className="h-8 w-8">
-                            <Link href={`/super-admin/leads/${lead.id}`}>
+                            <Link href={`/super-admin/leads/${lead.id}`} prefetch>
                               <Eye className="h-4 w-4" />
                             </Link>
                           </Button>

@@ -173,11 +173,15 @@ export function ReservationWizardDialog({
         return;
       }
       if (!checkInDate || !checkOutDate) {
-        toast.error("Veuillez renseigner les dates");
+        toast.error("Veuillez renseigner les dates d'arrivée et de départ");
         return;
       }
       if (nights <= 0) {
         toast.error("La date de départ doit être après la date d'arrivée");
+        return;
+      }
+      if (rateAmount <= 0) {
+        toast.error("Le tarif par nuit doit être supérieur à 0");
         return;
       }
     }

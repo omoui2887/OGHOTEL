@@ -225,15 +225,14 @@ export async function checkRoomAvailability(
 ): Promise<{ available: boolean; conflicts: { id: string; guest_name: string; check_in: string; check_out: string }[] }> {
   const supabase = createSupabaseAdminClient();
 
-  // Récupérer toutes les réservations de cette chambre avec un statut bloquant
+  // Récupérer toutes les réservations de cette chambre avec un statut bloquant.
+  // On ne fait pas de join sur guests ici — si le join échoue (FK non résolu
+  // par PostgREST, problème réseau, etc.), la fonction retournerait
+  // `available: false` et bloquerait TOUTES les réservations. On récupère
+  // les guest_id séparément et on fetch les noms seulement si nécessaire.
   let query = supabase
     .from("reservations")
-    .select(
-      `
-      id, check_in_date, check_out_date, status,
-      guest:guests(full_name)
-    `
-    )
+    .select("id, check_in_date, check_out_date, status, guest_id")
     .eq("room_id", roomId)
     .in("status", BLOCKING_STATUSES);
 
@@ -243,21 +242,47 @@ export async function checkRoomAvailability(
 
   const { data, error } = await query;
 
-  if (error || !data) {
-    return { available: false, conflicts: [] };
+  if (error) {
+    // Si la requête échoue, on log l'erreur MAIS on ne bloque pas la réservation.
+    // La contrainte DB (exclusion GiST) rattrapera les vrais conflits.
+    console.error("[reservations] checkRoomAvailability query error:", error.message);
+    return { available: true, conflicts: [] };
+  }
+
+  if (!data) {
+    return { available: true, conflicts: [] };
   }
 
   // Filtrer les conflits de dates côté applicatif (plus fiable que SQL)
-  const conflicts = (data as any[])
-    .filter((r) =>
-      datesOverlap(checkInDate, checkOutDate, r.check_in_date, r.check_out_date)
-    )
-    .map((r) => ({
-      id: r.id,
-      guest_name: r.guest?.full_name ?? "—",
-      check_in: r.check_in_date,
-      check_out: r.check_out_date,
-    }));
+  const conflictReservations = (data as any[]).filter((r) =>
+    datesOverlap(checkInDate, checkOutDate, r.check_in_date, r.check_out_date)
+  );
+
+  if (conflictReservations.length === 0) {
+    return { available: true, conflicts: [] };
+  }
+
+  // Récupérer les noms des clients en conflit (requête séparée, non bloquante)
+  const guestIds = conflictReservations.map((r) => r.guest_id).filter(Boolean);
+  let guestMap: Record<string, string> = {};
+  if (guestIds.length > 0) {
+    const { data: guests } = await supabase
+      .from("guests")
+      .select("id, full_name")
+      .in("id", guestIds);
+    if (guests) {
+      guestMap = Object.fromEntries(
+        (guests as any[]).map((g) => [g.id, g.full_name ?? "—"])
+      );
+    }
+  }
+
+  const conflicts = conflictReservations.map((r) => ({
+    id: r.id,
+    guest_name: guestMap[r.guest_id] ?? "—",
+    check_in: r.check_in_date,
+    check_out: r.check_out_date,
+  }));
 
   return {
     available: conflicts.length === 0,

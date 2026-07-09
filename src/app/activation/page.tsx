@@ -75,6 +75,7 @@ export default function ActivationPage() {
           Déjà inscrit ?{" "}
           <Link
             href="/login"
+            prefetch
             className="font-semibold text-primary hover:underline"
           >
             Se connecter

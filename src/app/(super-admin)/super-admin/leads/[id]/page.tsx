@@ -68,7 +68,7 @@ export default async function LeadDetailPage({ params }: { params: Params }) {
       {/* Header avec retour */}
       <div className="flex items-center gap-3">
         <Button asChild variant="ghost" size="icon">
-          <Link href="/super-admin/leads" aria-label="Retour">
+          <Link href="/super-admin/leads" prefetch aria-label="Retour">
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>

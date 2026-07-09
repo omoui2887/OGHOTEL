@@ -91,6 +91,7 @@ export function SiteFooter() {
               <li>
                 <Link
                   href="/login"
+                  prefetch
                   className="transition-colors hover:text-orange-400"
                 >
                   Connexion
@@ -99,6 +100,7 @@ export function SiteFooter() {
               <li>
                 <Link
                   href="/activation"
+                  prefetch
                   className="transition-colors hover:text-orange-400"
                 >
                   Activer mon compte

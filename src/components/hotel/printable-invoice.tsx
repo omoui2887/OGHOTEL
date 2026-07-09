@@ -58,7 +58,7 @@ export function PrintableInvoice({ invoice, canCancel }: Props) {
       {/* Actions (masquées à l'impression) */}
       <div className="flex items-center gap-3 print:hidden">
         <Button asChild variant="ghost" size="icon">
-          <Link href="/app/invoices" aria-label="Retour">
+          <Link href="/app/invoices" prefetch aria-label="Retour">
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>

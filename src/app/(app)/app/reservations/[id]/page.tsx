@@ -118,6 +118,7 @@ export default async function ReservationDetailPage({ params }: { params: Params
                     <p className="text-xs text-muted-foreground">Client</p>
                     <Link
                       href={`/app/guests/${reservation.guest_id}`}
+                      prefetch
                       className="font-medium hover:text-primary"
                     >
                       {reservation.guest_name ?? "—"}

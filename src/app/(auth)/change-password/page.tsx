@@ -17,7 +17,8 @@ export const metadata = {
 
 export default function ChangePasswordPage() {
   return (
-    <div className="w-full max-w-md space-y-6">
+    <div className="flex min-h-screen w-full items-center justify-center bg-[#fffaf3] p-4 dark:bg-background sm:p-6">
+      <div className="w-full max-w-md space-y-6">
       {/* Logo */}
       <Link
         href="/"
@@ -55,11 +56,12 @@ export default function ChangePasswordPage() {
 
       <div className="text-center">
         <Button asChild variant="ghost" size="sm">
-          <Link href="/login">
+          <Link href="/login" prefetch>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Retour à la connexion
           </Link>
         </Button>
+      </div>
       </div>
     </div>
   );

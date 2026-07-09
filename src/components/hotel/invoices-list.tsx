@@ -260,7 +260,7 @@ export function InvoicesList({
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-end">
                             <Button asChild variant="ghost" size="icon" className="h-8 w-8">
-                              <Link href={`/app/invoices/${inv.id}`} aria-label="Voir">
+                              <Link href={`/app/invoices/${inv.id}`} prefetch aria-label="Voir">
                                 <Eye className="h-4 w-4" />
                               </Link>
                             </Button>
