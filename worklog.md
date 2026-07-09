@@ -642,3 +642,69 @@ Stage Summary:
 - 1 page simplifiée : /app/reservations/new (redirect vers wizard modal)
 - Modales adaptées des 4 images : thème orange OGHOTEL, stepper numéroté, recherche + création client inline, upload pièce d'identité, bannière arrivée walk-in, étapes validation
 - Vérification browser réussie pour les 2 modes (walk-in 2 étapes + réservation 3 étapes)
+
+---
+Task ID: 36
+Agent: main-orchestrator
+Task: Adapter les modèles de pages d'inscription/connexion (2 images fournies) au SaaS OGHOTEL
+
+Work Log:
+- Analysé les 2 images fournies via VLM :
+  * Image 1 : Page d'activation/inscription — layout 2 colonnes (sidebar verte avec 3 étapes + contenu droit avec stepper et formulaire code)
+  * Image 2 : Page de connexion — layout 2 colonnes (section gauche orange marketing avec points forts + témoignage + section droite formulaire)
+- Créé src/components/auth/auth-split-layout.tsx : layout 2 colonnes réutilisable
+  * Props : sidebar (ReactNode), sidebarVariant ("orange" | "navy")
+  * Sidebar gauche masquée sur mobile (lg:hidden), logo + contenu + footer
+  * Texture décorative (points radiaux) + glow blur pour effet premium
+  * Contenu droit centré, fond crème (#fffaf3)
+  * Mobile : logo affiché en haut + contenu centré
+- Créé src/components/auth/registration-steps-sidebar.tsx :
+  * RegistrationStepsSidebar : sidebar pour /activation et /register
+    - Titre "Rejoignez OGHOTEL" + sous-titre
+    - Carte illustrative avec icône Building2
+    - 3 étapes avec icônes (KeyRound, Building2, UserCircle2) — étape active surlignée orange
+    - Badge sécurité "Inscription sécurisée"
+  * HorizontalStepper : stepper horizontal 3 cercles (Code/Hôtel/Propriétaire) pour le contenu droit
+- Modifié src/app/(auth)/layout.tsx : pass-through simple (les pages gèrent leur propre layout split)
+- Redesigné src/app/(auth)/login/page.tsx :
+  * Layout split orange (sidebar) + crème (contenu)
+  * Sidebar gauche : titre "La plateforme de gestion hôtelière de référence en Côte d'Ivoire" + 3 points forts (Gestion complète, Clients & walk-ins, Rapports détaillés) + témoignage client avec 5 étoiles
+  * Contenu droit : titre "Connexion" + carte formulaire + lien "Inscrivez-vous" + badge "Connexion sécurisée" vert + lien retour accueil
+- Redesigné src/components/auth/login-form.tsx :
+  * Champs avec icônes (Mail, Lock) à gauche
+  * Checkbox "Se souvenir de moi"
+  * Bouton gradient orange "Se connecter" avec icône LogIn
+- Redesigné src/app/activation/page.tsx :
+  * Layout split navy (sidebar) + crème (contenu)
+  * Sidebar gauche : RegistrationStepsSidebar (étape 1 active)
+  * Contenu droit : HorizontalStepper + titre "Activation de votre compte" + carte formulaire + section aide (WhatsApp + email) + lien "Se connecter" + badge sécurité
+- Redesigné src/components/activation/activation-form.tsx :
+  * Champ code avec icône KeyRound + placeholder "HTL-XXXX-XXXX-2026"
+  * Bouton gradient orange "Vérifier mon code" avec état "Code vérifié !" après succès
+- Redesigné src/app/register/page.tsx :
+  * Layout split navy (sidebar) + crème (contenu)
+  * Sidebar gauche : RegistrationStepsSidebar (étape 2 active)
+  * Contenu droit : HorizontalStepper + badge plan + carte formulaire + lien retour
+  * Gestion défensive : try/catch autour de verifyActivationCode (affiche message d'erreur propre au lieu de planter si Supabase non configuré)
+- Redesigné src/components/activation/register-form.tsx :
+  * Badge "Code vérifié" en haut
+  * 2 sections : "Informations de l'établissement" + "Identifiants du compte"
+  * Champs avec icônes (Building2)
+  * Indicateur robustesse mot de passe + critères en grille 2 colonnes
+  * Bouton gradient orange "Créer mon compte"
+- Vérifications Agent Browser :
+  * /login : layout 2 colonnes ✓, sidebar orange avec titre + 3 points forts + témoignage ✓, formulaire droit avec champs email/password + checkbox + bouton ✓, badge sécurité vert ✓, responsive mobile ✓
+  * /activation : layout 2 colonnes ✓, sidebar navy avec "Rejoignez OGHOTEL" + 3 étapes ✓, stepper horizontal ✓, formulaire code + bouton Vérifier ✓, section contact WhatsApp/email ✓
+  * /register : layout 2 colonnes ✓, étape 2 active dans sidebar ✓, message d'erreur propre pour code invalide ✓
+  * VLM a confirmé : designs modernes, professionnels, cohérents avec le branding OGHOTEL
+  * Liens de navigation vérifiés : /login → /activation (Inscrivez-vous) et /activation → /login (Se connecter)
+- Lint : 0 erreur, 0 warning
+- Compilation : /login = 200, /activation = 200, /register = 200 (avec code) / 307 (sans code)
+
+Stage Summary:
+- 2 nouveaux composants : AuthSplitLayout + RegistrationStepsSidebar (avec HorizontalStepper)
+- 3 pages redesignées : /login, /activation, /register — toutes avec layout 2 colonnes
+- 3 formulaires mis à jour : LoginForm, ActivationForm, RegisterForm — autonomes (sans CardContent), icônes, gradient orange
+- Thème : orange (marketing/connexion) + navy (inscription) + crème (fonds formulaire)
+- Responsive : sidebar masquée sur mobile, logo affiché en en-tête mobile
+- Navigation croisée : login ↔ activation ↔ register

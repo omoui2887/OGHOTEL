@@ -1,11 +1,11 @@
+/**
+ * Layout /auth/* — les pages gèrent elles-mêmes leur layout split-screen.
+ * Ce layout est un simple pass-through.
+ */
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-primary/5 via-background to-background px-4 py-10">
-      {children}
-    </div>
-  );
+  return <>{children}</>;
 }

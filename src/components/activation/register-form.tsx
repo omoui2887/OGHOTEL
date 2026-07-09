@@ -6,12 +6,20 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, Eye, EyeOff, Check, Building2, ArrowRight } from "lucide-react";
+import {
+  Loader2,
+  Eye,
+  EyeOff,
+  Check,
+  Building2,
+  ArrowRight,
+  KeyRound,
+  BadgeCheck,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -147,9 +155,10 @@ export function RegisterForm({ code, leadName, planName }: RegisterFormProps) {
         return;
       }
 
-      toast.success("Compte créé avec succès ! Redirection vers votre tableau de bord…");
+      toast.success(
+        "Compte créé avec succès ! Redirection vers votre tableau de bord…"
+      );
 
-      // Rediriger vers /login (le user doit se connecter avec ses identifiants)
       setTimeout(() => {
         router.push("/login");
       }, 1500);
@@ -161,24 +170,35 @@ export function RegisterForm({ code, leadName, planName }: RegisterFormProps) {
   };
 
   return (
-    <CardContent className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
       {/* Code vérifié (read-only) */}
-      <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3">
-        <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-2.5">
+        <div className="flex items-center gap-2.5">
+          <BadgeCheck className="h-5 w-5 text-emerald-600" />
           <div>
-            <p className="text-xs text-muted-foreground">Code d'activation vérifié</p>
-            <p className="font-mono font-bold text-primary">{code}</p>
+            <p className="text-xs text-muted-foreground">Code vérifié</p>
+            <p className="font-mono text-sm font-bold text-foreground">{code}</p>
           </div>
-          {planName && (
-            <Badge variant="outline">{planName}</Badge>
-          )}
         </div>
+        {planName && (
+          <Badge variant="outline" className="border-primary/40 text-primary">
+            {planName}
+          </Badge>
+        )}
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+      {/* Section 1 : Établissement */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 border-b border-border pb-2">
+          <Building2 className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">
+            Informations de l&apos;établissement
+          </h3>
+        </div>
+
         {/* Nom du gérant */}
-        <div className="space-y-2">
-          <Label htmlFor="owner_name">
+        <div className="space-y-1.5">
+          <Label htmlFor="owner_name" className="text-sm font-medium">
             Nom du gérant <span className="text-destructive">*</span>
           </Label>
           <Input
@@ -193,9 +213,9 @@ export function RegisterForm({ code, leadName, planName }: RegisterFormProps) {
         </div>
 
         {/* Nom établissement */}
-        <div className="space-y-2">
-          <Label htmlFor="establishment_name">
-            Nom de l'établissement <span className="text-destructive">*</span>
+        <div className="space-y-1.5">
+          <Label htmlFor="establishment_name" className="text-sm font-medium">
+            Nom de l&apos;établissement <span className="text-destructive">*</span>
           </Label>
           <div className="relative">
             <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -214,9 +234,9 @@ export function RegisterForm({ code, leadName, planName }: RegisterFormProps) {
 
         {/* Type + Ville */}
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="establishment_type">
-              Type d'établissement <span className="text-destructive">*</span>
+          <div className="space-y-1.5">
+            <Label htmlFor="establishment_type" className="text-sm font-medium">
+              Type d&apos;établissement <span className="text-destructive">*</span>
             </Label>
             <Select
               value={establishmentType}
@@ -243,8 +263,8 @@ export function RegisterForm({ code, leadName, planName }: RegisterFormProps) {
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="city">
+          <div className="space-y-1.5">
+            <Label htmlFor="city" className="text-sm font-medium">
               Ville <span className="text-destructive">*</span>
             </Label>
             <Input
@@ -260,8 +280,8 @@ export function RegisterForm({ code, leadName, planName }: RegisterFormProps) {
         </div>
 
         {/* Adresse */}
-        <div className="space-y-2">
-          <Label htmlFor="address">
+        <div className="space-y-1.5">
+          <Label htmlFor="address" className="text-sm font-medium">
             Adresse <span className="text-destructive">*</span>
           </Label>
           <Input
@@ -277,8 +297,8 @@ export function RegisterForm({ code, leadName, planName }: RegisterFormProps) {
 
         {/* Téléphone + Email */}
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="phone">
+          <div className="space-y-1.5">
+            <Label htmlFor="phone" className="text-sm font-medium">
               Téléphone <span className="text-destructive">*</span>
             </Label>
             <Input
@@ -293,8 +313,8 @@ export function RegisterForm({ code, leadName, planName }: RegisterFormProps) {
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-sm font-medium">
               Email <span className="text-destructive">*</span>
             </Label>
             <Input
@@ -309,10 +329,20 @@ export function RegisterForm({ code, leadName, planName }: RegisterFormProps) {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Section 2 : Compte */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 border-b border-border pb-2">
+          <KeyRound className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">
+            Identifiants du compte
+          </h3>
+        </div>
 
         {/* Mot de passe */}
-        <div className="space-y-2">
-          <Label htmlFor="password">
+        <div className="space-y-1.5">
+          <Label htmlFor="password" className="text-sm font-medium">
             Mot de passe <span className="text-destructive">*</span>
           </Label>
           <div className="relative">
@@ -348,8 +378,8 @@ export function RegisterForm({ code, leadName, planName }: RegisterFormProps) {
         </div>
 
         {/* Confirmation mot de passe */}
-        <div className="space-y-2">
-          <Label htmlFor="confirm_password">
+        <div className="space-y-1.5">
+          <Label htmlFor="confirm_password" className="text-sm font-medium">
             Confirmer le mot de passe <span className="text-destructive">*</span>
           </Label>
           <div className="relative">
@@ -377,11 +407,11 @@ export function RegisterForm({ code, leadName, planName }: RegisterFormProps) {
         </div>
 
         {/* Critères mot de passe */}
-        <div className="rounded-md border border-dashed border-border bg-muted/30 p-3">
+        <div className="rounded-lg border border-dashed border-border bg-muted/30 p-3.5">
           <p className="mb-2 text-xs font-medium text-muted-foreground">
             Le mot de passe doit contenir :
           </p>
-          <ul className="space-y-1 text-xs text-muted-foreground">
+          <ul className="grid grid-cols-2 gap-1.5 text-xs text-muted-foreground">
             {[
               { ok: password.length >= 8, label: "Au moins 8 caractères" },
               { ok: /[A-Z]/.test(password), label: "Une majuscule" },
@@ -397,21 +427,27 @@ export function RegisterForm({ code, leadName, planName }: RegisterFormProps) {
             ))}
           </ul>
         </div>
+      </div>
 
-        <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Création du compte…
-            </>
-          ) : (
-            <>
-              Créer mon compte
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </>
-          )}
-        </Button>
-      </form>
-    </CardContent>
+      {/* Bouton submit */}
+      <Button
+        type="submit"
+        className="w-full bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg shadow-primary/20 transition-all hover:from-primary/90 hover:to-orange-600/90 hover:shadow-xl hover:shadow-primary/30"
+        size="lg"
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Création du compte…
+          </>
+        ) : (
+          <>
+            Créer mon compte
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </>
+        )}
+      </Button>
+    </form>
   );
 }
