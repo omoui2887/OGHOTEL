@@ -2852,3 +2852,35 @@ Stage Summary:
 - L'ancienne erreur "Impossible de charger le formulaire" disparaîtra après redeploy
 - ⚠️ L'utilisateur DOIT appliquer manuellement les migrations SQL 003 + 006 sur Supabase
 - Les helper functions RLS (is_super_admin, belongs_to_establishment, etc.) sont CRITICAL — sans elles, RLS casse tout
+
+---
+Task ID: 45
+Agent: main-orchestrator
+Task: Amélioration du contraste — fonds et écritures qui se confondaient
+
+Work Log:
+- Problème : l'utilisateur signalait que les valeurs de fond et les écritures se confondaient (cartes/muted trop proches du fond navy)
+- Diagnostic : les variables CSS avaient des couleurs trop proches :
+  * background = #0a1929 (navy foncé)
+  * card = #102841 (navy +0x06 — trop peu de différence)
+  * muted = #163049 (navy +0x0C — trop peu de différence)
+  * muted-foreground = #94a3b8 (gris moyen — insuffisamment lumineux)
+  * border = rgba(255,255,255,0.08) (trop transparent)
+- Fix appliqué dans src/app/globals.css :
+  * card : #102841 → #163049 (plus clair, se détache mieux du fond)
+  * popover : #0f2438 → #1a3a55
+  * secondary/muted : #163049 → #1e3a5f (navy intermédiaire bien visible)
+  * muted-foreground : #94a3b8 → #cbd5e1 (gris beaucoup plus clair et lisible)
+  * border : rgba(255,255,255,0.08) → rgba(255,255,255,0.15) (bordures plus visibles)
+  * input : rgba(255,255,255,0.12) → rgba(255,255,255,0.2) (inputs plus visibles)
+  * sidebar-accent : #163049 → #1e3a5f
+  * sidebar-border : rgba(255,255,255,0.08) → rgba(255,255,255,0.12)
+- Vérification VLM : "Les éléments se détachent bien du fond. Plus de problèmes de contraste. Lisibilité excellente."
+- Push vers GitHub → Vercel redéploie
+
+Stage Summary:
+- Contraste amélioré : cartes, inputs, bordures et texte muted maintenant bien visibles
+- muted-foreground passé de #94a3b8 à #cbd5e1 (beaucoup plus lisible)
+- Bordures renforcées (0.08 → 0.15 opacity)
+- 0 erreur lint
+- Push vers GitHub effectué
