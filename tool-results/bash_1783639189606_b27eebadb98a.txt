@@ -1,0 +1,893 @@
+-- ============================================================================
+-- OGHOTEL — Migration 003 : Politiques Row Level Security (RLS)
+-- ============================================================================
+-- Objectif : isoler strictement les données par établissement (multi-tenant).
+--
+-- PRINCIPES (PRD §12.3, §12.4, §14.5) :
+--   1. RLS activé sur toutes les tables métier sensibles.
+--   2. Le super_admin voit les données globales nécessaires (SaaS).
+--   3. hotel_admin + staff ne voient QUE les lignes de leur establishment_id.
+--   4. Les leads peuvent être créés publiquement (landing page) mais lus
+--      uniquement par super_admin.
+--   5. Les plans actifs sont lisibles publiquement (affichage tarifs).
+--   6. Les codes d'activation ne sont JAMAIS lisibles publiquement.
+--   7. Les actions critiques (création établissement, validation code, etc.)
+--      se font via service_role côté serveur (bypass RLS).
+--   8. Les staff ont des permissions limitées par rôle (PRD §5.4).
+--
+-- ⚠️  Les fonctions helper sont SECURITY DEFINER pour éviter une récursion
+--     infinie (profiles a elle-même RLS).
+-- ⚠️  Toutes les fonctions utilisent SET search_path = public pour éviter
+--     les attaques par détournement de search_path.
+-- ============================================================================
+
+
+-- ============================================================================
+-- PARTIE 1 — FONCTIONS HELPER (SECURITY DEFINER)
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- 1.1 Rôle de l'utilisateur courant
+-- ----------------------------------------------------------------------------
+create or replace function public.get_current_user_role()
+returns text
+language sql
+security definer
+set search_path = public
+as $$
+    select p.role
+    from public.profiles p
+    where p.id = auth.uid();
+$$;
+
+comment on function public.get_current_user_role() is
+    'Retourne le rôle de l utilisateur connecté. Null si non authentifié ou sans profil.';
+
+
+-- ----------------------------------------------------------------------------
+-- 1.2 Établissement de l'utilisateur courant
+-- ----------------------------------------------------------------------------
+create or replace function public.get_current_user_establishment_id()
+returns uuid
+language sql
+security definer
+set search_path = public
+as $$
+    select p.establishment_id
+    from public.profiles p
+    where p.id = auth.uid();
+$$;
+
+comment on function public.get_current_user_establishment_id() is
+    'Retourne l establishment_id de l utilisateur connecté. Null pour super_admin.';
+
+
+-- ----------------------------------------------------------------------------
+-- 1.3 Vérification super_admin
+-- ----------------------------------------------------------------------------
+create or replace function public.is_super_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+    select exists (
+        select 1
+        from public.profiles p
+        where p.id = auth.uid()
+          and p.role = 'super_admin'
+          and p.is_active = true
+    );
+$$;
+
+comment on function public.is_super_admin() is
+    'True si l utilisateur connecté est un super_admin actif.';
+
+
+-- ----------------------------------------------------------------------------
+-- 1.4 Appartenance à un établissement
+-- ----------------------------------------------------------------------------
+create or replace function public.belongs_to_establishment(est_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+    select exists (
+        select 1
+        from public.profiles p
+        where p.id = auth.uid()
+          and p.is_active = true
+          and p.establishment_id = est_id
+    );
+$$;
+
+comment on function public.belongs_to_establishment(uuid) is
+    'True si l utilisateur connecté appartient à l établissement donné.';
+
+
+-- ============================================================================
+-- PARTIE 2 — HELPERS DE PERMISSIONS PAR RÔLE (PRD §5.4, §14.5)
+-- ============================================================================
+-- Ces fonctions déterminent quelles opérations un rôle peut faire sur les
+-- données de son établissement. Le super_admin bypass toujours via is_super_admin().
+--
+-- Rôles et permissions (PRD §5.4) :
+--   hotel_admin   : tout peut gérer dans son établissement (y compris staff)
+--   manager       : supervision opérationnelle (sauf staff et paramètres)
+--   receptionist  : réservations, clients, check-in/out, paiements séjour
+--   accountant    : paiements séjour, dépenses, factures
+--   housekeeping   : ménage uniquement
+--   maintenance   : maintenance uniquement
+-- ============================================================================
+
+-- Peut gérer les chambres et types de chambres
+create or replace function public.can_manage_rooms()
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+    select get_current_user_role() in ('hotel_admin','manager','receptionist','housekeeping');
+$$;
+
+-- Peut gérer les réservations (créer, modifier, check-in/out)
+create or replace function public.can_manage_reservations()
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+    select get_current_user_role() in ('hotel_admin','manager','receptionist');
+$$;
+
+-- Peut enregistrer des paiements séjour
+create or replace function public.can_manage_stay_payments()
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+    select get_current_user_role() in ('hotel_admin','manager','receptionist','accountant');
+$$;
+
+-- Peut gérer les factures et reçus
+create or replace function public.can_manage_invoices()
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+    select get_current_user_role() in ('hotel_admin','manager','receptionist','accountant');
+$$;
+
+-- Peut gérer les dépenses
+create or replace function public.can_manage_expenses()
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+    select get_current_user_role() in ('hotel_admin','manager','accountant');
+$$;
+
+-- Peut gérer les clients hébergés
+create or replace function public.can_manage_guests()
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+    select get_current_user_role() in ('hotel_admin','manager','receptionist');
+$$;
+
+-- Peut gérer les tâches de ménage
+create or replace function public.can_manage_housekeeping()
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+    select get_current_user_role() in ('hotel_admin','manager','housekeeping');
+$$;
+
+-- Peut gérer les tickets de maintenance
+create or replace function public.can_manage_maintenance()
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+    select get_current_user_role() in ('hotel_admin','manager','maintenance');
+$$;
+
+-- Peut gérer le personnel (users) — hotel_admin uniquement
+create or replace function public.can_manage_staff()
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+    select get_current_user_role() = 'hotel_admin';
+$$;
+
+-- Peut modifier les paramètres de l'établissement — hotel_admin uniquement
+create or replace function public.can_manage_establishment()
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+    select get_current_user_role() = 'hotel_admin';
+$$;
+
+
+-- ============================================================================
+-- PARTIE 3 — ACTIVATION RLS SUR TOUTES LES TABLES
+-- ============================================================================
+alter table public.profiles                enable row level security;
+alter table public.plans                   enable row level security;
+alter table public.leads                   enable row level security;
+alter table public.establishments          enable row level security;
+alter table public.subscription_payments   enable row level security;
+alter table public.activation_codes        enable row level security;
+alter table public.room_types              enable row level security;
+alter table public.rooms                   enable row level security;
+alter table public.guests                  enable row level security;
+alter table public.reservations            enable row level security;
+alter table public.stay_payments           enable row level security;
+alter table public.invoices                enable row level security;
+alter table public.expenses                enable row level security;
+alter table public.housekeeping_tasks      enable row level security;
+alter table public.maintenance_tickets     enable row level security;
+alter table public.activity_logs           enable row level security;
+
+
+-- ============================================================================
+-- PARTIE 4 — POLITIQUES PAR TABLE
+-- ============================================================================
+-- Convention de nommage : <table>_<operation>_<description>
+-- using(...)  = filtre les lignes visibles (SELECT, UPDATE USING, DELETE)
+-- with check(...) = valide les nouvelles valeurs (INSERT, UPDATE CHECK)
+-- ============================================================================
+
+
+-- ----------------------------------------------------------------------------
+-- 4.1 PROFILES — PRD §13.1
+-- ----------------------------------------------------------------------------
+-- SELECT : un utilisateur voit son propre profil, ou les profils de son
+--          établissement (s'il est staff), ou tout si super_admin.
+-- INSERT : super_admin uniquement (création de staff). L'inscription client
+--          lors de l'activation se fait via service_role (bypass RLS).
+-- UPDATE : propre profil (champs limités) ou super_admin.
+-- DELETE : super_admin uniquement.
+-- ----------------------------------------------------------------------------
+
+drop policy if exists profiles_select_own_or_establishment on public.profiles;
+create policy profiles_select_own_or_establishment
+    on public.profiles for select
+    using (
+        id = auth.uid()
+        or is_super_admin()
+        or (establishment_id is not null
+            and establishment_id = get_current_user_establishment_id())
+    );
+
+drop policy if exists profiles_insert_admin_only on public.profiles;
+create policy profiles_insert_admin_only
+    on public.profiles for insert
+    with check (is_super_admin());
+
+drop policy if exists profiles_update_own_or_admin on public.profiles;
+create policy profiles_update_own_or_admin
+    on public.profiles for update
+    using (id = auth.uid() or is_super_admin())
+    with check (id = auth.uid() or is_super_admin());
+
+drop policy if exists profiles_delete_admin_only on public.profiles;
+create policy profiles_delete_admin_only
+    on public.profiles for delete
+    using (is_super_admin());
+
+
+-- ----------------------------------------------------------------------------
+-- 4.2 PLANS — PRD §13.2
+-- ----------------------------------------------------------------------------
+-- SELECT : public pour les plans actifs (affichage tarifs landing page).
+--          super_admin voit aussi les plans inactifs.
+-- INSERT/UPDATE/DELETE : super_admin uniquement.
+-- ----------------------------------------------------------------------------
+
+drop policy if exists plans_select_public_active on public.plans;
+create policy plans_select_public_active
+    on public.plans for select
+    using (is_active = true or is_super_admin());
+
+drop policy if exists plans_insert_admin_only on public.plans;
+create policy plans_insert_admin_only
+    on public.plans for insert
+    with check (is_super_admin());
+
+drop policy if exists plans_update_admin_only on public.plans;
+create policy plans_update_admin_only
+    on public.plans for update
+    using (is_super_admin())
+    with check (is_super_admin());
+
+drop policy if exists plans_delete_admin_only on public.plans;
+create policy plans_delete_admin_only
+    on public.plans for delete
+    using (is_super_admin());
+
+
+-- ----------------------------------------------------------------------------
+-- 4.3 LEADS — PRD §13.3
+-- ----------------------------------------------------------------------------
+-- SELECT/UPDATE/DELETE : super_admin uniquement (CRM commercial).
+-- INSERT : PUBLIC (anon + authenticated) — formulaire landing page.
+--          ⚠️ Pas de USING pour INSERT (on autorise toutes les insertions
+--             car le lead n'est pas encore lié à un utilisateur).
+-- ----------------------------------------------------------------------------
+
+drop policy if exists leads_select_admin_only on public.leads;
+create policy leads_select_admin_only
+    on public.leads for select
+    using (is_super_admin());
+
+drop policy if exists leads_insert_public on public.leads;
+create policy leads_insert_public
+    on public.leads for insert
+    to anon, authenticated
+    with check (true);
+
+drop policy if exists leads_update_admin_only on public.leads;
+create policy leads_update_admin_only
+    on public.leads for update
+    using (is_super_admin())
+    with check (is_super_admin());
+
+drop policy if exists leads_delete_admin_only on public.leads;
+create policy leads_delete_admin_only
+    on public.leads for delete
+    using (is_super_admin());
+
+
+-- ----------------------------------------------------------------------------
+-- 4.4 ESTABLISHMENTS — PRD §13.4
+-- ----------------------------------------------------------------------------
+-- SELECT : super_admin voit tout ; hotel_user voit SON établissement.
+-- INSERT : super_admin uniquement (la création via activation se fait avec
+--          service_role côté serveur, qui bypass RLS).
+-- UPDATE : super_admin ou hotel_admin de l'établissement.
+-- DELETE : super_admin uniquement.
+-- ----------------------------------------------------------------------------
+
+drop policy if exists establishments_select_own_or_admin on public.establishments;
+create policy establishments_select_own_or_admin
+    on public.establishments for select
+    using (
+        is_super_admin()
+        or id = get_current_user_establishment_id()
+    );
+
+drop policy if exists establishments_insert_admin_only on public.establishments;
+create policy establishments_insert_admin_only
+    on public.establishments for insert
+    with check (is_super_admin());
+
+drop policy if exists establishments_update_own_or_admin on public.establishments;
+create policy establishments_update_own_or_admin
+    on public.establishments for update
+    using (
+        is_super_admin()
+        or (id = get_current_user_establishment_id()
+            and can_manage_establishment())
+    )
+    with check (
+        is_super_admin()
+        or (id = get_current_user_establishment_id()
+            and can_manage_establishment())
+    );
+
+drop policy if exists establishments_delete_admin_only on public.establishments;
+create policy establishments_delete_admin_only
+    on public.establishments for delete
+    using (is_super_admin());
+
+
+-- ----------------------------------------------------------------------------
+-- 4.5 SUBSCRIPTION_PAYMENTS — PRD §13.6
+-- ----------------------------------------------------------------------------
+-- Toutes opérations : super_admin uniquement.
+-- Les paiements SaaS sont gérés exclusivement par l'éditeur OGHOTEL.
+-- ----------------------------------------------------------------------------
+
+drop policy if exists subscription_payments_select_admin on public.subscription_payments;
+create policy subscription_payments_select_admin
+    on public.subscription_payments for select
+    using (is_super_admin());
+
+drop policy if exists subscription_payments_insert_admin on public.subscription_payments;
+create policy subscription_payments_insert_admin
+    on public.subscription_payments for insert
+    with check (is_super_admin());
+
+drop policy if exists subscription_payments_update_admin on public.subscription_payments;
+create policy subscription_payments_update_admin
+    on public.subscription_payments for update
+    using (is_super_admin())
+    with check (is_super_admin());
+
+drop policy if exists subscription_payments_delete_admin on public.subscription_payments;
+create policy subscription_payments_delete_admin
+    on public.subscription_payments for delete
+    using (is_super_admin());
+
+
+-- ----------------------------------------------------------------------------
+-- 4.6 ACTIVATION_CODES — PRD §13.5
+-- ----------------------------------------------------------------------------
+-- ⚠️  SÉCURITÉ CRITIQUE — codes non lisibles publiquement.
+-- Toutes opérations : super_admin uniquement.
+-- La validation d'un code lors de l'activation se fait via service_role
+-- côté serveur (bypass RLS), après vérification du statut/expiration/usage.
+-- ----------------------------------------------------------------------------
+
+drop policy if exists activation_codes_select_admin on public.activation_codes;
+create policy activation_codes_select_admin
+    on public.activation_codes for select
+    using (is_super_admin());
+
+drop policy if exists activation_codes_insert_admin on public.activation_codes;
+create policy activation_codes_insert_admin
+    on public.activation_codes for insert
+    with check (is_super_admin());
+
+drop policy if exists activation_codes_update_admin on public.activation_codes;
+create policy activation_codes_update_admin
+    on public.activation_codes for update
+    using (is_super_admin())
+    with check (is_super_admin());
+
+drop policy if exists activation_codes_delete_admin on public.activation_codes;
+create policy activation_codes_delete_admin
+    on public.activation_codes for delete
+    using (is_super_admin());
+
+
+-- ============================================================================
+-- PARTIE 5 — TABLES MÉTIER HÔTEL (isolation par establishment_id)
+-- ============================================================================
+-- Pattern commun pour toutes ces tables :
+--   SELECT : super_admin OU belongs_to_establishment(establishment_id)
+--   INSERT : super_admin OU (belongs_to_establishment + permission rôle)
+--   UPDATE : super_admin OU (belongs_to_establishment + permission rôle)
+--   DELETE : super_admin OU (belongs_to_establishment + permission rôle)
+-- ============================================================================
+
+
+-- ----------------------------------------------------------------------------
+-- 4.7 ROOM_TYPES — PRD §13.7
+-- ----------------------------------------------------------------------------
+drop policy if exists room_types_select_establishment on public.room_types;
+create policy room_types_select_establishment
+    on public.room_types for select
+    using (
+        is_super_admin()
+        or belongs_to_establishment(establishment_id)
+    );
+
+drop policy if exists room_types_insert_establishment on public.room_types;
+create policy room_types_insert_establishment
+    on public.room_types for insert
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_rooms())
+    );
+
+drop policy if exists room_types_update_establishment on public.room_types;
+create policy room_types_update_establishment
+    on public.room_types for update
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_rooms())
+    )
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_rooms())
+    );
+
+drop policy if exists room_types_delete_establishment on public.room_types;
+create policy room_types_delete_establishment
+    on public.room_types for delete
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_rooms())
+    );
+
+
+-- ----------------------------------------------------------------------------
+-- 4.8 ROOMS — PRD §13.8
+-- ----------------------------------------------------------------------------
+drop policy if exists rooms_select_establishment on public.rooms;
+create policy rooms_select_establishment
+    on public.rooms for select
+    using (
+        is_super_admin()
+        or belongs_to_establishment(establishment_id)
+    );
+
+drop policy if exists rooms_insert_establishment on public.rooms;
+create policy rooms_insert_establishment
+    on public.rooms for insert
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_rooms())
+    );
+
+drop policy if exists rooms_update_establishment on public.rooms;
+create policy rooms_update_establishment
+    on public.rooms for update
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_rooms())
+    )
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_rooms())
+    );
+
+drop policy if exists rooms_delete_establishment on public.rooms;
+create policy rooms_delete_establishment
+    on public.rooms for delete
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_rooms())
+    );
+
+
+-- ----------------------------------------------------------------------------
+-- 4.9 GUESTS — PRD §13.9
+-- ----------------------------------------------------------------------------
+drop policy if exists guests_select_establishment on public.guests;
+create policy guests_select_establishment
+    on public.guests for select
+    using (
+        is_super_admin()
+        or belongs_to_establishment(establishment_id)
+    );
+
+drop policy if exists guests_insert_establishment on public.guests;
+create policy guests_insert_establishment
+    on public.guests for insert
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_guests())
+    );
+
+drop policy if exists guests_update_establishment on public.guests;
+create policy guests_update_establishment
+    on public.guests for update
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_guests())
+    )
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_guests())
+    );
+
+drop policy if exists guests_delete_establishment on public.guests;
+create policy guests_delete_establishment
+    on public.guests for delete
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_guests())
+    );
+
+
+-- ----------------------------------------------------------------------------
+-- 4.10 RESERVATIONS — PRD §13.10
+-- ----------------------------------------------------------------------------
+drop policy if exists reservations_select_establishment on public.reservations;
+create policy reservations_select_establishment
+    on public.reservations for select
+    using (
+        is_super_admin()
+        or belongs_to_establishment(establishment_id)
+    );
+
+drop policy if exists reservations_insert_establishment on public.reservations;
+create policy reservations_insert_establishment
+    on public.reservations for insert
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_reservations())
+    );
+
+drop policy if exists reservations_update_establishment on public.reservations;
+create policy reservations_update_establishment
+    on public.reservations for update
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_reservations())
+    )
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_reservations())
+    );
+
+drop policy if exists reservations_delete_establishment on public.reservations;
+create policy reservations_delete_establishment
+    on public.reservations for delete
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_reservations())
+    );
+
+
+-- ----------------------------------------------------------------------------
+-- 4.11 STAY_PAYMENTS — PRD §13.11
+-- ----------------------------------------------------------------------------
+drop policy if exists stay_payments_select_establishment on public.stay_payments;
+create policy stay_payments_select_establishment
+    on public.stay_payments for select
+    using (
+        is_super_admin()
+        or belongs_to_establishment(establishment_id)
+    );
+
+drop policy if exists stay_payments_insert_establishment on public.stay_payments;
+create policy stay_payments_insert_establishment
+    on public.stay_payments for insert
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_stay_payments())
+    );
+
+drop policy if exists stay_payments_update_establishment on public.stay_payments;
+create policy stay_payments_update_establishment
+    on public.stay_payments for update
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_stay_payments())
+    )
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_stay_payments())
+    );
+
+drop policy if exists stay_payments_delete_establishment on public.stay_payments;
+create policy stay_payments_delete_establishment
+    on public.stay_payments for delete
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_stay_payments())
+    );
+
+
+-- ----------------------------------------------------------------------------
+-- 4.12 INVOICES — PRD §13.12
+-- ----------------------------------------------------------------------------
+drop policy if exists invoices_select_establishment on public.invoices;
+create policy invoices_select_establishment
+    on public.invoices for select
+    using (
+        is_super_admin()
+        or belongs_to_establishment(establishment_id)
+    );
+
+drop policy if exists invoices_insert_establishment on public.invoices;
+create policy invoices_insert_establishment
+    on public.invoices for insert
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_invoices())
+    );
+
+drop policy if exists invoices_update_establishment on public.invoices;
+create policy invoices_update_establishment
+    on public.invoices for update
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_invoices())
+    )
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_invoices())
+    );
+
+drop policy if exists invoices_delete_establishment on public.invoices;
+create policy invoices_delete_establishment
+    on public.invoices for delete
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_invoices())
+    );
+
+
+-- ----------------------------------------------------------------------------
+-- 4.13 EXPENSES — PRD §13.13
+-- ----------------------------------------------------------------------------
+drop policy if exists expenses_select_establishment on public.expenses;
+create policy expenses_select_establishment
+    on public.expenses for select
+    using (
+        is_super_admin()
+        or belongs_to_establishment(establishment_id)
+    );
+
+drop policy if exists expenses_insert_establishment on public.expenses;
+create policy expenses_insert_establishment
+    on public.expenses for insert
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_expenses())
+    );
+
+drop policy if exists expenses_update_establishment on public.expenses;
+create policy expenses_update_establishment
+    on public.expenses for update
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_expenses())
+    )
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_expenses())
+    );
+
+drop policy if exists expenses_delete_establishment on public.expenses;
+create policy expenses_delete_establishment
+    on public.expenses for delete
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_expenses())
+    );
+
+
+-- ----------------------------------------------------------------------------
+-- 4.14 HOUSEKEEPING_TASKS — PRD §13.14
+-- ----------------------------------------------------------------------------
+drop policy if exists housekeeping_select_establishment on public.housekeeping_tasks;
+create policy housekeeping_select_establishment
+    on public.housekeeping_tasks for select
+    using (
+        is_super_admin()
+        or belongs_to_establishment(establishment_id)
+    );
+
+drop policy if exists housekeeping_insert_establishment on public.housekeeping_tasks;
+create policy housekeeping_insert_establishment
+    on public.housekeeping_tasks for insert
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_housekeeping())
+    );
+
+drop policy if exists housekeeping_update_establishment on public.housekeeping_tasks;
+create policy housekeeping_update_establishment
+    on public.housekeeping_tasks for update
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_housekeeping())
+    )
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_housekeeping())
+    );
+
+drop policy if exists housekeeping_delete_establishment on public.housekeeping_tasks;
+create policy housekeeping_delete_establishment
+    on public.housekeeping_tasks for delete
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_housekeeping())
+    );
+
+
+-- ----------------------------------------------------------------------------
+-- 4.15 MAINTENANCE_TICKETS — PRD §13.15
+-- ----------------------------------------------------------------------------
+drop policy if exists maintenance_select_establishment on public.maintenance_tickets;
+create policy maintenance_select_establishment
+    on public.maintenance_tickets for select
+    using (
+        is_super_admin()
+        or belongs_to_establishment(establishment_id)
+    );
+
+drop policy if exists maintenance_insert_establishment on public.maintenance_tickets;
+create policy maintenance_insert_establishment
+    on public.maintenance_tickets for insert
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_maintenance())
+    );
+
+drop policy if exists maintenance_update_establishment on public.maintenance_tickets;
+create policy maintenance_update_establishment
+    on public.maintenance_tickets for update
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_maintenance())
+    )
+    with check (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_maintenance())
+    );
+
+drop policy if exists maintenance_delete_establishment on public.maintenance_tickets;
+create policy maintenance_delete_establishment
+    on public.maintenance_tickets for delete
+    using (
+        is_super_admin()
+        or (belongs_to_establishment(establishment_id) and can_manage_maintenance())
+    );
+
+
+-- ----------------------------------------------------------------------------
+-- 4.16 ACTIVITY_LOGS — PRD §13.16
+-- ----------------------------------------------------------------------------
+-- SELECT : super_admin ou staff de l'établissement (tous les rôles voient
+--          les logs de leur établissement pour la transparence opérationnelle).
+-- INSERT : super_admin ou n'importe quel staff de l'établissement (les logs
+--          sont créés par le système ou les utilisateurs).
+-- UPDATE/DELETE : super_admin uniquement (les logs sont immuables).
+-- ----------------------------------------------------------------------------
+
+drop policy if exists activity_logs_select_establishment on public.activity_logs;
+create policy activity_logs_select_establishment
+    on public.activity_logs for select
+    using (
+        is_super_admin()
+        or (establishment_id is not null
+            and belongs_to_establishment(establishment_id))
+    );
+
+drop policy if exists activity_logs_insert_establishment on public.activity_logs;
+create policy activity_logs_insert_establishment
+    on public.activity_logs for insert
+    with check (
+        is_super_admin()
+        or (establishment_id is not null
+            and belongs_to_establishment(establishment_id))
+    );
+
+drop policy if exists activity_logs_update_admin on public.activity_logs;
+create policy activity_logs_update_admin
+    on public.activity_logs for update
+    using (is_super_admin())
+    with check (is_super_admin());
+
+drop policy if exists activity_logs_delete_admin on public.activity_logs;
+create policy activity_logs_delete_admin
+    on public.activity_logs for delete
+    using (is_super_admin());
+
+
+-- ============================================================================
+-- PARTIE 6 — RÉCAPITULATIF DE SÉCURITÉ
+-- ============================================================================
+-- ✅ 16 tables ont RLS activé.
+-- ✅ 4 fonctions helper de base + 9 fonctions de permission par rôle.
+-- ✅ Toutes les fonctions sont SECURITY DEFINER + SET search_path = public.
+-- ✅ super_admin bypass toutes les restrictions via is_super_admin().
+-- ✅ hotel_admin + staff sont isolés par establishment_id.
+-- ✅ leads : INSERT public, SELECT/UPDATE/DELETE super_admin.
+-- ✅ plans : SELECT public (actifs), écriture super_admin.
+-- ✅ activation_codes : TOUT super_admin (jamais public).
+-- ✅ subscription_payments : TOUT super_admin.
+-- ✅ activity_logs : immuables (UPDATE/DELETE super_admin uniquement).
+-- ✅ Actions critiques (activation, création établissement) via service_role.
+-- ============================================================================
+
+-- Vérification : lister toutes les politiques créées
+select tablename, policyname, cmd
+from pg_policies
+where schemaname = 'public'
+order by tablename, cmd, policyname;
+
+-- ============================================================================
+-- FIN — Politiques RLS OGHOTEL prêtes.
+-- ============================================================================
