@@ -4,15 +4,14 @@ import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
-  Plus,
   Search,
   Eye,
   Inbox,
   ChevronLeft,
   ChevronRight,
-  X,
+  Zap,
+  CalendarPlus,
 } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,13 +31,17 @@ import {
   type Reservation,
 } from "@/lib/hotel/reservations";
 import { formatFCFA, formatDate } from "@/lib/utils";
+import { ReservationWizardDialog } from "@/components/hotel/reservation-wizard-dialog";
+import type { Room } from "@/lib/hotel/rooms";
+import type { Guest } from "@/lib/hotel/guests";
 
 type Props = {
   reservations: Reservation[];
   total: number;
   page: number;
   totalPages: number;
-  rooms: { id: string; room_number: string }[];
+  rooms: Room[];
+  guests: Guest[];
   initialSearch: string;
   initialStatus: string;
   initialRoomId: string;
@@ -51,6 +54,7 @@ export function ReservationsList({
   page,
   totalPages,
   rooms,
+  guests,
   initialSearch,
   initialStatus,
   initialRoomId,
@@ -61,6 +65,26 @@ export function ReservationsList({
   const [search, setSearch] = React.useState(initialSearch);
   const [status, setStatus] = React.useState(initialStatus);
   const [roomId, setRoomId] = React.useState(initialRoomId);
+  const [wizardOpen, setWizardOpen] = React.useState(false);
+  const [wizardMode, setWizardMode] = React.useState<"reservation" | "walk-in">("reservation");
+
+  // Auto-open wizard si ?new=1 ou ?walkin=1 dans l'URL
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("new") === "1") {
+      setWizardMode("reservation");
+      setWizardOpen(true);
+      params.delete("new");
+      const qs = params.toString();
+      window.history.replaceState({}, "", `/app/reservations${qs ? "?" + qs : ""}`);
+    } else if (params.get("walkin") === "1") {
+      setWizardMode("walk-in");
+      setWizardOpen(true);
+      params.delete("walkin");
+      const qs = params.toString();
+      window.history.replaceState({}, "", `/app/reservations${qs ? "?" + qs : ""}`);
+    }
+  }, []);
 
   const updateUrl = React.useCallback(
     (params: { search: string; status: string; roomId: string; page: number }) => {
@@ -137,12 +161,30 @@ export function ReservationsList({
               {total} réservation{total > 1 ? "s" : ""}
             </span>
             {canEdit && (
-              <Button asChild>
-                <Link href="/app/reservations/new">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Nouvelle
-                </Link>
-              </Button>
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setWizardMode("walk-in");
+                    setWizardOpen(true);
+                  }}
+                  className="border-orange-500/40 text-orange-600 hover:bg-orange-500/5"
+                >
+                  <Zap className="mr-2 h-4 w-4" />
+                  Walk-In
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setWizardMode("reservation");
+                    setWizardOpen(true);
+                  }}
+                >
+                  <CalendarPlus className="mr-2 h-4 w-4" />
+                  Nouvelle Réservation
+                </Button>
+              </>
             )}
           </div>
         </CardContent>
@@ -164,12 +206,30 @@ export function ReservationsList({
                 : "Les réservations apparaîtront ici"}
             </p>
             {canEdit && !hasFilters && (
-              <Button asChild className="mt-4">
-                <Link href="/app/reservations/new">
-                  <Plus className="mr-2 h-4 w-4" />
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setWizardMode("walk-in");
+                    setWizardOpen(true);
+                  }}
+                  className="border-orange-500/40 text-orange-600 hover:bg-orange-500/5"
+                >
+                  <Zap className="mr-2 h-4 w-4" />
+                  Enregistrement Walk-In
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setWizardMode("reservation");
+                    setWizardOpen(true);
+                  }}
+                >
+                  <CalendarPlus className="mr-2 h-4 w-4" />
                   Créer une réservation
-                </Link>
-              </Button>
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -282,6 +342,17 @@ export function ReservationsList({
             </Button>
           </div>
         </div>
+      )}
+
+      {/* Modale Wizard Réservation / Walk-In */}
+      {canEdit && (
+        <ReservationWizardDialog
+          open={wizardOpen}
+          onOpenChange={setWizardOpen}
+          mode={wizardMode}
+          rooms={rooms}
+          guests={guests}
+        />
       )}
     </div>
   );

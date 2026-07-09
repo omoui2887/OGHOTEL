@@ -591,3 +591,54 @@ Work Log:
 - Créé src/components/shared/loading-states.tsx : LoadingState (spinner), StatCardSkeleton, TableSkeleton
 - Vérifié : 0 hydration error, 0 lint error
 - Commit sur GitHub
+
+---
+Task ID: 35
+Agent: main-orchestrator
+Task: Adapter les modèles de modales de réservation (4 images fournies) au SaaS OGHOTEL
+
+Work Log:
+- Analysé les 4 images fournies via VLM :
+  * Images 1 & 2 : Modale "Enregistrement Direct (Walk-In)" — 2 étapes (Client → Chambre) avec bannière arrivée, recherche client + formulaire nouveau client (Prénom, Nom, Téléphone, Email, Type doc, N° doc, upload pièce)
+  * Images 3 & 4 : Modale "Nouvelle Réservation" — 3 étapes (Client → Détails → Validation) avec même structure client + upload pièce d'identité
+- Créé src/components/hotel/new-client-form.tsx : formulaire inline réutilisable
+  * Champs séparés Prénom / Nom (combinés en full_name à la soumission)
+  * Téléphone, Email, Type de document (select), N° Document, Nationalité (datalist)
+  * Upload pièce d'identité (input file image/PDF, nom stocké dans notes client)
+  * Validation Zod, POST vers /api/hotel/guests, callback onCreated
+  * Style bordé orange (border-primary/30) + fond teinté, bouton "Créer le client" désactivé tant que champs requis vides
+- Créé src/components/hotel/reservation-wizard-dialog.tsx : modale wizard unifiée
+  * 2 modes : "reservation" (3 étapes) | "walk-in" (2 étapes)
+  * Stepper horizontal avec cercles numérotés (actif = orange + ring, done = orange opaque, inactif = gris)
+  * Mode walk-in : bannière orange "Arrivée : Aujourd'hui (date) — Check-in automatique", dates verrouillées (aujourd'hui → demain)
+  * Étape 1 Client : recherche client existant OU bouton "Nouveau Client" (affiche NewClientForm inline bordé orange)
+  * Étape 2 : Chambre (walk-in) ou Détails (réservation) — chambre, source, dates, tarif, adultes/enfants, remise, acompte, calcul nuits/total/solde en temps réel
+  * Étape 3 Validation (réservation seulement) : récap client + séjour + tarifs + notes
+  * Boutons : Annuler (gauche), Précédent/Suivant/Confirmer (droite) avec icônes lucide
+  * POST vers /api/hotel/reservations, redirect vers /app/reservations après succès
+- Mis à jour src/components/hotel/reservations-list.tsx :
+  * 2 boutons dans la barre de filtres : "Walk-In" (outline orange) + "Nouvelle Réservation" (primary)
+  * État vide : mêmes 2 boutons centrés
+  * Auto-open wizard si ?new=1 (mode réservation) ou ?walkin=1 (mode walk-in) dans l'URL, puis nettoie l'URL
+  * Props étendues : rooms: Room[] (au lieu de {id, room_number}[]), guests: Guest[] (nouveau prop)
+  * Import ReservationWizardDialog + types Room/Guest
+- Mis à jour src/app/(app)/app/reservations/page.tsx :
+  * Fetch guests (getGuests, pageSize 200) en plus de rooms
+  * Passe rooms + guests au complet à ReservationsList
+- Modifié src/app/(app)/app/reservations/new/page.tsx : redirect vers /app/reservations?new=1 (l'ancien formulaire multi-sections est remplacé par le wizard modal)
+- Vérifié avec Agent Browser (mode test temporaire avec mock data, supprimé après vérification) :
+  * Walk-in : titre "Enregistrement Direct (Walk-In)" + sous-titre ✓, stepper 2 étapes ✓, bannière arrivée "Aujourd'hui (09/07/2026) — Check-in automatique" ✓, bouton "Nouveau Client" ✓, recherche ✓, liste clients ✓, boutons Annuler/Suivant ✓
+  * Nouveau client form : Prénom*, Nom*, Téléphone*, Email, Type document (select), N° Document, Nationalité (datalist), bouton "Télécharger un fichier" ✓, bouton "Créer le client" (désactivé tant que requis vides) ✓
+  * Réservation : titre "Nouvelle Réservation" + "Créez une réservation en 3 étapes" ✓, stepper 3 étapes (Client/Détails/Validation) ✓
+  * VLM a confirmé : design moderne, professionnel, palette orange + bleu marine, correspond aux modèles fournis
+- Lint : 0 erreur, 0 warning
+- Compilation : / = 200, /app/reservations = 200, /app/reservations/new = 307 (redirect)
+- Aucune erreur runtime dans dev.log
+
+Stage Summary:
+- 2 nouveaux composants créés : NewClientForm + ReservationWizardDialog
+- 1 composant mis à jour : ReservationsList (boutons Walk-In + Nouvelle Réservation)
+- 1 page mise à jour : /app/reservations (fetch guests)
+- 1 page simplifiée : /app/reservations/new (redirect vers wizard modal)
+- Modales adaptées des 4 images : thème orange OGHOTEL, stepper numéroté, recherche + création client inline, upload pièce d'identité, bannière arrivée walk-in, étapes validation
+- Vérification browser réussie pour les 2 modes (walk-in 2 étapes + réservation 3 étapes)

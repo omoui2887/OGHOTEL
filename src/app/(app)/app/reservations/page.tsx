@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { getCurrentProfile } from "@/lib/auth";
 import { getReservations } from "@/lib/hotel/reservations-server";
 import { getRooms } from "@/lib/hotel/rooms-server";
+import { getGuests } from "@/lib/hotel/guests-server";
 import { ReservationsList } from "@/components/hotel/reservations-list";
 
 export const metadata = {
@@ -36,7 +37,7 @@ export default async function ReservationsPage({
     );
   }
 
-  const [result, rooms] = await Promise.all([
+  const [result, rooms, guestsResult] = await Promise.all([
     getReservations(profile.establishment_id, {
       search,
       status,
@@ -45,6 +46,7 @@ export default async function ReservationsPage({
       pageSize: 10,
     }),
     getRooms(profile.establishment_id),
+    getGuests(profile.establishment_id, { pageSize: 200 }),
   ]);
 
   const canEdit = ["hotel_admin", "manager", "receptionist"].includes(profile.role);
@@ -67,7 +69,8 @@ export default async function ReservationsPage({
           total={result.total}
           page={result.page}
           totalPages={result.totalPages}
-          rooms={rooms.map((r) => ({ id: r.id, room_number: r.room_number }))}
+          rooms={rooms}
+          guests={guestsResult.guests}
           initialSearch={search}
           initialStatus={status}
           initialRoomId={roomId}
