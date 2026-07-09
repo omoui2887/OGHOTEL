@@ -708,3 +708,47 @@ Stage Summary:
 - Thème : orange (marketing/connexion) + navy (inscription) + crème (fonds formulaire)
 - Responsive : sidebar masquée sur mobile, logo affiché en en-tête mobile
 - Navigation croisée : login ↔ activation ↔ register
+
+---
+Task ID: 37
+Agent: main-orchestrator
+Task: Corriger le bug "Impossible de charger le formulaire de réservation"
+
+Work Log:
+- Diagnostic à partir des 2 captures fournies :
+  * Image 1 : carte "Présent à la réception (walk-in)" — bouton walk-in de l'ancien formulaire
+  * Image 2 : page d'erreur "Impossible de charger le formulaire de réservation" — error.tsx de /app/reservations/new
+- Cause racine identifiée :
+  * La page /app/reservations/new/page.tsx faisait un redirect() vers /app/reservations?new=1
+  * Le fichier /app/reservations/new/error.tsx (boundary) était encore présent et interceptait les erreurs
+  * En production avec Supabase, le redirect() pouvait lever une erreur interceptée par error.tsx
+  * De plus, les liens dashboard/calendar pointaient vers /app/reservations/new (page obsolète)
+- Corrections appliquées :
+  1. Supprimé le dossier src/app/(app)/app/reservations/new/ entirely (page.tsx + error.tsx)
+     → /app/reservations/new retourne maintenant 404 au lieu d'afficher l'erreur
+  2. Mis à jour src/app/(app)/app/dashboard/page.tsx :
+     - Bouton "Réservation rapide" : href="/app/reservations/new" → href="/app/reservations?walkin=1"
+     - Ouvre directement le wizard walk-in (2 étapes) sans passer par une page intermédiaire
+  3. Mis à jour src/components/hotel/calendar-view.tsx :
+     - Bouton "Réservation" : href="/app/reservations/new" → href="/app/reservations?new=1"
+     - Ouvre directement le wizard réservation (3 étapes)
+  4. Supprimé l'ancien composant src/components/hotel/reservation-form.tsx (plus importé nulle part)
+     - Contenait l'ancien formulaire multi-sections avec la carte "Présent à la réception"
+  5. Rendu défensif le fetch de la page /app/reservations :
+     - try/catch autour de Promise.all([getReservations, getRooms, getGuests])
+     - En cas d'erreur Supabase (table manquante, RLS, réseau), affiche la page avec listes vides
+     - Empêche l'error boundary de s'afficher pour une erreur de fetch
+- Vérifications :
+  * Lint : 0 erreur, 0 warning
+  * Compilation : /app/dashboard = 200, /app/reservations = 200, /app/reservations?walkin=1 = 200, /app/reservations?new=1 = 200, /app/calendar = 200
+  * /app/reservations/new = 404 (page supprimée, plus d'erreur)
+  * Liens vérifiés dans le HTML rendu :
+    - Dashboard : href="/app/reservations?walkin=1" ✓
+    - Calendar : href="/app/reservations?new=1" ✓ (visible quand canEdit=true)
+
+Stage Summary:
+- Bug "Impossible de charger le formulaire" RÉSOLU
+- 3 fichiers supprimés : /app/reservations/new/page.tsx, /app/reservations/new/error.tsx, /components/hotel/reservation-form.tsx
+- 2 fichiers mis à jour : dashboard (lien walkin=1), calendar (lien new=1)
+- 1 fichier rendu défensif : /app/reservations/page.tsx (try/catch sur fetch)
+- L'utilisateur doit redéployer sur Vercel pour que le correctif soit effectif

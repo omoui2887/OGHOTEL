@@ -50,7 +50,7 @@ export default async function AppDashboardPage() {
           <div className="flex items-center gap-2">
             <ExportButton scope="hotel" />
             <Button asChild size="sm" className="bg-orange-500 text-white hover:bg-orange-600 shadow-md">
-              <Link href="/app/reservations/new">
+              <Link href="/app/reservations?walkin=1">
                 <Zap className="mr-1.5 h-4 w-4" />
                 Réservation rapide
               </Link>

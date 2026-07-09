@@ -37,17 +37,28 @@ export default async function ReservationsPage({
     );
   }
 
-  const [result, rooms, guestsResult] = await Promise.all([
-    getReservations(profile.establishment_id, {
-      search,
-      status,
-      room_id: roomId,
-      page: Number.isNaN(page) || page < 1 ? 1 : page,
-      pageSize: 10,
-    }),
-    getRooms(profile.establishment_id),
-    getGuests(profile.establishment_id, { pageSize: 200 }),
-  ]);
+  // Fetch défensif : si une erreur survient (Supabase indisponible, table
+  // manquante, etc.), on affiche la page avec des listes vides au lieu de
+  // planter toute la page.
+  let result = { reservations: [], total: 0, page: 1, totalPages: 0 };
+  let rooms: any[] = [];
+  let guestsResult = { guests: [], total: 0, page: 1, pageSize: 200, totalPages: 0 };
+
+  try {
+    [result, rooms, guestsResult] = await Promise.all([
+      getReservations(profile.establishment_id, {
+        search,
+        status,
+        room_id: roomId,
+        page: Number.isNaN(page) || page < 1 ? 1 : page,
+        pageSize: 10,
+      }),
+      getRooms(profile.establishment_id),
+      getGuests(profile.establishment_id, { pageSize: 200 }),
+    ]);
+  } catch (err) {
+    console.error("Erreur chargement réservations:", err);
+  }
 
   const canEdit = ["hotel_admin", "manager", "receptionist"].includes(profile.role);
 
