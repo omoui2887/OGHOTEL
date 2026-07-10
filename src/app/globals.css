@@ -71,7 +71,7 @@
   --secondary-foreground: #1a1a1a;
 
   --muted: #f0e8d5;
-  --muted-foreground: #6b6b6b;
+  --muted-foreground: #4a4a4a;
 
   /* Accent orange plus doux pour hover/secondaire */
   --accent: #ff9a3c;
@@ -81,7 +81,7 @@
 
   /* Bordures visibles sur fond clair */
   --border: #e0d8c5;
-  --input: #e0d8c5;
+  --input: #d5cab0;
   --ring: #ff7a00;
 
   --chart-1: #ff7a00;
@@ -114,12 +114,12 @@
   --secondary: #f0e8d5;
   --secondary-foreground: #1a1a1a;
   --muted: #f0e8d5;
-  --muted-foreground: #6b6b6b;
+  --muted-foreground: #4a4a4a;
   --accent: #ff9a3c;
   --accent-foreground: #1a1a1a;
   --destructive: #dc2626;
   --border: #e0d8c5;
-  --input: #e0d8c5;
+  --input: #d5cab0;
   --ring: #ff7a00;
   --chart-1: #ff7a00;
   --chart-2: #2563eb;
@@ -148,6 +148,35 @@
   }
   html {
     scroll-behavior: smooth;
+  }
+
+  /* Inputs : fond blanc pour bien se détacher du fond beige + texte foncé */
+  input,
+  textarea,
+  select {
+    background-color: #ffffff;
+    color: #1a1a1a;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #6b6b6b;
+    opacity: 1;
+  }
+  /* Select triggers (shadcn) : fond blanc */
+  [data-slot="select-trigger"] {
+    background-color: #ffffff;
+    color: #1a1a1a;
+  }
+  /* Tables : texte foncé pour la lisibilité */
+  table {
+    color: #1a1a1a;
+  }
+  th {
+    color: #1a1a1a;
+  }
+  /* Labels : bien visibles */
+  label {
+    color: #1a1a1a;
   }
 }
 
