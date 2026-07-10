@@ -3319,3 +3319,110 @@ Stage Summary:
 - No scope creep outside the 3 listed files + the unavoidable `lead-form.tsx` follow-up (its `text-white` would have been invisible on the new white contact card)
 - No changes to `globals.css` (already light beige `--background: #f8f3e9`); the new white sections layer cleanly on top
 - Lint clean, dev server healthy, ready for user preview via the Preview Panel / "Open in New Tab" button
+
+---
+Task ID: LANDING-BATCH-1
+Agent: full-stack-developer
+Task: Landing batch 1 — Navbar + Hero + Trust + Problem
+
+Work Log:
+- Lu `/home/z/my-project/worklog.md` (entrées précédentes : orchestrateur, white-theme-landing, fix-hotel-cleanup) pour comprendre le contexte et la palette/typographie attendues.
+- Vérifié l'existant : `src/app/page.tsx` (landing v1 avec SiteHeader/SiteFooter), `src/components/layout/site-header.tsx` (Sheet pattern + mounted gate), `src/components/ui/sheet.tsx` (API exportée), `src/components/ui/button.tsx` (variantes ghost/outline/default, asChild via Slot), `src/lib/utils.ts` (`cn`, `buildWhatsAppUrl`), `src/app/layout.tsx` (Geist + Geist_Mono via next/font — pas de Playfair Display chargé → utilisation de `font-serif` Tailwind comme fallback premium), `eslint.config.mjs` (règles Next.js assouplies, `react/no-unescaped-entities` OFF — apostrophes autorisées mais j'ai quand-même échappé `d'Ivoire` et `Aujourd'hui` avec `&apos;`).
+- Créé `src/components/landing/Navbar.tsx` ("use client") :
+  - Fond `bg-[#0B1F3A]/80 backdrop-blur-xl border-b border-white/10` (glassmorphism), sticky top-0 z-50
+  - Logo "OGHOTEL" bold blanc + badge sous-titre "SaaS hôtelier ivoirien" (uppercase tracking slate-400) + carré doré "OG"
+  - Nav desktop (lg+) : 5 liens `#features` `#how` `#pricing` `#faq` `#contact` en `<a>` simple (scroll natif, pas de JS)
+  - Actions desktop : "Connexion" ghost → `/login` (Next.js Link), "Demander une activation" bouton doré `bg-[#D4A843] text-[#0B1F3A]` → `<a href="#lead-form">`, icône WhatsApp ghost → `https://wa.me/2250576103277` (target _blank)
+  - Mobile (lg-) : icône WhatsApp visible + hamburger qui ouvre un Sheet (`bg-[#0B1F3A] text-white`, bordure `border-white/10`) avec les 5 liens, séparateur, Connexion, et CTA doré pleine largeur
+  - Effet scroll : `useEffect` écoute `window.scrollY > 20` → toggle `shadow-lg shadow-black/30` (transitions 300ms). Gate `mounted` pour éviter l'hydration mismatch du Sheet (même pattern que site-header existant).
+  - Accessibilité : `aria-label` sur boutons icône, `aria-describedby={undefined}` sur SheetContent (silence warning Radix), SheetTitle visible
+- Créé `src/components/landing/HeroSection.tsx` (server component, pas de "use client") :
+  - Fond `bg-[#0B1F3A]` + 2 lueurs radiales dorées (`rgba(212,168,67,0.20)` top-left + `0.10` top-right) en `style={{ background: radial-gradient(...) }}`
+  - Badge doré "Solution de gestion pour hôtels & résidences en Côte d'Ivoire" (Sparkles icon, border `#D4A843/40`)
+  - H1 blanc + `simplement` en `font-serif italic text-[#D4A843]` (accent premium)
+  - Sous-titre slate-400, 2 CTA (doré plein + outline blanc), ligne de confiance ("Paiement Mobile Money · Activation par code · Support WhatsApp · Données sécurisées")
+  - Maquette tableau de bord (HTML/CSS pur, pas d'image) :
+    - Carte `bg-[#0B1F3A]/70 backdrop-blur border-white/10` + halo `from-[#D4A843]/20 blur-2xl`
+    - En-tête avec logo "OG", libellé "OGHOTEL · Tableau de bord", "Hôtel Baoulé · Aujourd'hui", badge "En ligne" vert
+    - 4 stat cards : Chambres dispo 12 (sur 28), Taux d'occupation 78% (+5% vs hier), Recettes du jour 185 000 FCFA (+12% vs hier), Arrivées 6 (2 en attente)
+    - Liste 3 réservations : Awa Koné / 104 / 12–15 oct. / Réservée (blue), Marc Tanoh / 208 / 13–17 oct. / Occupée (orange), Fatou Diallo / 301 / 14–16 oct. / Nettoyage (amber) — chaque ligne avec avatar initiales doré
+    - Légende 4 badges statut : Disponible (green #16A34A), Occupée (orange #F97316), Réservée (blue-500), Nettoyage (amber-500) — `StatusBadge` helper factorisé avec `STATUS_STYLES` map
+  - Sous-composants `StatCard`, `StatusBadge`, `ReservationRow` définis dans le même fichier (pas d'exports supplémentaires)
+- Créé `src/components/landing/TrustSection.tsx` (server component) :
+  - Fond `bg-[#F8F6F0]` (ivoire), padding `py-16 md:py-20`
+  - Grille 6 badges (sm:2, lg:3) : cartes `bg-white border-[#E5E7EB]` avec icône Lucide dans cercle `bg-[#D4A843]/15 text-[#D4A843]`
+  - 6 badges : MapPin "Pensé pour la Côte d'Ivoire", Building2 "Adapté aux hôtels, résidences et auberges", Wallet "Compatible Mobile Money manuel", MessageCircle "Support WhatsApp", Languages "Interface simple en français", KeyRound "Activation sécurisée par code"
+  - Ligne centrale en `max-w-3xl text-center text-[#334155] md:text-lg` : "Conçu pour aider les établissements à remplacer les cahiers, fichiers Excel et suivis WhatsApp dispersés par une gestion claire et centralisée."
+- Créé `src/components/landing/ProblemSection.tsx` (server component) :
+  - Fond `bg-[#0B1F3A]`, titre blanc "Les difficultés que rencontrent les hôtels et résidences" avec "hôtels et résidences" en `font-serif italic text-[#D4A843]`
+  - Grille 6 cartes (sm:2, lg:3) : `bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all`
+  - 6 cartes avec icônes Lucide dans cercle doré : CalendarX "Réservations dispersées" / AlertTriangle "Risque de double réservation" / Eye "Disponibilité difficile à suivre" / Wallet "Paiements mal contrôlés" / FileText "Reçus manuels" / BarChart3 "Pas de rapports" — descriptions exactement comme spécifié dans le prompt
+  - `article` sémantique pour chaque carte
+- `bun run lint` → **0 errors, 0 warnings** (eslint .)
+- Dev server (`/home/z/my-project/dev.log`) reste healthy — pas d'erreurs de compilation sur les routes existantes. Les 4 nouveaux composants ne sont pas encore wire dans `page.tsx` (scoping : ce batch ne crée que les briques, l'intégration dans la route `/` se fera dans un batch ultérieur avec les sections features/how/pricing/faq/contact/lead-form).
+
+Stage Summary:
+- 4 fichiers créés sous `src/components/landing/` : `Navbar.tsx` (client), `HeroSection.tsx` (server), `TrustSection.tsx` (server), `ProblemSection.tsx` (server)
+- Palette respectée à la lettre : `#0B1F3A` (navy), `#D4A843` (or premium, utilisé pour TOUS les accents/boutons/icônes), `#F8F6F0` (ivoire), `#FFFFFF` (cartes trust), `#334155` (body text trust), `#E5E7EB` (borders trust), `#16A34A` (success green badge + stat hint), `#F97316` (reservation orange badge)
+- Typographie : body en Geist (via layout), accents premium en `font-serif italic` (Tailwind fallback serif) sur "simplement" (hero) et "hôtels et résidences" (problem)
+- Tous les textes en français, HTML sémantique (`header`, `section`, `nav`, `article`, `h1`/`h2`/`h3`)
+- Navbar : glassmorphism + shadow au scroll (window.scrollY > 20) + Sheet mobile + WhatsApp icon link + 2 CTA (Connexion ghost, Demander une activation doré)
+- Hero : maquette dashboard HTML/CSS complète (4 stats + 3 réservations + 4 badges statut) sans aucune image externe
+- Trust : 6 badges ivoire + ligne centrale
+- Problem : 6 cartes navy avec icônes Lucide dorés
+- Imports utilisés : `Button` de `@/components/ui/button`, `Sheet*` de `@/components/ui/sheet`, `cn` de `@/lib/utils`, icônes `lucide-react`, `Link` de `next/link` pour la route interne `/login`
+- Lint clean, dev server healthy, composants prêts à être intégrés dans `src/app/page.tsx` par le batch suivant (qui ajoutera aussi les sections `#features`, `#how`, `#pricing`, `#faq`, `#contact`, `#lead-form` référencées par la navbar)
+
+---
+
+Task ID: LANDING-BATCH-2
+Agent: full-stack-developer
+Task: Landing batch 2 — Solution + Features + Showcase + LocalFit + HowItWorks
+
+Work Log:
+- Read `/home/z/my-project/worklog.md` (incl. WHITE-THEME-LANDING record) for palette and styling context
+- Created `src/components/landing/` directory with 5 server components (no `'use client'`):
+  - `SolutionSection.tsx` — ivory `bg-[#F8F6F0]`; title with `font-serif italic` accent on "transforme"; 6-step visual workflow (Chambre → Réservation → Check-in → Paiement → Reçu → Rapport) using gold numbered circles + `ChevronRight` arrows (rotates 90°→0° mobile→desktop); 6 benefit cards (white bg, rounded-2xl, shadow, hover lift) with icons BedDouble/CalendarCheck/Wallet/FileText/BarChart3/Smartphone
+  - `FeaturesSection.tsx` — navy `bg-[#0B1F3A]`; white title with gold accent on "gérer"; 14 feature cards in `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4` using the exact specified card style (`bg-white/5 border border-white/10 rounded-2xl p-5 hover:bg-white/10 transition-all hover:-translate-y-0.5`); tier badges "Inclus" (green `#16A34A`), "Avancé" (gold `#D4A843`), "Premium" (orange `#F97316`); bottom legend with solid swatches
+  - `ProductShowcase.tsx` — ivory `bg-[#F8F6F0]`; 5 tab-like cards via `WindowFrame` wrapper (macOS-style 3-dot row + tab icon + name on slate-50 top bar, `rounded-2xl shadow-sm`, hover lift). 5 realistic CSS-only previews: Tableau de bord (2×2 stat tiles incl. 78% occupation bar, 2 450 000 FCFA, 4 départs, 5 à nettoyer), Chambres (5 rooms with colored status pills), Réservations (compact 4-row table with guest/room/dates/status), Paiements (4-row list with method+date+green amount), Rapports (6-bar CSS gradient gold chart + total tile). All mockup text uses slate-400/500/600/700
+  - `LocalFitSection.tsx` — white bg; title "Pensé pour le **marché ivoirien**" with `font-serif italic` gold accent; 7 local-fit cards (Coins/Smartphone/MessageCircle/Languages/Wifi/UserCheck/Building2); warm quote figure on ivory `bg-[#F8F6F0]` with gold `Quote` icon, "Vous n'avez pas besoin d'être expert en informatique…" blockquote, "OG" avatar + "L'équipe OGHOTEL" attribution
+  - `HowItWorksSection.tsx` — navy `bg-[#0B1F3A]`; white title with gold accent on "OGHOTEL"; 5 steps (FileText, MessageCircle, CreditCard, KeyRound, Rocket). Desktop (`md+`): horizontal timeline `md:grid-cols-5` with gold connecting line at top-7, gold `size-14` numbered circles with `ring-8 ring-[#0B1F3A]` to mask the line, icon + title below. Mobile (`<md`): vertical timeline with left-aligned gold circles, vertical gold line connector, "Étape N" label + icon + title. CTA gold "Démarrer maintenant" button linking to `#contact`
+- All components: server components, semantic HTML (`section`/`ol`/`li`/`article`/`figure`/`blockquote`/`table`), `aria-labelledby` + `aria-hidden` on decorative icons, mobile-first responsive (1→2→3/4 col grids, ≥44px touch targets), French copy, strict adherence to the user's premium palette (no indigo/blue)
+- Each section has a stable `id` for scroll-links: `#solution`, `#fonctionnalites`, `#produit`, `#marche-ivoirien`, `#demarrage`
+- `bun run lint` → 0 errors, 0 warnings
+- Dev server `/home/z/my-project/dev.log` shows only `GET / 200` responses, no compile/runtime errors
+- Agent record written to `/agent-ctx/LANDING-BATCH-2-full-stack-developer.md`
+
+Stage Summary:
+- 5 production-ready landing section components delivered in `src/components/landing/` covering the middle of the OGHOTEL marketing narrative (Solution → Features → Product Showcase → Local Fit → How It Works)
+- Strict palette compliance (deep navy `#0B1F3A`, premium gold `#D4A843`, ivory `#F8F6F0`, white, slate, plus tier colors green/gold/orange)
+- Realistic CSS-only product UI mockups (no images needed) — dashboard, rooms list, reservations table, payments list, bar chart
+- Responsive mobile-first throughout: vertical timelines on mobile flipping to horizontal on desktop; 1→2→3/4 column grids; ≥44px touch targets
+- All exported as named + default exports; ready to be imported by `src/app/page.tsx` (next integration batch). Lint clean, dev server healthy, ready for user preview via the Preview Panel / "Open in New Tab" button
+
+---
+Task ID: LANDING-BATCH-3
+Agent: full-stack-developer
+Task: Landing batch 3 — Pricing + Comparison + Testimonials + FAQ + LeadForm + FinalCTA + Footer
+
+Work Log:
+- Created 7 new files in `src/components/landing/`:
+  1. `PricingSection.tsx` (server, ivory bg) — 3 pricing cards (ESSENTIEL 30k / PRIVILEGE 50k highlighted "Recommandé" / PREMIUM 75k), `font-serif italic` title accent, `font-mono` prices, gold/navy CTAs that link to `/?plan={ID}#lead-form` for plan preselection.
+  2. `ComparisonSection.tsx` (server, white bg) — 12-row feature comparison table (Chambres → Support prioritaire), green Check / gray X icons, PRIVILEGE column highlighted gold, `overflow-x-auto` wrapper + sticky first column for mobile responsiveness.
+  3. `TestimonialsSection.tsx` (server, navy bg `#0B1F3A`) — 3 glassmorphism value cards (Eye/ShieldCheck/Award), gold radial glow decorations, `font-serif italic` gold accent on "OGHOTEL".
+  4. `FaqSection.tsx` (client, navy bg) — 7-item accordion (Radix via shadcn), gold-on-hover triggers, all 7 questions/answers verbatim from the task spec, WhatsApp helper link.
+  5. `LeadForm.tsx` (client, ivory bg) — RHF + zod resolver on `leadSchema` from `@/lib/validations/lead`, all 10 fields, plan preselect via `useSearchParams` wrapped in `<Suspense>`, POSTs to `/api/leads` with field remapping (`business_name→hotel_name`, `desired_plan_name (uppercase)→desired_plan (lowercase)`, city+rooms_count folded into `message`), 429 handled with Sonner toast + WhatsApp action button, success/error toasts per spec.
+  6. `FinalCtaSection.tsx` (server, navy bg) — Two CTAs: gold "Demander une activation" (`Link` to `/?plan=PRIVILEGE#lead-form`) + outline white "Contacter sur WhatsApp" (`wa.me` link), gold radial glow background.
+  7. `Footer.tsx` (server, dark navy `#07172B`) — Gold OGHOTEL logo, tagline, green pulsing "Support WhatsApp disponible" pill, WhatsApp +225 05 76 10 32 77 link, email ogouromain@gmail.com link, nav (Fonctionnalités/Tarifs/FAQ/Contact/Connexion/Activer), `© 2026 OGHOTEL. Tous droits réservés.`, `mt-auto` for sticky-footer behavior.
+- Wrote detailed work record at `agent-ctx/LANDING-BATCH-3-full-stack-developer.md`.
+- Ran `bun run lint` → 0 errors, 0 warnings.
+- Verified all 7 files exist in `src/components/landing/` and confirmed no existing files were modified.
+- Dev log shows clean compilation with `GET / 200` responses, no runtime errors.
+
+Stage Summary:
+- All 7 components for LANDING-BATCH-3 are created, lint-clean, ready for composition into the final landing page.
+- Schema mismatch between form-side (`@/lib/validations/lead`) and API-side (`/api/leads`) is bridged cleanly at submit time inside `LeadForm.tsx` — no changes needed to either the zod schema or the API route.
+- Plan preselection works end-to-end: PricingSection CTAs and FinalCtaSection primary button use `/?plan={PLAN}#lead-form` URLs; the LeadForm reads `useSearchParams().get("plan")` and preselects the corresponding plan via RHF `setValue`. No client-side event wiring needed on the server-rendered CTA anchors.
+- Visual language consistent across all 7 components: navy `#0B1F3A`/`#07172B` dark sections, ivory `#F8F6F0` light sections, gold `#D4A843` accents/CTAs/badges, green `#16A34A` for success/support indicators, `font-serif italic` for premium title accents, `font-mono` for all prices, generous touch targets (h-12 buttons, p-8 cards), mobile-first responsive grids that stack to single column on small screens.
+
+---
