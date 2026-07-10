@@ -97,15 +97,22 @@ export async function getReports(
   const periodDays = Math.max(1, Math.ceil((now.getTime() - new Date(start).getTime()) / 86400000));
   const totalNights = totalRooms * periodDays;
 
-  const { count: occupiedNights } = await supabase
+  // 🔒 BUG-08 fix : on doit SUM les nuits, pas COUNT les réservations.
+  // Une réservation de 7 nuits compte pour 7 nuits occupées, pas 1.
+  const { data: occupiedReservations } = await supabase
     .from("reservations")
-    .select("id", { count: "exact", head: true })
+    .select("nights")
     .eq("establishment_id", establishmentId)
     .in("status", ["checked_in", "checked_out"])
     .lte("check_in_date", end)
     .gte("check_out_date", start);
 
-  const occupancyRate = totalNights > 0 ? Math.round(((occupiedNights ?? 0) / totalNights) * 100) : 0;
+  const occupiedNights = (occupiedReservations ?? []).reduce(
+    (sum, r: any) => sum + (r.nights || 0),
+    0
+  );
+
+  const occupancyRate = totalNights > 0 ? Math.round((occupiedNights / totalNights) * 100) : 0;
 
   // 2. REVENUE — chiffre d'affaires
   const { data: todayPay } = await supabase

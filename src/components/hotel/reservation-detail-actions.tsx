@@ -93,27 +93,10 @@ export function ReservationDetailActions({ reservation, canEdit }: Props) {
   }
 
   async function handleCheckOut() {
-    setIsLoading(true);
-    try {
-      const res = await fetch("/api/hotel/check-out", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reservation_id: reservation.id }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error ?? "Erreur");
-        return;
-      }
-
-      toast.success(data.message ?? "Check-out effectué");
-      router.refresh();
-    } catch {
-      toast.error("Erreur réseau");
-    } finally {
-      setIsLoading(false);
-    }
+    // Rediriger vers la page /app/check-out qui a le dialog complet
+    // (paiement du solde, force_unpaid, etc.) au lieu d'appeler l'API directement.
+    // L'API check-out échoue si balance > 0 sans payment ou force_unpaid.
+    router.push("/app/check-out");
   }
 
   if (!canEdit) return null;

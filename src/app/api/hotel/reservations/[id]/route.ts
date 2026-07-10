@@ -17,9 +17,11 @@ const patchSchema = z.object({
   rate_amount: z.coerce.number().int().min(0).max(10000000).optional(),
   discount_amount: z.coerce.number().int().min(0).max(10000000).optional(),
   paid_amount: z.coerce.number().int().min(0).max(10000000).optional(),
-  status: z
-    .enum(["pending", "confirmed", "checked_in", "checked_out", "cancelled", "no_show"])
-    .optional(),
+  // 🔒 status est RETIRÉ du PATCH — les transitions de statut (check-in, check-out,
+  // cancel, no_show) doivent passer par les endpoints dédiés :
+  //   POST /api/hotel/check-in, POST /api/hotel/check-out, PATCH ?action=cancel
+  // Cela empêche le contournement du workflow (ex: passer directement à checked_out
+  // sans payer le solde, sans créer la tâche ménage, sans générer la facture).
   source: z.enum(["direct", "phone", "whatsapp", "agency", "other"]).optional(),
   notes: z.string().max(2000).optional().or(z.literal("")),
   action: z.enum(["cancel"]).optional(),

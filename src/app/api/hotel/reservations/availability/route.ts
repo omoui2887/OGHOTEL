@@ -46,7 +46,8 @@ export async function POST(request: NextRequest) {
       parsed.data.room_id,
       parsed.data.check_in_date,
       parsed.data.check_out_date,
-      parsed.data.exclude_reservation_id
+      parsed.data.exclude_reservation_id,
+      profile.establishment_id
     );
 
     return NextResponse.json(result);

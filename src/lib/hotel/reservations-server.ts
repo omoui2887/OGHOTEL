@@ -515,6 +515,7 @@ export async function updateReservation(
   // Recalculer si tarif/remise/dates changent
   const rateAmount = input.rate_amount ?? current.rate_amount;
   const discount = input.discount_amount ?? current.discount_amount;
+  let totalChanged = false;
   if (
     input.rate_amount !== undefined ||
     input.discount_amount !== undefined ||
@@ -525,13 +526,15 @@ export async function updateReservation(
     updateData.rate_amount = rateAmount;
     updateData.discount_amount = discount;
     updateData.total_amount = rateAmount * nights - discount;
+    totalChanged = true;
   }
 
-  // Si acompte change, recalculer le solde
-  if (input.paid_amount !== undefined) {
+  // Si acompte change OU si le total a changé, recalculer le solde
+  if (input.paid_amount !== undefined || totalChanged) {
     const total = (updateData.total_amount as number) ?? current.total_amount;
-    updateData.paid_amount = input.paid_amount;
-    updateData.balance_amount = total - input.paid_amount;
+    const paid = input.paid_amount ?? current.paid_amount;
+    updateData.paid_amount = paid;
+    updateData.balance_amount = total - paid;
   }
 
   const { error } = await supabase
