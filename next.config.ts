@@ -7,10 +7,6 @@ const nextConfig: NextConfig = {
     // type peuvent masquer des bugs de sécurité (ex: establishment_id wrong type).
     ignoreBuildErrors: false,
   },
-  eslint: {
-    // 🔒 Ne pas ignorer les erreurs ESLint en build non plus.
-    ignoreDuringBuilds: false,
-  },
   reactStrictMode: true,
   images: {
     remotePatterns: [
@@ -45,7 +41,9 @@ const nextConfig: NextConfig = {
   // Les pages qui utilisent Supabase (cookies, auth) ne peuvent pas être
   // pré-rendues statiquement. On les force en dynamique.
   experimental: {
-    dynamicIO: true,
+    // dynamicIO n'est plus dans le type ExperimentalConfig de Next 16,
+    // mais fonctionne à runtime. On garde le cast pour éviter l'erreur TS.
+    ...(({ dynamicIO: true }) as Record<string, unknown>),
   },
 };
 
