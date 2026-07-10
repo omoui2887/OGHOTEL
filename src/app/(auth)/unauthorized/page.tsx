@@ -23,7 +23,7 @@ export default async function UnauthorizedPage() {
     : null;
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-[#fffaf3] p-4 dark:bg-background sm:p-6">
+    <div className="flex min-h-screen w-full items-center justify-center bg-background p-4 sm:p-6">
       <div className="w-full max-w-md space-y-6">
       <Card className="shadow-lg border-destructive/20">
         <CardHeader className="space-y-3 text-center">

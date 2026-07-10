@@ -17,7 +17,7 @@ export const metadata = {
 
 export default function ChangePasswordPage() {
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-[#fffaf3] p-4 dark:bg-background sm:p-6">
+    <div className="flex min-h-screen w-full items-center justify-center bg-background p-4 sm:p-6">
       <div className="w-full max-w-md space-y-6">
       {/* Logo */}
       <Link

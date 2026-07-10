@@ -28,7 +28,7 @@ export function AuthSplitLayout({
           "relative hidden w-[44%] max-w-xl flex-col justify-between overflow-hidden lg:flex",
           sidebarVariant === "orange"
             ? "bg-gradient-to-br from-primary via-primary to-orange-700 text-white"
-            : "bg-gradient-to-br from-zinc-900 via-zinc-900 to-slate-900 text-white",
+            : "bg-gradient-to-br from-orange-600 via-primary to-orange-800 text-white",
         ].join(" ")}
       >
         {/* Texture décorative */}
@@ -66,7 +66,7 @@ export function AuthSplitLayout({
       </aside>
 
       {/* Contenu droit */}
-      <main className="flex flex-1 flex-col bg-[#fffaf3] dark:bg-background">
+      <main className="flex flex-1 flex-col bg-background">
         {/* Mobile header (logo visible sur mobile) */}
         <div className="flex items-center justify-between p-4 lg:hidden">
           <Link href="/" className="inline-flex items-center gap-2">
