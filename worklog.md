@@ -2884,3 +2884,54 @@ Stage Summary:
 - Bordures renforcées (0.08 → 0.15 opacity)
 - 0 erreur lint
 - Push vers GitHub effectué
+
+---
+Task ID: 46
+Agent: main-orchestrator
+Task: Appliquer le thème de référence (beige/crème + orange) à toutes les pages du SaaS
+
+Work Log:
+- Analyse de la capture de référence via VLM :
+  * Fond principal : beige très clair / crème (#F8F3E9)
+  * Texte principal : noir profond (#1A1A1A)
+  * Texte secondaire : gris foncé (#555555)
+  * Couleur primaire / accents : orange vif (#FF7A00)
+  * Style : moderne, minimaliste, clair, chaleureux
+- Application du thème dans src/app/globals.css :
+  * --background : #0a1929 (navy) → #f8f3e9 (beige crème)
+  * --foreground : #f8fafc (blanc) → #1a1a1a (noir profond)
+  * --card : #163049 (navy) → #ffffff (blanc pur)
+  * --popover : #1a3a55 → #ffffff
+  * --primary : #ff6b35 → #ff7a00 (orange référence)
+  * --primary-foreground : #0a1929 → #ffffff (blanc sur orange)
+  * --secondary : #1e3a5f → #f0e8d5 (beige plus foncé)
+  * --muted : #1e3a5f → #f0e8d5
+  * --muted-foreground : #cbd5e1 → #6b6b6b (gris foncé lisible)
+  * --accent : #ff8a5c → #ff9a3c
+  * --destructive : #ef4444 → #dc2626
+  * --border : rgba(255,255,255,0.15) → #e0d8c5 (bordure beige visible)
+  * --input : rgba(255,255,255,0.2) → #e0d8c5
+  * --sidebar : #0a1929 → #f0e8d5 (beige pour sidebar)
+  * --sidebar-accent : #1e3a5f → #e8dec5
+  * Charts : adaptés pour fond clair (bleu, vert, jaune, violet)
+  * Mode .dark : identique au mode clair (le SaaS est clair par défaut)
+- Mise à jour AuthSplitLayout :
+  * sidebarVariant "navy" : from-zinc-900 → from-orange-600 via-primary to-orange-800 (cohérent avec le thème orange)
+  * main : bg-[#fffaf3] → bg-background (utilise la variable CSS)
+- Mise à jour change-password + unauthorized pages :
+  * bg-[#fffaf3] → bg-background (variable CSS)
+- Vérification VLM :
+  * App : "Fond beige/crème, texte noir, accents orange. Contraste élevé, conforme WCAG."
+  * Login : "Fond gauche orange, fond droit beige. Thème cohérent beige/crème + orange."
+- Lint : 0 erreur
+- Push vers GitHub → Vercel redéploie
+
+Stage Summary:
+- Thème beige/crème + orange appliqué à TOUTES les pages du SaaS
+- Fond : #f8f3e9 (beige clair) au lieu de #0a1929 (navy foncé)
+- Texte : #1a1a1a (noir) au lieu de #f8fafc (blanc)
+- Cartes : #ffffff (blanc pur) bien détachées du fond beige
+- Bordures : #e0d8c5 (beige foncé) bien visibles
+- Sidebar auth "navy" → orange (cohérent avec le branding)
+- Toutes les variables CSS :root et .dark mises à jour
+- 0 erreur lint
