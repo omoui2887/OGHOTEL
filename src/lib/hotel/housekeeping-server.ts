@@ -81,6 +81,19 @@ export async function createHousekeepingTask(
 ): Promise<{ success: boolean; id?: string; error?: string }> {
   const supabase = createSupabaseAdminClient();
 
+  // 🔒 Vérifier que room_id appartient bien à cet établissement
+  if (input.room_id) {
+    const { data: room } = await supabase
+      .from("rooms")
+      .select("id")
+      .eq("id", input.room_id)
+      .eq("establishment_id", establishmentId)
+      .maybeSingle();
+    if (!room) {
+      return { success: false, error: "Chambre introuvable dans votre établissement" };
+    }
+  }
+
   const { data, error } = await supabase
     .from("housekeeping_tasks")
     .insert({

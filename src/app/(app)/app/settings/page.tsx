@@ -1,6 +1,7 @@
 import { getCurrentProfile } from "@/lib/auth";
 import { getEstablishmentSettings } from "@/lib/hotel/settings-server";
 import { SettingsForm } from "@/components/hotel/settings-form";
+import { PermissionDenied } from "@/components/hotel/permission-denied";
 
 export const metadata = {
   title: "Paramètres",
@@ -15,6 +16,13 @@ export default async function SettingsPage() {
         <p className="text-sm text-muted-foreground">Aucun établissement associé.</p>
       </div>
     );
+  }
+
+  // 🔒 Sécurité : les paramètres contiennent des infos sensibles
+  // (owner_name, email, phone, address, subscription). Seuls hotel_admin
+  // et manager peuvent les voir.
+  if (profile.role !== "hotel_admin" && profile.role !== "manager") {
+    return <PermissionDenied />;
   }
 
   const settings = await getEstablishmentSettings(profile.establishment_id);

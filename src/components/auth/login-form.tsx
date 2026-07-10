@@ -65,7 +65,14 @@ export function LoginForm() {
       const redirectTo = searchParams.get("redirect");
       const rolePath = getRedirectPathForRole(data.profile?.role);
 
-      router.push(redirectTo ?? rolePath);
+      // 🔒 Anti open redirect : n'accepter que les chemins relatifs internes
+      // (commençant par "/" mais pas "//" qui est un protocole alternatif).
+      const safeRedirect =
+        redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
+          ? redirectTo
+          : rolePath;
+
+      router.push(safeRedirect);
       router.refresh();
     } catch {
       toast.error("Erreur réseau. Vérifiez votre connexion et réessayez.");

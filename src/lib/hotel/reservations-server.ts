@@ -221,20 +221,23 @@ export async function checkRoomAvailability(
   roomId: string,
   checkInDate: string,
   checkOutDate: string,
-  excludeReservationId?: string
+  excludeReservationId?: string,
+  establishmentId?: string
 ): Promise<{ available: boolean; conflicts: { id: string; guest_name: string; check_in: string; check_out: string }[] }> {
   const supabase = createSupabaseAdminClient();
 
   // Récupérer toutes les réservations de cette chambre avec un statut bloquant.
-  // On ne fait pas de join sur guests ici — si le join échoue (FK non résolu
-  // par PostgREST, problème réseau, etc.), la fonction retournerait
-  // `available: false` et bloquerait TOUTES les réservations. On récupère
-  // les guest_id séparément et on fetch les noms seulement si nécessaire.
+  // On filtre par establishment_id si fourni (anti cross-tenant : ne regarde
+  // que les réservations du MÊME établissement, pas celles des autres hôtels).
   let query = supabase
     .from("reservations")
-    .select("id, check_in_date, check_out_date, status, guest_id")
+    .select("id, check_in_date, check_out_date, status, guest_id, establishment_id")
     .eq("room_id", roomId)
     .in("status", BLOCKING_STATUSES);
+
+  if (establishmentId) {
+    query = query.eq("establishment_id", establishmentId);
+  }
 
   if (excludeReservationId) {
     query = query.neq("id", excludeReservationId);
@@ -309,6 +312,29 @@ export async function createReservation(
 ): Promise<{ success: boolean; id?: string; error?: string }> {
   const supabase = createSupabaseAdminClient();
 
+  // 0. 🔒 Vérifier que room_id ET guest_id appartiennent BIEN à cet établissement
+  //    (anti cross-tenant injection : sans ça, un hotel_admin pourrait créer
+  //    une réservation avec une chambre/client d'un AUTRE établissement).
+  const { data: room } = await supabase
+    .from("rooms")
+    .select("id")
+    .eq("id", input.room_id)
+    .eq("establishment_id", establishmentId)
+    .maybeSingle();
+  if (!room) {
+    return { success: false, error: "Chambre introuvable dans votre établissement" };
+  }
+
+  const { data: guest } = await supabase
+    .from("guests")
+    .select("id")
+    .eq("id", input.guest_id)
+    .eq("establishment_id", establishmentId)
+    .maybeSingle();
+  if (!guest) {
+    return { success: false, error: "Client introuvable dans votre établissement" };
+  }
+
   // 1. Valider les dates
   const nights = calculateNights(input.check_in_date, input.check_out_date);
   if (nights <= 0) {
@@ -319,7 +345,9 @@ export async function createReservation(
   const availability = await checkRoomAvailability(
     input.room_id,
     input.check_in_date,
-    input.check_out_date
+    input.check_out_date,
+    undefined,
+    establishmentId
   );
 
   if (!availability.available) {

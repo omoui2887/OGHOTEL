@@ -21,23 +21,12 @@ export default async function AppLayout({
 }) {
   const profile = await getCurrentProfile();
 
-  // En production, si pas de profil (Supabase mal configuré, session expirée,
-  // etc.), on redirige vers /login au lieu de rendre le shell sans auth.
-  // En dev (sandbox sans Supabase), on laisse passer pour permettre le dev.
+  // 🔒 Sécurité : si pas de profil (Supabase mal configuré, session expirée,
+  // etc.), on redirige TOUJOURS vers /login. Le mode dev sandbox sans
+  // Supabase ne doit pas exposer le shell — les pages afficheront leurs
+  // propres messages "Aucun établissement associé" sans données.
   if (!profile) {
-    if (process.env.NODE_ENV === "production") {
-      redirect("/login?redirect=/app/dashboard");
-    }
-    // Dev : rend le shell sans establishmentName (middleware gère)
-    return (
-      <HotelShell
-        profile={null}
-        establishmentName={null}
-        features={{}}
-      >
-        {children}
-      </HotelShell>
-    );
+    redirect("/login?redirect=/app/dashboard");
   }
 
   if (!isHotelUser(profile.role)) {

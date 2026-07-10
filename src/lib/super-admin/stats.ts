@@ -1,3 +1,4 @@
+import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 /**

@@ -60,6 +60,17 @@ export async function createRoom(
 ): Promise<{ success: boolean; id?: string; error?: string }> {
   const supabase = createSupabaseAdminClient();
 
+  // 🔒 Vérifier que room_type_id appartient bien à cet établissement
+  const { data: roomType } = await supabase
+    .from("room_types")
+    .select("id")
+    .eq("id", input.room_type_id)
+    .eq("establishment_id", establishmentId)
+    .maybeSingle();
+  if (!roomType) {
+    return { success: false, error: "Type de chambre introuvable dans votre établissement" };
+  }
+
   const { data, error } = await supabase
     .from("rooms")
     .insert({

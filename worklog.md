@@ -2962,3 +2962,50 @@ Stage Summary:
 - 5 loading.tsx pour les pages clés (dashboard, reservations, rooms, guests, payments) → UX fluide pendant le chargement serveur
 - 0 erreur lint, 0 erreur TypeScript dans src/ (erreurs pré-existantes seulement dans examples/skills/next.config.ts — non liées)
 - Dev server : OK (GET / 200, GET /login 200)
+
+---
+Task ID: SEC-AUDIT-FULL-DISCOVERY
+Agent: Explore (security discovery)
+Task: PASSE 1 — Discovery complete
+
+Work Log:
+- Lu /home/z/my-project/worklog.md (historique, 2964 lignes)
+- Lu package.json, next.config.ts, tsconfig.json, .gitignore, .env (committé !)
+- Lu src/middleware.ts, src/lib/supabase/{middleware,server,client}.ts, src/lib/auth.ts, src/lib/roles.ts, src/lib/db.ts
+- Lu src/lib/security/{rate-limit,url}.ts
+- Lu src/lib/activation/server.ts
+- Lu les 6 migrations SQL supabase/migrations/00{1..6}*.sql
+- Lu TOUS les 38 routes API src/app/api/**/route.ts (auth, activation, hotel/*, super-admin/*, leads)
+- Lu TOUS les 24 fichiers src/lib/hotel/*-server.ts et src/lib/super-admin/*-server.ts
+- Lu les 3 layouts (app)/(super-admin)/(auth) et vérifié le defense-in-depth
+- Lu les pages login, register, activation, change-password, unauthorized, error.tsx (root + 2 module)
+- Lu 12 composants client (login-form, register-form, activation-form, change-password-form, settings-form, lead-form, printable-invoice, etc.)
+- Vérifié l'usage des 3 clients Supabase (admin/server/browser) + boundary client/serveur
+- Vérifié les imports `server-only` dans tous les fichiers serveur
+- Vérifié les console.* (90+ occurrences, toutes serveur, aucune fuite de mot de passe/secret)
+- Vérifié `dangerouslySetInnerHTML` (1 occurrence dans shadcn chart.tsx, safe)
+- Vérifié `process.env.*` (5 occurrences, toutes publiques NEXT_PUBLIC_* ou NODE_ENV)
+- Vérifié establishment_id trust boundaries sur TOUS les -server.ts
+- Vérifié toutes les pages (app) pour canAccessModule / inline role checks
+
+Stage Summary:
+- 38 routes API cataloguées (3 publiques + 3 auth + 19 hotel + 8 super-admin + 1 health + 4 inutilisées)
+- 16 tables RLS activées, 64 policies, 14 fonctions SECURITY DEFINER (search_path=public)
+- 6 migrations SQL (001 initial, 002 seed_plans, 003 RLS, 004 seed_super_admin, 005 test, 006 contraintes)
+- 7 vulnérabilités CRITIQUES/HIGH identifiées (voir rapport détaillé ci-dessous)
+- 11 vulnérabilités MEDIUM/LOW identifiées
+- 0 violation de boundary client/serveur (tous les -server.ts ont `import "server-only"`)
+- 0 fuite de secret dans .env (mais .env est committé — mauvaise hygiène)
+- 0 console.log de mot de passe/secret/token
+
+PROCHAINES PASSES (PASSE 2 — FIX) :
+- Fix #1 : createReservation/createRoom/createHousekeepingTask/createMaintenanceTicket doivent vérifier que room_id/guest_id/room_type_id appartiennent à establishmentId
+- Fix #2 : Valider `redirect` param dans login-form.tsx (refuser URLs externes)
+- Fix #3 : Supprimer la branche dev du (app)/layout.tsx ou la protéger par un flag explicite
+- Fix #4 : Retirer .env du git tracking (git rm --cached .env)
+- Fix #5 : Activer typescript.ignoreBuildErrors: false dans next.config.ts
+- Fix #6 : Ajouter headers CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+- Fix #7 : Upgrade xlsx vers 0.20.x (CVE-2023-30533, CVE-2024-22363)
+- Fix #8 : Ajouter `import "server-only"` à src/lib/super-admin/stats.ts
+- Fix #9 : canAccessModule sur /app/settings, /app/room-types
+- Fix #10 : Migration vers Upstash Redis pour rate limiting distribué
