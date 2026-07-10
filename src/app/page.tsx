@@ -330,44 +330,104 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-              <span className="text-slate-900">{RESULTS_SECTION.titleWhite}</span>{" "}
-              <span className="text-amber-600">{RESULTS_SECTION.titleOrange}</span>
+              <span className="text-slate-900">Ce que nos clients</span>{" "}
+              <span className="text-amber-600">disent de nous</span>
             </h2>
-            <p className="mt-4 text-slate-500">{RESULTS_SECTION.subtitle}</p>
+            <p className="mt-4 text-slate-500">
+              Plus de 500 hôtels nous font confiance à travers la Côte d&apos;Ivoire.
+            </p>
           </div>
 
-          <div className="mt-12 grid items-center gap-8 lg:grid-cols-2">
-            {/* Image */}
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-slate-200 shadow-xl">
-              <Image
-                src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=1200&q=80"
-                alt="Réception d'hôtel avec réceptionniste au travail"
-                fill
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover"
-              />
-            </div>
-
-            {/* Card */}
-            <Card className="border-amber-600/30 bg-gradient-to-br from-amber-600/10 to-transparent">
-              <CardContent className="space-y-5">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-600/15 text-amber-500">
-                  <TrendingUp className="h-7 w-7" />
+          <div className="mt-12 grid gap-6 md:grid-cols-2">
+            {/* Témoignage 1 */}
+            <Card className="border-slate-200 bg-white shadow-lg">
+              <CardContent className="space-y-4 p-6">
+                <div className="flex gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  ))}
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900">
-                  {RESULTS_SECTION.cardTitle}
-                </h3>
-                <p className="text-slate-600">{RESULTS_SECTION.cardDesc}</p>
-                <Button
-                  asChild
-                  variant="link"
-                  className="h-auto p-0 text-amber-500 hover:text-amber-400"
-                >
-                  <Link href="/#contact">
-                    {RESULTS_SECTION.cardCta}
-                    <ArrowRight className="ml-1 h-4 w-4" />
-                  </Link>
-                </Button>
+                <p className="text-sm leading-relaxed text-slate-600">
+                  &ldquo;OGHOTEL a complètement transformé notre gestion. Nous avons réduit nos erreurs de réservation de 90% et augmenté nos revenus de 35% en seulement 6 mois. L&apos;interface est intuitive et l&apos;équipe support est exceptionnelle.&rdquo;
+                </p>
+                <div className="flex items-center gap-3 border-t border-slate-100 pt-4">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-600 text-sm font-bold text-white">
+                    KY
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Kouamé Yao</p>
+                    <p className="text-xs text-slate-500">Directeur Général · Hôtel Prestige, Abidjan</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Témoignage 2 */}
+            <Card className="border-slate-200 bg-white shadow-lg">
+              <CardContent className="space-y-4 p-6">
+                <div className="flex gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <p className="text-sm leading-relaxed text-slate-600">
+                  &ldquo;Avant OGHOTEL, je passais des heures sur Excel. Maintenant, tout est automatisé. Les rapports financiers, les réservations, les notifications clients... C&apos;est comme avoir un assistant personnel 24h/24.&rdquo;
+                </p>
+                <div className="flex items-center gap-3 border-t border-slate-100 pt-4">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-600 text-sm font-bold text-white">
+                    AD
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Aminata Diallo</p>
+                    <p className="text-xs text-slate-500">Propriétaire · Résidence Étoile, Yamoussoukro</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Témoignage 3 */}
+            <Card className="border-slate-200 bg-white shadow-lg">
+              <CardContent className="space-y-4 p-6">
+                <div className="flex gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <p className="text-sm leading-relaxed text-slate-600">
+                  &ldquo;Le fait que l&apos;équipe soit basée en Côte d&apos;Ivoire fait toute la différence. Ils comprennent nos réalités. L&apos;intégration Mobile Money a été un game-changer pour nos clients. Absolument recommandé !&rdquo;
+                </p>
+                <div className="flex items-center gap-3 border-t border-slate-100 pt-4">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-600 text-sm font-bold text-white">
+                    IK
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Ibrahim Koné</p>
+                    <p className="text-xs text-slate-500">Responsable Opérations · Grand Hôtel du Nord, Korhogo</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Témoignage 4 */}
+            <Card className="border-slate-200 bg-white shadow-lg">
+              <CardContent className="space-y-4 p-6">
+                <div className="flex gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <p className="text-sm leading-relaxed text-slate-600">
+                  &ldquo;La fonctionnalité multi-propriétés nous permet de gérer nos 3 établissements depuis un seul écran. La tarification dynamique a augmenté notre taux d&apos;occupation de 60% à 85%. Incroyable !&rdquo;
+                </p>
+                <div className="flex items-center gap-3 border-t border-slate-100 pt-4">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-600 text-sm font-bold text-white">
+                    MB
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Marie-Claire Bamba</p>
+                    <p className="text-xs text-slate-500">Gérante · Hôtel Les Palmiers, San-Pédro</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
