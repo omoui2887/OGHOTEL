@@ -198,7 +198,7 @@ export default function HomePage() {
             <div className="relative">
               <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-slate-200 shadow-2xl">
                 <Image
-                  src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=80"
+                  src="/images/hotel-lobby-1.png"
                   alt="Lobby d'hôtel moderne et lumineux"
                   fill
                   priority
@@ -327,6 +327,17 @@ export default function HomePage() {
       {/* TÉMOIGNAGES / RÉSULTATS                                            */}
       {/* ----------------------------------------------------------------- */}
       <section id="temoignages" className="py-16 md:py-24">
+        {/* Image d'ambiance — lobby d'hôtel de luxe */}
+        <div className="relative mb-12 h-[240px] w-full overflow-hidden md:h-[320px]">
+          <Image
+            src="/images/hotel-lobby-2.png"
+            alt="Hall d'hôtel de luxe en Côte d'Ivoire"
+            fill
+            sizes="100vw"
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/30 to-transparent" />
+        </div>
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
