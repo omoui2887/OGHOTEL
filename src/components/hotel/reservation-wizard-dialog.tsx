@@ -350,7 +350,7 @@ export function ReservationWizardDialog({
         {isWalkIn && (
           <div className="flex items-center gap-2 rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-sm">
             <Calendar className="h-4 w-4 shrink-0 text-orange-600" />
-            <span className="text-orange-800 dark:text-orange-200">
+            <span className="text-orange-800 text-orange-800">
               Arrivée :{" "}
               <span className="font-semibold">Aujourd&apos;hui ({formatDate(todayStr)})</span>{" "}
               — Check-in automatique
@@ -634,7 +634,7 @@ export function ReservationWizardDialog({
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Acompte</p>
-                    <p className="text-lg font-bold text-emerald-600">
+                    <p className="text-lg font-bold text-emerald-700">
                       {formatFCFA(paidAmount || 0)}
                     </p>
                   </div>
@@ -645,7 +645,7 @@ export function ReservationWizardDialog({
                         "text-lg font-bold",
                         balanceAmount > 0
                           ? "text-destructive"
-                          : "text-emerald-600"
+                          : "text-emerald-700"
                       )}
                     >
                       {formatFCFA(balanceAmount)}
@@ -746,7 +746,7 @@ export function ReservationWizardDialog({
                     </span>
                   </div>
                   {discountAmount > 0 && (
-                    <div className="flex justify-between text-emerald-600">
+                    <div className="flex justify-between text-emerald-700">
                       <span>Remise</span>
                       <span className="font-medium">-{formatFCFA(discountAmount)}</span>
                     </div>
@@ -759,7 +759,7 @@ export function ReservationWizardDialog({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Acompte versé</span>
-                    <span className="font-medium text-emerald-600">
+                    <span className="font-medium text-emerald-700">
                       {formatFCFA(paidAmount || 0)}
                     </span>
                   </div>
@@ -768,7 +768,7 @@ export function ReservationWizardDialog({
                     <span
                       className={cn(
                         "font-bold",
-                        balanceAmount > 0 ? "text-destructive" : "text-emerald-600"
+                        balanceAmount > 0 ? "text-destructive" : "text-emerald-700"
                       )}
                     >
                       {formatFCFA(balanceAmount)}

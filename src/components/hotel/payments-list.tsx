@@ -226,7 +226,7 @@ export function PaymentsList({
                       <td className="px-4 py-3 text-muted-foreground">
                         {p.room_number ?? "—"}
                       </td>
-                      <td className="px-4 py-3 font-bold text-emerald-600">
+                      <td className="px-4 py-3 font-bold text-emerald-700">
                         {formatFCFA(p.amount)}
                       </td>
                       <td className="px-4 py-3">

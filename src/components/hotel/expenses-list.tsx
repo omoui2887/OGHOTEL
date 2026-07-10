@@ -254,7 +254,7 @@ export function ExpensesList({
         </Card>
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-500/15 text-blue-400">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-500/15 text-blue-700">
               <Inbox className="h-5 w-5" />
             </div>
             <div>

@@ -211,7 +211,7 @@ export function RoomFormDialog({ open, onOpenChange, room, roomTypes }: Props) {
               <p className="text-xs text-destructive">{errors.room_type_id.message}</p>
             )}
             {activeRoomTypes.length === 0 && (
-              <p className="text-xs text-amber-500">
+              <p className="text-xs text-amber-700">
                 Créez d'abord un type de chambre dans /app/room-types
               </p>
             )}

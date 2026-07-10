@@ -30,7 +30,7 @@ const SEVERITY_COLORS: Record<string, string> = {
   info: "bg-blue-500/15 text-blue-400",
   warning: "bg-amber-500/15 text-amber-400",
   danger: "bg-destructive/15 text-destructive",
-  success: "bg-emerald-500/15 text-emerald-400",
+  success: "bg-emerald-500/15 text-emerald-700",
 };
 
 const SEVERITY_DOT: Record<string, string> = {

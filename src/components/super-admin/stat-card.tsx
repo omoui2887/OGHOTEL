@@ -12,7 +12,7 @@ type StatCardProps = {
 
 const VARIANT_CLASSES: Record<NonNullable<StatCardProps["variant"]>, string> = {
   default: "bg-primary/10 text-primary",
-  success: "bg-emerald-500/15 text-emerald-400",
+  success: "bg-emerald-500/15 text-emerald-700",
   warning: "bg-amber-500/15 text-amber-400",
   danger: "bg-destructive/15 text-destructive",
   info: "bg-blue-500/15 text-blue-400",

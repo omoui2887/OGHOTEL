@@ -52,19 +52,19 @@ const STATUS_COLORS: Record<string, { bg: string; border: string; text: string; 
   pending: {
     bg: "bg-amber-500/20",
     border: "border-amber-500/40",
-    text: "text-amber-700 dark:text-amber-300",
+    text: "text-amber-700 text-amber-700",
     dot: "bg-amber-500",
   },
   confirmed: {
     bg: "bg-blue-500/20",
     border: "border-blue-500/40",
-    text: "text-blue-700 dark:text-blue-300",
+    text: "text-blue-700 text-blue-700",
     dot: "bg-blue-500",
   },
   checked_in: {
     bg: "bg-emerald-500/20",
     border: "border-emerald-500/40",
-    text: "text-emerald-700 dark:text-emerald-300",
+    text: "text-emerald-700",
     dot: "bg-emerald-500",
   },
   checked_out: {
@@ -77,7 +77,7 @@ const STATUS_COLORS: Record<string, { bg: string; border: string; text: string; 
 
 // Couleurs par statut de chambre
 const ROOM_STATUS_COLORS: Record<string, string> = {
-  available: "bg-emerald-500/15 text-emerald-600",
+  available: "bg-emerald-500/15 text-emerald-700",
   reserved: "bg-blue-500/15 text-blue-600",
   occupied: "bg-primary/15 text-primary",
   cleaning: "bg-amber-500/15 text-amber-600",
@@ -667,7 +667,7 @@ export function CalendarView({
                                   </p>
                                 )}
                                 {arrivalsCount > 0 && (
-                                  <p className="text-xs text-emerald-600">
+                                  <p className="text-xs text-emerald-700">
                                     ← {arrivalsCount} arrivée{arrivalsCount > 1 ? "s" : ""}
                                   </p>
                                 )}

@@ -127,7 +127,7 @@ export function RegisterForm({ code, leadName, planName }: RegisterFormProps) {
       ? "text-destructive"
       : strength < 70
       ? "text-amber-600"
-      : "text-emerald-600";
+      : "text-emerald-700";
 
   const onSubmit = async (values: Values) => {
     setIsLoading(true);
@@ -174,7 +174,7 @@ export function RegisterForm({ code, leadName, planName }: RegisterFormProps) {
       {/* Code vérifié (read-only) */}
       <div className="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-2.5">
         <div className="flex items-center gap-2.5">
-          <BadgeCheck className="h-5 w-5 text-emerald-600" />
+          <BadgeCheck className="h-5 w-5 text-emerald-700" />
           <div>
             <p className="text-xs text-muted-foreground">Code vérifié</p>
             <p className="font-mono text-sm font-bold text-foreground">{code}</p>
@@ -420,7 +420,7 @@ export function RegisterForm({ code, leadName, planName }: RegisterFormProps) {
             ].map((c) => (
               <li key={c.label} className="flex items-center gap-1.5">
                 <Check
-                  className={`h-3 w-3 ${c.ok ? "text-emerald-600" : "text-muted-foreground/40"}`}
+                  className={`h-3 w-3 ${c.ok ? "text-emerald-700" : "text-muted-foreground/40"}`}
                 />
                 <span className={c.ok ? "text-foreground" : ""}>{c.label}</span>
               </li>

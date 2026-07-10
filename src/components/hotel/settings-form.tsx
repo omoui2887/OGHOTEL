@@ -306,7 +306,7 @@ export function SettingsForm({ settings, canEdit }: Props) {
           {/* Alerte expiration */}
           {isExpiringSoon && !isExpired && (
             <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
-              <p className="font-medium text-amber-700 dark:text-amber-300">
+              <p className="font-medium text-amber-700 text-amber-700">
                 Votre abonnement expire bientôt
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">

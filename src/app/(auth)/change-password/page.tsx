@@ -46,7 +46,7 @@ export default function ChangePasswordPage() {
       </Card>
 
       {/* Avertissement sécurité */}
-      <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+      <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 ">
         <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
         <p>
           Choisissez un mot de passe unique, différent de votre mot de passe
