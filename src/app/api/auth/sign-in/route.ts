@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/security/rate-limit";
 
 /**
  * POST /api/auth/sign-in
@@ -22,6 +23,16 @@ type CookieToSet = { name: string; value: string; options: Record<string, unknow
 
 export async function POST(request: NextRequest) {
   try {
+    // 🔒 Rate limiting anti brute-force : 10 tentatives / 15 min par IP
+    const ip = getClientIP(request);
+    const rl = checkRateLimit(`signin:${ip}`, RATE_LIMITS.signIn.maxRequests, RATE_LIMITS.signIn.windowMs);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: `Trop de tentatives. Réessayez dans ${rl.retryAfter} secondes.` },
+        { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+      );
+    }
+
     const body = await request.json();
     const parsed = signInSchema.safeParse(body);
 

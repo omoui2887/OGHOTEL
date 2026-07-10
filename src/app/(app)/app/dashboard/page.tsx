@@ -1,16 +1,18 @@
 import Link from "next/link";
 import {
-  Hotel,
-  LayoutDashboard,
   BedDouble,
   CalendarCheck,
   Users,
-  ArrowLeft,
-  ShieldCheck,
+  Wallet,
+  TrendingUp,
+  AlertCircle,
   Zap,
+  ArrowRight,
+  LogIn,
+  LogOut,
+  Sparkles,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -18,139 +20,406 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { APP_NAME } from "@/lib/constants";
-import { ExportButton } from "@/components/shared/export-button";
+import { Button } from "@/components/ui/button";
 import { getCurrentProfile } from "@/lib/auth";
-import { ROLE_LABELS } from "@/lib/roles";
-import { SignOutButton } from "@/components/auth/sign-out-button";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { formatFCFA, formatDate } from "@/lib/utils";
 
-const QUICK_LINKS = [
-  { href: "/app/rooms", label: "Chambres", icon: BedDouble },
-  { href: "/app/calendar", label: "Calendrier", icon: CalendarCheck },
-  { href: "/app/guests", label: "Clients", icon: Users },
-];
+export const metadata = {
+  title: "Tableau de bord",
+};
 
 export default async function AppDashboardPage() {
   const profile = await getCurrentProfile();
 
-  return (
-    <div className="min-h-screen bg-muted/30">
-      {/* Topbar */}
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background">
-        <div className="flex h-16 items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Hotel className="h-5 w-5" />
-            </span>
-            <div>
-              <p className="text-sm font-semibold leading-none">{APP_NAME}</p>
-              <p className="text-xs text-muted-foreground">Espace Établissement</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <ExportButton scope="hotel" />
-            {profile && ["hotel_admin", "manager", "receptionist"].includes(profile.role) && (
-              <Button asChild size="sm" className="bg-orange-500 text-white hover:bg-orange-600 shadow-md">
-                <Link href="/app/reservations?walkin=1">
-                  <Zap className="mr-1.5 h-4 w-4" />
-                  Réservation rapide
-                </Link>
-              </Button>
-            )}
-            {profile && (
-              <span className="hidden text-sm text-muted-foreground sm:inline">
-                {profile.full_name ?? profile.email}
-              </span>
-            )}
-            <SignOutButton />
-          </div>
-        </div>
-      </header>
+  // Stats défensif : si Supabase mal configuré, on affiche des zéros
+  let stats = {
+    totalRooms: 0,
+    availableRooms: 0,
+    occupiedRooms: 0,
+    todayCheckIns: 0,
+    todayCheckOuts: 0,
+    activeGuests: 0,
+    monthRevenue: 0,
+    pendingBalance: 0,
+  };
+  let recentReservations: any[] = [];
+  let todayArrivals: any[] = [];
+  let todayDepartures: any[] = [];
 
-      {/* Contenu */}
-      <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
-        <div className="mb-8">
+  if (profile?.establishment_id) {
+    try {
+      const supabase = createSupabaseAdminClient();
+      const estId = profile.establishment_id;
+      const today = new Date().toISOString().split("T")[0];
+      const startOfMonth = new Date(
+        new Date().getFullYear(),
+        new Date().getMonth(),
+        1
+      )
+        .toISOString()
+        .split("T")[0];
+
+      // Stats chambres
+      const { data: rooms } = await supabase
+        .from("rooms")
+        .select("status")
+        .eq("establishment_id", estId)
+        .neq("status", "inactive");
+
+      if (rooms) {
+        stats.totalRooms = rooms.length;
+        stats.availableRooms = rooms.filter((r) => r.status === "available").length;
+        stats.occupiedRooms = rooms.filter((r) => r.status === "occupied").length;
+      }
+
+      // Check-ins du jour
+      const { data: checkIns } = await supabase
+        .from("reservations")
+        .select(
+          `id, check_in_date, guest:guests(full_name), room:rooms(room_number)`
+        )
+        .eq("establishment_id", estId)
+        .eq("check_in_date", today)
+        .in("status", ["confirmed", "checked_in"]);
+
+      stats.todayCheckIns = checkIns?.length ?? 0;
+      todayArrivals = checkIns ?? [];
+
+      // Check-outs du jour
+      const { data: checkOuts } = await supabase
+        .from("reservations")
+        .select(
+          `id, check_out_date, guest:guests(full_name), room:rooms(room_number)`
+        )
+        .eq("establishment_id", estId)
+        .eq("check_out_date", today)
+        .in("status", ["checked_in", "checked_out"]);
+
+      stats.todayCheckOuts = checkOuts?.length ?? 0;
+      todayDepartures = checkOuts ?? [];
+
+      // Clients actifs (séjours en cours)
+      const { count: activeCount } = await supabase
+        .from("reservations")
+        .select("id", { count: "exact", head: true })
+        .eq("establishment_id", estId)
+        .eq("status", "checked_in");
+
+      stats.activeGuests = activeCount ?? 0;
+
+      // Revenu du mois (paiements validés)
+      const { data: payments } = await supabase
+        .from("stay_payments")
+        .select("amount")
+        .eq("establishment_id", estId)
+        .gte("payment_date", startOfMonth);
+
+      stats.monthRevenue = payments?.reduce((sum, p) => sum + (p.amount || 0), 0) ?? 0;
+
+      // Solde impayé
+      const { data: unpaidRes } = await supabase
+        .from("reservations")
+        .select("balance_amount")
+        .eq("establishment_id", estId)
+        .in("status", ["confirmed", "checked_in"])
+        .gt("balance_amount", 0);
+
+      stats.pendingBalance =
+        unpaidRes?.reduce((sum, r) => sum + (r.balance_amount || 0), 0) ?? 0;
+
+      // Réservations récentes
+      const { data: recent } = await supabase
+        .from("reservations")
+        .select(
+          `id, check_in_date, check_out_date, status, total_amount, balance_amount,
+          guest:guests(full_name), room:rooms(room_number)`
+        )
+        .eq("establishment_id", estId)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      recentReservations = recent ?? [];
+    } catch (err) {
+      console.error("Dashboard stats error:", err);
+    }
+  }
+
+  if (!profile?.establishment_id) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+          Tableau de bord
+        </h1>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <AlertCircle className="mx-auto mb-3 h-12 w-12 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">
+              Aucun établissement associé à votre compte.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const occupancyRate =
+    stats.totalRooms > 0
+      ? Math.round((stats.occupiedRooms / stats.totalRooms) * 100)
+      : 0;
+
+  const statCards = [
+    {
+      label: "Chambres disponibles",
+      value: `${stats.availableRooms}/${stats.totalRooms}`,
+      icon: BedDouble,
+      color: "text-emerald-700",
+      bg: "bg-emerald-500/10",
+    },
+    {
+      label: "Taux d'occupation",
+      value: `${occupancyRate}%`,
+      icon: TrendingUp,
+      color: "text-blue-700",
+      bg: "bg-blue-500/10",
+    },
+    {
+      label: "Clients en séjour",
+      value: stats.activeGuests,
+      icon: Users,
+      color: "text-primary",
+      bg: "bg-primary/10",
+    },
+    {
+      label: "Revenus du mois",
+      value: formatFCFA(stats.monthRevenue),
+      icon: Wallet,
+      color: "text-emerald-700",
+      bg: "bg-emerald-500/10",
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
             Tableau de bord
           </h1>
-          <p className="mt-1 text-muted-foreground">
-            Gérez votre établissement — chambres, réservations, clients et paiements.
+          <p className="mt-1 text-sm text-muted-foreground">
+            Bienvenue, {profile.full_name ?? profile.email} — voici l'activité de votre établissement.
           </p>
         </div>
-
-        {/* Carte statut */}
-        <Card className="mb-8 border-primary/20">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">
-                {profile
-                  ? `Bienvenue, ${profile.full_name ?? profile.email}`
-                  : "Session active"}
-              </CardTitle>
-            </div>
-            <CardDescription>
-              {profile
-                ? `Rôle : ${ROLE_LABELS[profile.role] ?? profile.role}`
-                : "Profil non chargé — l'authentification Supabase sera pleinement active après la création des tables (étape 4)."}
-            </CardDescription>
-          </CardHeader>
-        </Card>
-
-        {/* Accès rapides (placeholders) */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {QUICK_LINKS.map((link) => (
-            <Card key={link.href} className="transition-shadow hover:shadow-md">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <link.icon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">{link.label}</CardTitle>
-                    <CardDescription className="text-xs">
-                      Module à développer
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link href={link.href} prefetch>
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Bientôt disponible
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="flex gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/app/reservations?walkin=1">
+              <Zap className="mr-1.5 h-4 w-4 text-orange-600" />
+              Walk-In
+            </Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href="/app/reservations?new=1">
+              <CalendarCheck className="mr-1.5 h-4 w-4" />
+              Réservation
+            </Link>
+          </Button>
         </div>
+      </div>
 
-        {/* Note */}
-        <Card className="mt-8 border-dashed">
-          <CardContent className="flex items-start gap-3 p-5">
-            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
-            <div className="text-sm text-muted-foreground">
-              <p className="font-medium text-foreground">
-                Étape actuelle : intégration Supabase Auth
+      {/* Stats cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {statCards.map((stat) => (
+          <Card key={stat.label}>
+            <CardContent className="flex items-center gap-4 p-5">
+              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.bg}`}>
+                <stat.icon className={`h-6 w-6 ${stat.color}`} />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+                <p className="text-xl font-bold">{stat.value}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Alertes */}
+      {stats.pendingBalance > 0 && (
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="flex items-center gap-3 p-4">
+            <AlertCircle className="h-5 w-5 shrink-0 text-amber-700" />
+            <div>
+              <p className="text-sm font-medium text-amber-800">
+                Solde impayé : {formatFCFA(stats.pendingBalance)}
               </p>
-              <p className="mt-1">
-                L'authentification est prête. Les modules de gestion hôtelière
-                seront développés aux étapes 13 à 23.
+              <p className="text-xs text-amber-700">
+                Des séjours en cours ont un solde restant. Encaissez les paiements avant le check-out.
               </p>
             </div>
           </CardContent>
         </Card>
+      )}
 
-        <div className="mt-6">
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Arrivées du jour */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Arrivées du jour</CardTitle>
+              <CardDescription>{stats.todayCheckIns} prévue(s)</CardDescription>
+            </div>
+            <LogIn className="h-5 w-5 text-emerald-700" />
+          </CardHeader>
+          <CardContent>
+            {todayArrivals.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                Aucune arrivée prévue aujourd'hui
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {todayArrivals.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex items-center justify-between rounded-lg border border-border p-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium">
+                        {r.guest?.full_name ?? "—"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Chambre {r.room?.room_number ?? "—"}
+                      </p>
+                    </div>
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href={`/app/reservations/${r.id}`}>
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Départs du jour */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Départs du jour</CardTitle>
+              <CardDescription>{stats.todayCheckOuts} prévu(s)</CardDescription>
+            </div>
+            <LogOut className="h-5 w-5 text-blue-700" />
+          </CardHeader>
+          <CardContent>
+            {todayDepartures.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                Aucun départ prévu aujourd'hui
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {todayDepartures.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex items-center justify-between rounded-lg border border-border p-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium">
+                        {r.guest?.full_name ?? "—"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Chambre {r.room?.room_number ?? "—"}
+                      </p>
+                    </div>
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href={`/app/reservations/${r.id}`}>
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Réservations récentes */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base">Réservations récentes</CardTitle>
           <Button asChild variant="ghost" size="sm">
-            <Link href="/">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Retour à l'accueil
+            <Link href="/app/reservations">
+              Voir tout
+              <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </Button>
-        </div>
-      </main>
+        </CardHeader>
+        <CardContent>
+          {recentReservations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Sparkles className="mb-2 h-8 w-8 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">
+                Aucune réservation pour le moment.
+              </p>
+              <Button asChild className="mt-3" size="sm">
+                <Link href="/app/reservations?new=1">
+                  <CalendarCheck className="mr-1.5 h-4 w-4" />
+                  Créer une réservation
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b border-border text-left">
+                  <tr>
+                    <th className="px-3 py-2 font-medium text-muted-foreground">Client</th>
+                    <th className="px-3 py-2 font-medium text-muted-foreground">Chambre</th>
+                    <th className="px-3 py-2 font-medium text-muted-foreground">Arrivée</th>
+                    <th className="px-3 py-2 font-medium text-muted-foreground">Total</th>
+                    <th className="px-3 py-2 font-medium text-muted-foreground">Solde</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentReservations.map((r) => (
+                    <tr
+                      key={r.id}
+                      className="border-b border-border/50 transition-colors hover:bg-muted/30"
+                    >
+                      <td className="px-3 py-2.5">
+                        <Link
+                          href={`/app/reservations/${r.id}`}
+                          className="font-medium hover:text-primary"
+                        >
+                          {r.guest?.full_name ?? "—"}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-2.5">{r.room?.room_number ?? "—"}</td>
+                      <td className="px-3 py-2.5 text-muted-foreground">
+                        {formatDate(r.check_in_date)}
+                      </td>
+                      <td className="px-3 py-2.5 font-medium">
+                        {formatFCFA(r.total_amount ?? 0)}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        {r.balance_amount > 0 ? (
+                          <span className="font-medium text-destructive">
+                            {formatFCFA(r.balance_amount)}
+                          </span>
+                        ) : (
+                          <span className="text-emerald-700">Payé</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

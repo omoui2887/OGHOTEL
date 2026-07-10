@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { activateAccount } from "@/lib/activation/server";
+import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/security/rate-limit";
 
 /**
  * POST /api/activation/register
@@ -59,6 +60,16 @@ const schema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // 🔒 Rate limiting : 3 activations / heure par IP (création de compte = sensible)
+    const ip = getClientIP(request);
+    const rl = checkRateLimit(`register:${ip}`, RATE_LIMITS.activationRegister.maxRequests, RATE_LIMITS.activationRegister.windowMs);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { success: false, error: `Trop de tentatives. Réessayez dans ${rl.retryAfter} secondes.` },
+        { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+      );
+    }
+
     const body = await request.json();
     const parsed = schema.safeParse(body);
 

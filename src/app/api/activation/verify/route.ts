@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyActivationCode } from "@/lib/activation/server";
+import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/security/rate-limit";
 
 /**
  * POST /api/activation/verify
@@ -25,6 +26,16 @@ const schema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // 🔒 Rate limiting : 10 vérifications / heure par IP
+    const ip = getClientIP(request);
+    const rl = checkRateLimit(`verify:${ip}`, RATE_LIMITS.activationVerify.maxRequests, RATE_LIMITS.activationVerify.windowMs);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { valid: false, error: `Trop de tentatives. Réessayez dans ${rl.retryAfter} secondes.` },
+        { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+      );
+    }
+
     const body = await request.json();
     const parsed = schema.safeParse(body);
 

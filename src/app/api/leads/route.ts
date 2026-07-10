@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/security/rate-limit";
 
 const leadSchema = z.object({
   full_name: z.string().min(2, "Le nom est requis"),
@@ -16,9 +17,20 @@ const leadSchema = z.object({
  * POST /api/leads
  * Endpoint public : un prospect soumet ses coordonnées depuis la landing page.
  * Utilise le client admin (service_role) car la RLS peut ne pas être configurée.
+ * 🔒 Rate limited : 5 soumissions/heure par IP (anti-spam).
  */
 export async function POST(request: Request) {
   try {
+    // Rate limiting anti-spam
+    const ip = getClientIP(request);
+    const rl = checkRateLimit(`lead:${ip}`, RATE_LIMITS.leadForm.maxRequests, RATE_LIMITS.leadForm.windowMs);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: `Trop de demandes. Réessayez dans ${rl.retryAfter} secondes.` },
+        { status: 429, headers: { "Retry-After": String(rl.retryAfter) } }
+      );
+    }
+
     const body = await request.json();
     const parsed = leadSchema.safeParse(body);
 

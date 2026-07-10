@@ -2935,3 +2935,30 @@ Stage Summary:
 - Sidebar auth "navy" → orange (cohérent avec le branding)
 - Toutes les variables CSS :root et .dark mises à jour
 - 0 erreur lint
+
+---
+Task ID: SAAS-HARDENING
+Agent: full-stack-developer
+Task: Rate limiting + skeletons + error boundaries + responsive tables
+
+Work Log:
+- src/app/api/auth/sign-in/route.ts — ajout import + rate limit (RATE_LIMITS.signIn, id `signin:${ip}`, 10/15min)
+- src/app/api/activation/verify/route.ts — ajout import + rate limit (RATE_LIMITS.activationVerify, id `verify:${ip}`, 10/h)
+- src/app/api/activation/register/route.ts — ajout import + rate limit (RATE_LIMITS.activationRegister, id `register:${ip}`, 3/h)
+- src/components/shared/page-skeleton.tsx — nouveau composant (PageSkeleton + TableSkeleton) basé sur Skeleton de shadcn/ui
+- src/app/(app)/app/error.tsx — nouveau error boundary (lien vers /app/dashboard)
+- src/app/(super-admin)/super-admin/error.tsx — nouveau error boundary (lien vers /super-admin/dashboard)
+- src/app/(app)/app/reservations/loading.tsx — nouveau loading.tsx (PageSkeleton)
+- src/app/(app)/app/rooms/loading.tsx — nouveau loading.tsx (PageSkeleton)
+- src/app/(app)/app/guests/loading.tsx — nouveau loading.tsx (PageSkeleton)
+- src/app/(app)/app/payments/loading.tsx — nouveau loading.tsx (PageSkeleton)
+- src/app/(app)/app/dashboard/loading.tsx — nouveau loading.tsx (PageSkeleton)
+- Task 5 (overflow-x-auto) : VÉRIFICATION effectuée — les 6 composants avec <table> (reservations-list, guests-list, payments-list, invoices-list, expenses-list, users-list) ont DÉJÀ <div className="overflow-x-auto"> autour de chaque <table>. check-in-list et check-out-list utilisent un layout en Cards (pas de <table>). Aucun changement requis.
+
+Stage Summary:
+- 3 routes publiques protégées par rate limiting (sign-in anti brute-force, activation verify/register anti-spam)
+- 1 composant skeleton réutilisable (PageSkeleton + TableSkeleton)
+- 2 error boundaries par module (app + super-admin)
+- 5 loading.tsx pour les pages clés (dashboard, reservations, rooms, guests, payments) → UX fluide pendant le chargement serveur
+- 0 erreur lint, 0 erreur TypeScript dans src/ (erreurs pré-existantes seulement dans examples/skills/next.config.ts — non liées)
+- Dev server : OK (GET / 200, GET /login 200)
