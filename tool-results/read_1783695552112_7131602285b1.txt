@@ -1,0 +1,849 @@
+     1→"use client";
+     2→
+     3→import * as React from "react";
+     4→import { useRouter } from "next/navigation";
+     5→import { toast } from "sonner";
+     6→import {
+     7→  Loader2,
+     8→  X,
+     9→  ArrowRight,
+    10→  ArrowLeft,
+    11→  Check,
+    12→  Calendar,
+    13→  UserPlus,
+    14→  Search,
+    15→  Zap,
+    16→  Hotel,
+    17→  UserCircle2,
+    18→  CheckCircle2,
+    19→} from "lucide-react";
+    20→
+    21→import { Button } from "@/components/ui/button";
+    22→import { Input } from "@/components/ui/input";
+    23→import { Label } from "@/components/ui/label";
+    24→import { Textarea } from "@/components/ui/textarea";
+    25→import { Badge } from "@/components/ui/badge";
+    26→import {
+    27→  Dialog,
+    28→  DialogContent,
+    29→  DialogHeader,
+    30→  DialogTitle,
+    31→  DialogDescription,
+    32→} from "@/components/ui/dialog";
+    33→import {
+    34→  Select,
+    35→  SelectContent,
+    36→  SelectItem,
+    37→  SelectTrigger,
+    38→  SelectValue,
+    39→} from "@/components/ui/select";
+    40→import {
+    41→  RESERVATION_SOURCE_OPTIONS,
+    42→  calculateNights,
+    43→} from "@/lib/hotel/reservations";
+    44→import type { Room } from "@/lib/hotel/rooms";
+    45→import type { Guest } from "@/lib/hotel/guests";
+    46→import { formatFCFA, cn, formatDate } from "@/lib/utils";
+    47→import { NewClientForm } from "./new-client-form";
+    48→
+    49→type Mode = "reservation" | "walk-in";
+    50→
+    51→type Props = {
+    52→  open: boolean;
+    53→  onOpenChange: (open: boolean) => void;
+    54→  mode: Mode;
+    55→  rooms: Room[];
+    56→  guests: Guest[];
+    57→};
+    58→
+    59→type MiniGuest = {
+    60→  id: string;
+    61→  full_name: string;
+    62→  phone: string;
+    63→  email: string | null;
+    64→};
+    65→
+    66→export function ReservationWizardDialog({
+    67→  open,
+    68→  onOpenChange,
+    69→  mode,
+    70→  rooms,
+    71→  guests,
+    72→}: Props) {
+    73→  const router = useRouter();
+    74→  const isWalkIn = mode === "walk-in";
+    75→  const totalSteps = isWalkIn ? 2 : 3;
+    76→
+    77→  const [step, setStep] = React.useState(1);
+    78→  const [isLoading, setIsLoading] = React.useState(false);
+    79→
+    80→  // Client
+    81→  const [guestMode, setGuestMode] = React.useState<"search" | "new">("search");
+    82→  const [guestSearch, setGuestSearch] = React.useState("");
+    83→  const [selectedGuest, setSelectedGuest] = React.useState<MiniGuest | null>(null);
+    84→  const [guestsList, setGuestsList] = React.useState<MiniGuest[]>(
+    85→    guests.map((g) => ({
+    86→      id: g.id,
+    87→      full_name: g.full_name,
+    88→      phone: g.phone,
+    89→      email: g.email,
+    90→    }))
+    91→  );
+    92→
+    93→  // Détails séjour
+    94→  const today = new Date();
+    95→  const tomorrow = new Date();
+    96→  tomorrow.setDate(tomorrow.getDate() + 1);
+    97→  const todayStr = today.toISOString().split("T")[0];
+    98→  const tomorrowStr = tomorrow.toISOString().split("T")[0];
+    99→
+   100→  const [roomId, setRoomId] = React.useState("");
+   101→  const [checkInDate, setCheckInDate] = React.useState(
+   102→    isWalkIn ? todayStr : ""
+   103→  );
+   104→  const [checkOutDate, setCheckOutDate] = React.useState(
+   105→    isWalkIn ? tomorrowStr : ""
+   106→  );
+   107→  const [adults, setAdults] = React.useState(1);
+   108→  const [children, setChildren] = React.useState(0);
+   109→  const [rateAmount, setRateAmount] = React.useState(0);
+   110→  const [discountAmount, setDiscountAmount] = React.useState(0);
+   111→  const [paidAmount, setPaidAmount] = React.useState(0);
+   112→  const [source, setSource] = React.useState<"direct" | "phone" | "whatsapp" | "agency" | "other">(
+   113→    isWalkIn ? "direct" : "direct"
+   114→  );
+   115→  const [notes, setNotes] = React.useState("");
+   116→
+   117→  // Reset quand on ouvre / change de mode
+   118→  React.useEffect(() => {
+   119→    if (open) {
+   120→      setStep(1);
+   121→      setGuestMode("search");
+   122→      setGuestSearch("");
+   123→      setSelectedGuest(null);
+   124→      setRoomId("");
+   125→      setCheckInDate(isWalkIn ? todayStr : "");
+   126→      setCheckOutDate(isWalkIn ? tomorrowStr : "");
+   127→      setAdults(1);
+   128→      setChildren(0);
+   129→      setRateAmount(0);
+   130→      setDiscountAmount(0);
+   131→      setPaidAmount(0);
+   132→      setSource(isWalkIn ? "direct" : "direct");
+   133→      setNotes("");
+   134→    }
+   135→  }, [open, mode]);
+   136→
+   137→  // Auto-remplir le tarif quand on choisit une chambre
+   138→  React.useEffect(() => {
+   139→    if (roomId) {
+   140→      const r = rooms.find((x) => x.id === roomId);
+   141→      if (r) setRateAmount(r.price_per_night);
+   142→    }
+   143→  }, [roomId, rooms]);
+   144→
+   145→  const availableRooms = rooms.filter((r) => r.status !== "inactive");
+   146→  const filteredGuests = guestSearch
+   147→    ? guestsList.filter(
+   148→        (g) =>
+   149→          g.full_name.toLowerCase().includes(guestSearch.toLowerCase()) ||
+   150→          g.phone.includes(guestSearch)
+   151→      )
+   152→    : guestsList.slice(0, 6);
+   153→
+   154→  const nights =
+   155→    checkInDate && checkOutDate ? calculateNights(checkInDate, checkOutDate) : 0;
+   156→  const totalAmount = nights > 0 ? rateAmount * nights - (discountAmount || 0) : 0;
+   157→  const balanceAmount = totalAmount - (paidAmount || 0);
+   158→
+   159→  const stepLabels = isWalkIn
+   160→    ? ["Client", "Chambre"]
+   161→    : ["Client", "Détails", "Validation"];
+   162→
+   163→  function handleNext() {
+   164→    // Validation step 1
+   165→    if (step === 1 && !selectedGuest) {
+   166→      toast.error("Veuillez sélectionner ou créer un client");
+   167→      return;
+   168→    }
+   169→    // Validation step 2
+   170→    if (step === 2) {
+   171→      if (!roomId) {
+   172→        toast.error("Veuillez sélectionner une chambre");
+   173→        return;
+   174→      }
+   175→      if (!checkInDate || !checkOutDate) {
+   176→        toast.error("Veuillez renseigner les dates d'arrivée et de départ");
+   177→        return;
+   178→      }
+   179→      if (nights <= 0) {
+   180→        toast.error("La date de départ doit être après la date d'arrivée");
+   181→        return;
+   182→      }
+   183→      if (rateAmount <= 0) {
+   184→        toast.error("Le tarif par nuit doit être supérieur à 0");
+   185→        return;
+   186→      }
+   187→    }
+   188→    if (step < totalSteps) setStep(step + 1);
+   189→  }
+   190→
+   191→  function handlePrev() {
+   192→    if (step > 1) setStep(step - 1);
+   193→  }
+   194→
+   195→  async function handleConfirm() {
+   196→    if (!selectedGuest || !roomId) {
+   197→      toast.error("Informations manquantes");
+   198→      return;
+   199→    }
+   200→    setIsLoading(true);
+   201→    try {
+   202→      const body = {
+   203→        guest_id: selectedGuest.id,
+   204→        room_id: roomId,
+   205→        check_in_date: checkInDate,
+   206→        check_out_date: checkOutDate,
+   207→        adults,
+   208→        children,
+   209→        rate_amount: rateAmount,
+   210→        discount_amount: discountAmount || 0,
+   211→        paid_amount: paidAmount || 0,
+   212→        source,
+   213→        notes,
+   214→      };
+   215→
+   216→      // Étape 1 : créer la réservation (status = "confirmed" par défaut)
+   217→      const res = await fetch("/api/hotel/reservations", {
+   218→        method: "POST",
+   219→        headers: { "Content-Type": "application/json" },
+   220→        body: JSON.stringify(body),
+   221→      });
+   222→      const data = await res.json();
+   223→      if (!res.ok) {
+   224→        toast.error(data.error ?? "Erreur");
+   225→        return;
+   226→      }
+   227→
+   228→      const reservationId = data.id;
+   229→
+   230→      // Étape 2 (walk-in uniquement) : effectuer le check-in immédiat
+   231→      // La réservation passe à "checked_in", la chambre à "occupied", log activité.
+   232→      if (isWalkIn && reservationId) {
+   233→        const checkInBody: Record<string, unknown> = {
+   234→          reservation_id: reservationId,
+   235→        };
+   236→        // Si un acompte a été saisi, on l'enregistre avec le check-in
+   237→        if (paidAmount > 0) {
+   238→          checkInBody.payment = {
+   239→            amount: paidAmount,
+   240→            method: "cash",
+   241→          };
+   242→        }
+   243→        const checkInRes = await fetch("/api/hotel/check-in", {
+   244→          method: "POST",
+   245→          headers: { "Content-Type": "application/json" },
+   246→          body: JSON.stringify(checkInBody),
+   247→        });
+   248→        const checkInData = await checkInRes.json();
+   249→        if (!checkInRes.ok) {
+   250→          // La réservation est créée mais le check-in a échoué — on informe l'utilisateur
+   251→          toast.warning(
+   252→            `Réservation créée mais le check-in automatique a échoué : ${checkInData.error ?? "erreur"}. Effectuez le check-in manuellement.`
+   253→          );
+   254→        } else {
+   255→          toast.success("Séjour enregistré — client arrivé et installé");
+   256→        }
+   257→      } else {
+   258→        toast.success("Réservation créée avec succès");
+   259→      }
+   260→
+   261→      onOpenChange(false);
+   262→      router.push("/app/reservations");
+   263→      router.refresh();
+   264→    } catch {
+   265→      toast.error("Erreur réseau");
+   266→    } finally {
+   267→      setIsLoading(false);
+   268→    }
+   269→  }
+   270→
+   271→  const selectedRoom = rooms.find((r) => r.id === roomId);
+   272→
+   273→  return (
+   274→    <Dialog open={open} onOpenChange={onOpenChange}>
+   275→      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
+   276→        <DialogHeader>
+   277→          <div className="flex items-start justify-between gap-3">
+   278→            <div className="flex items-start gap-3">
+   279→              <div
+   280→                className={cn(
+   281→                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+   282→                  isWalkIn
+   283→                    ? "bg-orange-500/15 text-orange-600"
+   284→                    : "bg-primary/15 text-primary"
+   285→                )}
+   286→              >
+   287→                {isWalkIn ? <Zap className="h-5 w-5" /> : <Calendar className="h-5 w-5" />}
+   288→              </div>
+   289→              <div>
+   290→                <DialogTitle className="text-lg font-bold">
+   291→                  {isWalkIn ? "Enregistrement Direct (Walk-In)" : "Nouvelle Réservation"}
+   292→                </DialogTitle>
+   293→                <DialogDescription className="mt-0.5">
+   294→                  {isWalkIn
+   295→                    ? "Client sans réservation — enregistrement et attribution de chambre immédiats"
+   296→                    : "Créez une réservation en 3 étapes"}
+   297→                </DialogDescription>
+   298→              </div>
+   299→            </div>
+   300→          </div>
+   301→        </DialogHeader>
+   302→
+   303→        {/* Stepper */}
+   304→        <div className="flex items-center justify-center gap-2 py-2">
+   305→          {stepLabels.map((label, i) => {
+   306→            const stepNum = i + 1;
+   307→            const isActive = stepNum === step;
+   308→            const isDone = stepNum < step;
+   309→            return (
+   310→              <React.Fragment key={label}>
+   311→                <div className="flex flex-col items-center gap-1">
+   312→                  <div
+   313→                    className={cn(
+   314→                      "flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition-all",
+   315→                      isActive &&
+   316→                        "bg-primary text-primary-foreground shadow-md ring-4 ring-primary/15",
+   317→                      isDone && "bg-primary/80 text-primary-foreground",
+   318→                      !isActive && !isDone && "bg-muted text-muted-foreground"
+   319→                    )}
+   320→                  >
+   321→                    {isDone ? <Check className="h-4 w-4" /> : stepNum}
+   322→                  </div>
+   323→                  <span
+   324→                    className={cn(
+   325→                      "text-xs font-medium transition-colors",
+   326→                      isActive
+   327→                        ? "text-primary"
+   328→                        : isDone
+   329→                        ? "text-primary/70"
+   330→                        : "text-muted-foreground"
+   331→                    )}
+   332→                  >
+   333→                    {label}
+   334→                  </span>
+   335→                </div>
+   336→                {i < stepLabels.length - 1 && (
+   337→                  <div
+   338→                    className={cn(
+   339→                      "mx-1 h-0.5 w-12 rounded-full transition-colors sm:w-20",
+   340→                      stepNum < step ? "bg-primary/60" : "bg-border"
+   341→                    )}
+   342→                  />
+   343→                )}
+   344→              </React.Fragment>
+   345→            );
+   346→          })}
+   347→        </div>
+   348→
+   349→        {/* Bannière arrivée (walk-in uniquement) */}
+   350→        {isWalkIn && (
+   351→          <div className="flex items-center gap-2 rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-sm">
+   352→            <Calendar className="h-4 w-4 shrink-0 text-orange-600" />
+   353→            <span className="text-orange-800 text-orange-800">
+   354→              Arrivée :{" "}
+   355→              <span className="font-semibold">Aujourd&apos;hui ({formatDate(todayStr)})</span>{" "}
+   356→              — Check-in automatique
+   357→            </span>
+   358→          </div>
+   359→        )}
+   360→
+   361→        {/* === ÉTAPE 1 : CLIENT === */}
+   362→        {step === 1 && (
+   363→          <div className="space-y-4">
+   364→            <div className="flex items-center justify-between">
+   365→              <h3 className="text-base font-semibold">
+   366→                {isWalkIn ? "Informations du Client" : "Choix du Client"}
+   367→              </h3>
+   368→              {guestMode === "search" && (
+   369→                <Button
+   370→                  type="button"
+   371→                  variant="outline"
+   372→                  size="sm"
+   373→                  onClick={() => setGuestMode("new")}
+   374→                  className="border-primary/40 text-primary hover:bg-primary/5"
+   375→                >
+   376→                  <UserPlus className="mr-2 h-4 w-4" />
+   377→                  Nouveau Client
+   378→                </Button>
+   379→              )}
+   380→            </div>
+   381→
+   382→            {/* Client sélectionné */}
+   383→            {selectedGuest ? (
+   384→              <div className="flex items-center justify-between rounded-xl border-2 border-primary/40 bg-primary/5 p-4">
+   385→                <div className="flex items-center gap-3">
+   386→                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary">
+   387→                    <UserCircle2 className="h-5 w-5" />
+   388→                  </div>
+   389→                  <div>
+   390→                    <p className="font-semibold">{selectedGuest.full_name}</p>
+   391→                    <p className="text-sm text-muted-foreground">
+   392→                      {selectedGuest.phone}
+   393→                      {selectedGuest.email ? ` · ${selectedGuest.email}` : ""}
+   394→                    </p>
+   395→                  </div>
+   396→                </div>
+   397→                <Button
+   398→                  type="button"
+   399→                  variant="ghost"
+   400→                  size="sm"
+   401→                  onClick={() => {
+   402→                    setSelectedGuest(null);
+   403→                    setGuestMode("search");
+   404→                  }}
+   405→                >
+   406→                  Changer
+   407→                </Button>
+   408→              </div>
+   409→            ) : guestMode === "new" ? (
+   410→              <NewClientForm
+   411→                compact
+   412→                onCreated={(g) => {
+   413→                  setGuestsList((prev) => [g, ...prev]);
+   414→                  setSelectedGuest(g);
+   415→                  setGuestMode("search");
+   416→                }}
+   417→                onCancel={() => setGuestMode("search")}
+   418→              />
+   419→            ) : (
+   420→              <div className="space-y-3">
+   421→                <div className="relative">
+   422→                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+   423→                  <Input
+   424→                    placeholder="Rechercher un client existant par nom, téléphone..."
+   425→                    value={guestSearch}
+   426→                    onChange={(e) => setGuestSearch(e.target.value)}
+   427→                    className="pl-9"
+   428→                  />
+   429→                </div>
+   430→
+   431→                {filteredGuests.length > 0 ? (
+   432→                  <div className="max-h-72 space-y-1 overflow-y-auto rounded-lg border border-border p-1">
+   433→                    {filteredGuests.map((g) => (
+   434→                      <button
+   435→                        key={g.id}
+   436→                        type="button"
+   437→                        onClick={() => setSelectedGuest(g)}
+   438→                        className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted"
+   439→                      >
+   440→                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
+   441→                          <UserCircle2 className="h-4 w-4" />
+   442→                        </div>
+   443→                        <div className="min-w-0 flex-1">
+   444→                          <p className="font-medium">{g.full_name}</p>
+   445→                          <p className="text-xs text-muted-foreground">
+   446→                            {g.phone}
+   447→                            {g.email ? ` · ${g.email}` : ""}
+   448→                          </p>
+   449→                        </div>
+   450→                      </button>
+   451→                    ))}
+   452→                  </div>
+   453→                ) : (
+   454→                  <p className="rounded-lg border border-dashed border-border bg-muted/20 py-6 text-center text-xs text-muted-foreground">
+   455→                    {guestSearch
+   456→                      ? "Aucun client trouvé. Créez un nouveau client."
+   457→                      : "Tapez un nom ou numéro de téléphone pour rechercher un client"}
+   458→                  </p>
+   459→                )}
+   460→              </div>
+   461→            )}
+   462→          </div>
+   463→        )}
+   464→
+   465→        {/* === ÉTAPE 2 : CHAMBRE / DÉTAILS === */}
+   466→        {step === 2 && (
+   467→          <div className="space-y-4">
+   468→            <h3 className="text-base font-semibold">
+   469→              {isWalkIn ? "Attribution de la Chambre" : "Détails du Séjour"}
+   470→            </h3>
+   471→
+   472→            <div className="grid gap-4 sm:grid-cols-2">
+   473→              <div className="space-y-1.5">
+   474→                <Label>
+   475→                  Chambre <span className="text-destructive">*</span>
+   476→                </Label>
+   477→                <Select
+   478→                  value={roomId}
+   479→                  onValueChange={(v) => setRoomId(v)}
+   480→                >
+   481→                  <SelectTrigger>
+   482→                    <SelectValue placeholder="Sélectionnez une chambre" />
+   483→                  </SelectTrigger>
+   484→                  <SelectContent>
+   485→                    {availableRooms.map((r) => (
+   486→                      <SelectItem key={r.id} value={r.id}>
+   487→                        {r.room_number} — {r.room_type_name ?? "—"} —{" "}
+   488→                        {formatFCFA(r.price_per_night)}/nuit
+   489→                      </SelectItem>
+   490→                    ))}
+   491→                  </SelectContent>
+   492→                </Select>
+   493→              </div>
+   494→              <div className="space-y-1.5">
+   495→                <Label>Source</Label>
+   496→                <Select
+   497→                  value={source}
+   498→                  onValueChange={(v) =>
+   499→                    setSource(v as typeof source)
+   500→                  }
+   501→                >
+   502→                  <SelectTrigger>
+   503→                    <SelectValue />
+   504→                  </SelectTrigger>
+   505→                  <SelectContent>
+   506→                    {RESERVATION_SOURCE_OPTIONS.map((s) => (
+   507→                      <SelectItem key={s.value} value={s.value}>
+   508→                        {s.label}
+   509→                      </SelectItem>
+   510→                    ))}
+   511→                  </SelectContent>
+   512→                </Select>
+   513→              </div>
+   514→            </div>
+   515→
+   516→            <div className="grid gap-4 sm:grid-cols-2">
+   517→              <div className="space-y-1.5">
+   518→                <Label htmlFor="check_in_date">
+   519→                  Arrivée <span className="text-destructive">*</span>
+   520→                </Label>
+   521→                <Input
+   522→                  id="check_in_date"
+   523→                  type="date"
+   524→                  value={checkInDate}
+   525→                  onChange={(e) => setCheckInDate(e.target.value)}
+   526→                  disabled={isWalkIn}
+   527→                />
+   528→                {isWalkIn && (
+   529→                  <p className="text-xs text-muted-foreground">
+   530→                    Verrouillé en walk-in (aujourd&apos;hui)
+   531→                  </p>
+   532→                )}
+   533→              </div>
+   534→              <div className="space-y-1.5">
+   535→                <Label htmlFor="check_out_date">
+   536→                  Départ <span className="text-destructive">*</span>
+   537→                </Label>
+   538→                <Input
+   539→                  id="check_out_date"
+   540→                  type="date"
+   541→                  value={checkOutDate}
+   542→                  onChange={(e) => setCheckOutDate(e.target.value)}
+   543→                />
+   544→              </div>
+   545→            </div>
+   546→
+   547→            {nights > 0 && (
+   548→              <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-center text-sm">
+   549→                <span className="font-semibold">{nights}</span>{" "}
+   550→                nuit{nights > 1 ? "s" : ""} · Du{" "}
+   551→                <span className="font-medium">{formatDate(checkInDate)}</span> au{" "}
+   552→                <span className="font-medium">{formatDate(checkOutDate)}</span>
+   553→              </div>
+   554→            )}
+   555→            {checkInDate && checkOutDate && nights <= 0 && (
+   556→              <p className="text-xs text-destructive">
+   557→                La date de départ doit être après la date d&apos;arrivée
+   558→              </p>
+   559→            )}
+   560→
+   561→            {/* Tarifs */}
+   562→            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+   563→              <div className="space-y-1.5">
+   564→                <Label htmlFor="rate_amount">
+   565→                  Tarif/nuit (FCFA) <span className="text-destructive">*</span>
+   566→                </Label>
+   567→                <Input
+   568→                  id="rate_amount"
+   569→                  type="number"
+   570→                  min={0}
+   571→                  step={1000}
+   572→                  value={rateAmount}
+   573→                  onChange={(e) => setRateAmount(Number(e.target.value))}
+   574→                />
+   575→              </div>
+   576→              <div className="space-y-1.5">
+   577→                <Label htmlFor="adults">Adultes</Label>
+   578→                <Input
+   579→                  id="adults"
+   580→                  type="number"
+   581→                  min={1}
+   582→                  max={50}
+   583→                  value={adults}
+   584→                  onChange={(e) => setAdults(Number(e.target.value))}
+   585→                />
+   586→              </div>
+   587→              <div className="space-y-1.5">
+   588→                <Label htmlFor="children">Enfants</Label>
+   589→                <Input
+   590→                  id="children"
+   591→                  type="number"
+   592→                  min={0}
+   593→                  max={50}
+   594→                  value={children}
+   595→                  onChange={(e) => setChildren(Number(e.target.value))}
+   596→                />
+   597→              </div>
+   598→              <div className="space-y-1.5">
+   599→                <Label htmlFor="discount_amount">Remise (FCFA)</Label>
+   600→                <Input
+   601→                  id="discount_amount"
+   602→                  type="number"
+   603→                  min={0}
+   604→                  step={1000}
+   605→                  value={discountAmount}
+   606→                  onChange={(e) => setDiscountAmount(Number(e.target.value))}
+   607→                />
+   608→              </div>
+   609→              <div className="space-y-1.5">
+   610→                <Label htmlFor="paid_amount">Acompte payé (FCFA)</Label>
+   611→                <Input
+   612→                  id="paid_amount"
+   613→                  type="number"
+   614→                  min={0}
+   615→                  step={1000}
+   616→                  value={paidAmount}
+   617→                  onChange={(e) => setPaidAmount(Number(e.target.value))}
+   618→                />
+   619→              </div>
+   620→            </div>
+   621→
+   622→            {nights > 0 && (
+   623→              <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-3">
+   624→                <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+   625→                  <div>
+   626→                    <p className="text-xs text-muted-foreground">Nuits</p>
+   627→                    <p className="text-lg font-bold">{nights}</p>
+   628→                  </div>
+   629→                  <div>
+   630→                    <p className="text-xs text-muted-foreground">Total</p>
+   631→                    <p className="text-lg font-bold text-primary">
+   632→                      {formatFCFA(totalAmount)}
+   633→                    </p>
+   634→                  </div>
+   635→                  <div>
+   636→                    <p className="text-xs text-muted-foreground">Acompte</p>
+   637→                    <p className="text-lg font-bold text-emerald-700">
+   638→                      {formatFCFA(paidAmount || 0)}
+   639→                    </p>
+   640→                  </div>
+   641→                  <div>
+   642→                    <p className="text-xs text-muted-foreground">Solde</p>
+   643→                    <p
+   644→                      className={cn(
+   645→                        "text-lg font-bold",
+   646→                        balanceAmount > 0
+   647→                          ? "text-destructive"
+   648→                          : "text-emerald-700"
+   649→                      )}
+   650→                    >
+   651→                      {formatFCFA(balanceAmount)}
+   652→                    </p>
+   653→                  </div>
+   654→                </div>
+   655→              </div>
+   656→            )}
+   657→
+   658→            <div className="space-y-1.5">
+   659→              <Label htmlFor="notes">Notes (optionnel)</Label>
+   660→              <Textarea
+   661→                id="notes"
+   662→                rows={2}
+   663→                placeholder="Informations sur la réservation..."
+   664→                value={notes}
+   665→                onChange={(e) => setNotes(e.target.value)}
+   666→              />
+   667→            </div>
+   668→          </div>
+   669→        )}
+   670→
+   671→        {/* === ÉTAPE 3 : VALIDATION (réservation uniquement) === */}
+   672→        {step === 3 && (
+   673→          <div className="space-y-4">
+   674→            <h3 className="text-base font-semibold">Validation</h3>
+   675→
+   676→            <div className="space-y-3">
+   677→              {/* Client */}
+   678→              <div className="rounded-xl border border-border p-4">
+   679→                <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+   680→                  <UserCircle2 className="h-3.5 w-3.5" /> Client
+   681→                </div>
+   682→                {selectedGuest ? (
+   683→                  <div>
+   684→                    <p className="font-semibold">{selectedGuest.full_name}</p>
+   685→                    <p className="text-sm text-muted-foreground">
+   686→                      {selectedGuest.phone}
+   687→                      {selectedGuest.email ? ` · ${selectedGuest.email}` : ""}
+   688→                    </p>
+   689→                  </div>
+   690→                ) : (
+   691→                  <p className="text-sm text-destructive">Aucun client</p>
+   692→                )}
+   693→              </div>
+   694→
+   695→              {/* Séjour */}
+   696→              <div className="rounded-xl border border-border p-4">
+   697→                <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+   698→                  <Hotel className="h-3.5 w-3.5" /> Séjour
+   699→                </div>
+   700→                <div className="grid grid-cols-2 gap-3 text-sm">
+   701→                  <div>
+   702→                    <p className="text-xs text-muted-foreground">Chambre</p>
+   703→                    <p className="font-medium">
+   704→                      {selectedRoom?.room_number ?? "—"} ·{" "}
+   705→                      {selectedRoom?.room_type_name ?? "—"}
+   706→                    </p>
+   707→                  </div>
+   708→                  <div>
+   709→                    <p className="text-xs text-muted-foreground">Source</p>
+   710→                    <p className="font-medium capitalize">{source}</p>
+   711→                  </div>
+   712→                  <div>
+   713→                    <p className="text-xs text-muted-foreground">Arrivée</p>
+   714→                    <p className="font-medium">{formatDate(checkInDate)}</p>
+   715→                  </div>
+   716→                  <div>
+   717→                    <p className="text-xs text-muted-foreground">Départ</p>
+   718→                    <p className="font-medium">{formatDate(checkOutDate)}</p>
+   719→                  </div>
+   720→                  <div>
+   721→                    <p className="text-xs text-muted-foreground">Occupation</p>
+   722→                    <p className="font-medium">
+   723→                      {adults} adulte{adults > 1 ? "s" : ""}
+   724→                      {children > 0 ? ` · ${children} enfant${children > 1 ? "s" : ""}` : ""}
+   725→                    </p>
+   726→                  </div>
+   727→                  <div>
+   728→                    <p className="text-xs text-muted-foreground">Nuits</p>
+   729→                    <p className="font-medium">{nights}</p>
+   730→                  </div>
+   731→                </div>
+   732→              </div>
+   733→
+   734→              {/* Tarifs */}
+   735→              <div className="rounded-xl border-2 border-primary/30 bg-primary/5 p-4">
+   736→                <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary">
+   737→                  <CheckCircle2 className="h-3.5 w-3.5" /> Récapitulatif
+   738→                </div>
+   739→                <div className="space-y-1.5 text-sm">
+   740→                  <div className="flex justify-between">
+   741→                    <span className="text-muted-foreground">
+   742→                      {rateAmount} FCFA × {nights} nuit{nights > 1 ? "s" : ""}
+   743→                    </span>
+   744→                    <span className="font-medium">
+   745→                      {formatFCFA(rateAmount * nights)}
+   746→                    </span>
+   747→                  </div>
+   748→                  {discountAmount > 0 && (
+   749→                    <div className="flex justify-between text-emerald-700">
+   750→                      <span>Remise</span>
+   751→                      <span className="font-medium">-{formatFCFA(discountAmount)}</span>
+   752→                    </div>
+   753→                  )}
+   754→                  <div className="flex justify-between border-t border-primary/20 pt-1.5 text-base">
+   755→                    <span className="font-semibold">Total</span>
+   756→                    <span className="font-bold text-primary">
+   757→                      {formatFCFA(totalAmount)}
+   758→                    </span>
+   759→                  </div>
+   760→                  <div className="flex justify-between">
+   761→                    <span className="text-muted-foreground">Acompte versé</span>
+   762→                    <span className="font-medium text-emerald-700">
+   763→                      {formatFCFA(paidAmount || 0)}
+   764→                    </span>
+   765→                  </div>
+   766→                  <div className="flex justify-between">
+   767→                    <span className="text-muted-foreground">Solde à régler</span>
+   768→                    <span
+   769→                      className={cn(
+   770→                        "font-bold",
+   771→                        balanceAmount > 0 ? "text-destructive" : "text-emerald-700"
+   772→                      )}
+   773→                    >
+   774→                      {formatFCFA(balanceAmount)}
+   775→                    </span>
+   776→                  </div>
+   777→                </div>
+   778→              </div>
+   779→
+   780→              {notes && (
+   781→                <div className="rounded-xl border border-border p-4">
+   782→                  <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+   783→                    Notes
+   784→                  </div>
+   785→                  <p className="text-sm">{notes}</p>
+   786→                </div>
+   787→              )}
+   788→            </div>
+   789→          </div>
+   790→        )}
+   791→
+   792→        {/* Actions footer */}
+   793→        <div className="flex items-center justify-between gap-2 pt-2">
+   794→          <Button
+   795→            type="button"
+   796→            variant="outline"
+   797→            onClick={() => onOpenChange(false)}
+   798→            disabled={isLoading}
+   799→          >
+   800→            <X className="mr-2 h-4 w-4" />
+   801→            Annuler
+   802→          </Button>
+   803→
+   804→          <div className="flex items-center gap-2">
+   805→            {step > 1 && (
+   806→              <Button
+   807→                type="button"
+   808→                variant="outline"
+   809→                onClick={handlePrev}
+   810→                disabled={isLoading}
+   811→              >
+   812→                <ArrowLeft className="mr-2 h-4 w-4" />
+   813→                Précédent
+   814→              </Button>
+   815→            )}
+   816→
+   817→            {step < totalSteps ? (
+   818→              <Button
+   819→                type="button"
+   820→                onClick={handleNext}
+   821→                className="bg-primary text-primary-foreground hover:bg-primary/90"
+   822→              >
+   823→                Suivant
+   824→                <ArrowRight className="ml-2 h-4 w-4" />
+   825→              </Button>
+   826→            ) : (
+   827→              <Button
+   828→                type="button"
+   829→                onClick={handleConfirm}
+   830→                disabled={isLoading}
+   831→                className="bg-primary text-primary-foreground hover:bg-primary/90"
+   832→              >
+   833→                {isLoading ? (
+   834→                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+   835→                ) : (
+   836→                  <CheckCircle2 className="mr-2 h-4 w-4" />
+   837→                )}
+   838→                {isWalkIn
+   839→                  ? "Confirmer l'arrivée"
+   840→                  : "Confirmer la réservation"}
+   841→              </Button>
+   842→            )}
+   843→          </div>
+   844→        </div>
+   845→      </DialogContent>
+   846→    </Dialog>
+   847→  );
+   848→}
+   849→

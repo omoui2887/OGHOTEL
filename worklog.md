@@ -3051,3 +3051,217 @@ Stage Summary:
 - Aucune régression : lint 0 erreur, toutes les routes cibles retournent 200 (ou 307 pour /register sans code)
 - Note : la prop `sidebarVariant="orange"|"navy"` est conservée pour compat API, mais les deux variants rendent désormais le même gradient navy — distinction visuelle uniquement sémantique
 
+
+---
+Task ID: FUNCTIONAL-AUDIT
+Agent: Explore (functional audit)
+Task: Audit fonctionnel complet de tous les modules
+
+Work Log:
+- Lu /home/z/my-project/worklog.md (historique 3054 lignes)
+- Audit complet du Reservation Wizard : src/components/hotel/reservation-wizard-dialog.tsx (849 lignes)
+- Audit check-in/check-out : src/components/hotel/check-in-list.tsx, check-out-list.tsx, src/app/api/hotel/check-in/route.ts, check-out/route.ts, src/lib/hotel/stay-server.ts (384 lignes)
+- Audit réservations : src/components/hotel/reservations-list.tsx, src/app/(app)/app/reservations/[id]/page.tsx, src/components/hotel/reservation-detail-actions.tsx, src/app/api/hotel/reservations/[id]/route.ts, route.ts, availability/route.ts, src/lib/hotel/reservations-server.ts (633 lignes)
+- Audit guests : src/components/hotel/guests-list.tsx, guest-form-dialog.tsx, new-client-form.tsx, src/app/api/hotel/guests/[id]/route.ts, src/lib/hotel/guests-server.ts
+- Audit rooms : src/components/hotel/rooms-list.tsx, room-form-dialog.tsx, room-types-list.tsx, src/app/api/hotel/rooms/[id]/route.ts, src/lib/hotel/rooms-server.ts
+- Audit payments : src/components/hotel/payments-list.tsx, src/app/api/hotel/stay-payments/route.ts, src/lib/hotel/payments-server.ts (241 lignes)
+- Audit invoices : src/components/hotel/invoices-list.tsx, printable-invoice.tsx, src/app/api/hotel/invoices/generate/route.ts, [id]/cancel/route.ts, src/lib/hotel/invoices-server.ts (339 lignes)
+- Audit expenses : src/components/hotel/expenses-list.tsx, src/app/api/hotel/expenses/route.ts
+- Audit housekeeping : src/components/hotel/housekeeping-list.tsx, src/app/api/hotel/housekeeping/route.ts, src/lib/hotel/housekeeping-server.ts (218 lignes)
+- Audit maintenance : src/components/hotel/maintenance-list.tsx, src/app/api/hotel/maintenance/route.ts
+- Audit calendar : src/components/hotel/calendar-view.tsx (806 lignes), src/lib/hotel/calendar-server.ts (213 lignes)
+- Audit reports : src/components/hotel/reports-view.tsx (464 lignes), src/lib/hotel/reports-server.ts (327 lignes)
+- Audit settings : src/components/hotel/settings-form.tsx, src/app/api/hotel/settings/route.ts
+- Audit users : src/components/hotel/users-list.tsx (482 lignes)
+- Audit dashboard : src/app/(app)/app/dashboard/page.tsx (425 lignes)
+- Audit super-admin : dashboard/page.tsx, leads/page.tsx, payments/page.tsx, activation-codes/page.tsx
+
+Stage Summary:
+- 22 bugs identifiés (4 CRITICAL, 6 HIGH, 8 MEDIUM, 4 LOW)
+- Bug principal confirmé : le wizard walk-in NE vérifie PAS la disponibilité AVANT le bouton Confirmer
+- Tous les modules respectent le filtrage establishment_id côté serveur
+- Aucune fuite de secret, aucune violation de boundary client/serveur
+- Rapport détaillé ci-dessous
+
+=== RAPPORT DE BUGS DÉTAILLÉ ===
+
+## 🔴 CRITICAL (4)
+
+### BUG-01 — Wizard réservation : aucune vérification de disponibilité avant le bouton "Confirmer"
+- **Fichier** : `src/components/hotel/reservation-wizard-dialog.tsx`
+- **Lignes** : 145, 163-189 (`handleNext`), 195-269 (`handleConfirm`)
+- **Description** : `handleNext()` valide uniquement : guest sélectionné, dates remplies, nights > 0, rate > 0. Aucun appel à `/api/hotel/reservations/availability`. La disponibilité n'est vérifiée QUE côté serveur dans `createReservation` (lib/hotel/reservations-server.ts lignes 344-364) APRÈS que l'utilisateur ait cliqué sur "Confirmer". Le dropdown `availableRooms` (ligne 145) ne filtre que par `status !== "inactive"` — donc inclut toutes les chambres "occupied", "reserved", "cleaning", "maintenance". L'utilisateur peut donc sélectionner une chambre déjà réservée pour les mêmes dates, remplir tout le formulaire, cliquer Confirmer, et recevoir l'erreur "Cette chambre n'est pas disponible pour ces dates" uniquement à ce moment-là.
+- **Sévérité** : CRITICAL — c'est exactement le bug rapporté par l'utilisateur
+- **Fix recommandé** :
+  1. Dans `handleNext()` step 2, après validation des dates, appeler `POST /api/hotel/reservations/availability` avec `{room_id, check_in_date, check_out_date}`. Si `available === false`, bloquer la transition et afficher la liste des conflits (`conflicts[].guest_name`, `check_in`, `check_out`).
+  2. Filtrer le dropdown `availableRooms` pour n'afficher que les chambres réellement disponibles (status "available" + pas de réservation chevauchante). Rafraîchir quand les dates changent.
+  3. Ajouter un badge visuel par chambre dans le dropdown ("Occupée", "Réservée ce soir", "Disponible").
+
+### BUG-02 — Walk-in : dates pré-remplies aujourd'hui → demain sans vérifier si la chambre est déjà occupée
+- **Fichier** : `src/components/hotel/reservation-wizard-dialog.tsx`
+- **Lignes** : 100-106, 521-527 (input date `disabled={isWalkIn}`)
+- **Description** : En mode walk-in, `checkInDate` = aujourd'hui (verrouillé), `checkOutDate` = demain. Le dropdown des chambres montre TOUTES les chambres non-inactives, y compris celles déjà "occupied" ou "reserved" pour cette nuit. L'utilisateur peut sélectionner la chambre 101 déjà occupée, cliquer "Confirmer l'arrivée", et la réservation échoue à la création avec le message "Cette chambre n'est pas disponible...".
+- **Sévérité** : CRITICAL — scénario exact rapporté par l'utilisateur
+- **Fix recommandé** :
+  1. En mode walk-in, filter le dropdown sur `room.status === "available"`.
+  2. En plus, au montage du wizard walk-in, effectuer un appel `/api/hotel/reservations/availability?check_in_date=today&check_out_date=tomorrow` pour chaque chambre (ou un endpoint bulk) et n'afficher que les chambres disponibles.
+  3. Afficher dans le dropdown un indicateur "Déjà réservée ce soir" pour les chambres occupées.
+
+### BUG-03 — PATCH /api/hotel/reservations/[id] permet de bypasser le flux check-in / check-out
+- **Fichier** : `src/app/api/hotel/reservations/[id]/route.ts` (lignes 20-26, 65-72) + `src/lib/hotel/reservations-server.ts` `updateReservation` (lignes 433-573)
+- **Description** : Le schéma PATCH accepte `status` directement (lignes 20-22 : `z.enum(["pending", "confirmed", "checked_in", "checked_out", "cancelled", "no_show"]).optional()`). Le `updateReservation` effectue un simple UPDATE DB sans déclencher les side-effects du check-in (pas de mise à jour du statut chambre → "occupied", pas de paiement) ni du check-out (pas de génération de facture, pas de tâche ménage, pas de vérification du solde). N'importe quel réceptionniste peut donc envoyer `PATCH /api/hotel/reservations/{id}` body `{"status":"checked_out"}` et contourner tout le workflow métier : pas de facture générée, pas de tâche ménage, pas de vérification du solde impayé, chambre reste "occupied" à jamais.
+- **Sévérité** : CRITICAL — bypass complet du workflow métier + données incohérentes
+- **Fix recommandé** :
+  1. Retirer `status` du schéma PATCH (forcer l'usage de `/api/hotel/check-in` et `/api/hotel/check-out`).
+  2. Ou dans `updateReservation`, n'accepter que les transitions "safe" (`pending → confirmed → cancelled`, `confirmed → no_show`), et rejeter toute transition vers `checked_in` / `checked_out` avec un message "Utilisez l'API /check-in ou /check-out".
+
+### BUG-04 — `updateReservation` ne recalcule pas `balance_amount` quand `discount_amount` ou `rate_amount` change
+- **Fichier** : `src/lib/hotel/reservations-server.ts`
+- **Lignes** : 515-535
+- **Description** : Quand `rate_amount` ou `discount_amount` change, `updateData.total_amount` est recalculé (ligne 527). Mais `updateData.balance_amount` n'est PAS mis à jour dans cette branche — il n'est mis à jour que si `input.paid_amount !== undefined` (lignes 531-535). Conséquence : si l'admin modifie le tarif d'une réservation (PATCH `{"rate_amount": 25000}` au lieu de 20000), le `total_amount` passe de 20000 à 25000, mais `balance_amount` reste à 0 (car il avait été calculé à l'origine comme `total - paid = 20000 - 20000 = 0`). Résultat : `paid_amount > total_amount`, `balance_amount` négatif ou incohérent.
+- **Sévérité** : CRITICAL — incohérence financière en DB
+- **Fix recommandé** : Après le recalcul de `total_amount`, toujours recalculer `balance_amount = newTotal - (input.paid_amount ?? current.paid_amount)`.
+
+## 🟠 HIGH (6)
+
+### BUG-05 — Bouton "Check-out" sur la page détail réservation échoue si solde > 0
+- **Fichier** : `src/components/hotel/reservation-detail-actions.tsx`
+- **Lignes** : 95-117 (`handleCheckOut`)
+- **Description** : Le bouton "Check-out" appelle `POST /api/hotel/check-out` avec seulement `{"reservation_id": id}` — pas de paiement, pas de `force_unpaid`. Si `balance_amount > 0`, le serveur retourne `400 "Solde impayé de X FCFA..."`. L'utilisateur n'a aucun moyen (depuis cette page) d'encaisser le solde ou de forcer le check-out. Il doit naviguer vers `/app/check-out` pour utiliser le dialog complet.
+- **Sévérité** : HIGH — bouton cassé dans un cas très fréquent
+- **Fix recommandé** : Soit ouvrir le même dialog que `check-out-list.tsx` (extra charges, payment, force_unpaid), soit rediriger vers `/app/check-out` lorsque l'utilisateur clique.
+
+### BUG-06 — Auto-open wizard via URL `?new=1` / `?walkin=1` ne se déclenche qu'au premier montage
+- **Fichier** : `src/components/hotel/reservations-list.tsx`
+- **Lignes** : 71-86 (`useEffect(() => {...}, [])`)
+- **Description** : Le `useEffect` lit `window.location.search` uniquement au premier montage du composant. Si l'utilisateur est déjà sur `/app/reservations` et clique sur un lien "Walk-In" depuis le dashboard qui pousse `?walkin=1`, Next.js App Router rafraîchit le composant serveur mais NE remonte PAS le composant client (identité préservée). L'effet ne se rejoue pas, le wizard ne s'ouvre pas.
+- **Sévérité** : HIGH — boutons dashboard silencieux après première utilisation
+- **Fix recommandé** : Utiliser `useSearchParams()` (réactif) au lieu de `window.location.search` dans un `useEffect([])`. Ou ajouter `searchParams` dans les dépendances.
+
+### BUG-07 — `availableRooms` dans le wizard est mal nommé et non filtré
+- **Fichier** : `src/components/hotel/reservation-wizard-dialog.tsx`
+- **Lignes** : 145
+- **Description** : `const availableRooms = rooms.filter((r) => r.status !== "inactive")` — inclut les statuts "occupied", "reserved", "cleaning", "maintenance". Le nom `availableRooms` est trompeur. Contribution directe à BUG-01/02.
+- **Sévérité** : HIGH
+- **Fix recommandé** : Renommer en `selectableRooms` ET ajouter un filtrage réel par disponibilité (cf. BUG-01 fix).
+
+### BUG-08 — Reports : taux d'occupation calculé avec un numérateur incorrect
+- **Fichier** : `src/lib/hotel/reports-server.ts`
+- **Lignes** : 100-108
+- **Description** : `occupiedNights` utilise `count` (nombre de réservations qui chevauchent la période) au lieu de la SOMME des `nights` de ces réservations. Le dénominateur est `totalRooms * periodDays` (room-nights). Pour un hôtel 10 chambres × 30 jours = 300 room-nights, une réservation de 30 nuits compte pour 1 au lieu de 30. Le taux affiché est donc 30× trop bas.
+- **Sévérité** : HIGH — métrique business fausse
+- **Fix recommandé** : Remplacer `{ count: "exact", head: true }` par un SELECT de `nights` et sommer en JS. Ou changer le dénominateur en "nombre de réservations" (moins utile mais cohérent).
+
+### BUG-09 — `checkRoomAvailability` API route ne passe pas `establishmentId`
+- **Fichier** : `src/app/api/hotel/reservations/availability/route.ts`
+- **Lignes** : 45-50
+- **Description** : Appelle `checkRoomAvailability(room_id, check_in, check_out, exclude_id)` SANS le 5ème argument `establishmentId`. La fonction serveur interroge donc les réservations de cette chambre à travers TOUS les établissements, et retourne dans `conflicts[].guest_name` les noms des clients d'autres hôtels. Fuite d'information cross-tenant (faible impact car le wizard ne passe que des `room_id` de son propre établissement, mais un client malveillant peut envoyer un `room_id` arbitraire).
+- **Sévérité** : MEDIUM-HIGH (info leak cross-tenant)
+- **Fix recommandé** : Passer `profile.establishment_id` en 5ème argument.
+
+### BUG-10 — `updateReservation` : aucune validation des transitions de statut
+- **Fichier** : `src/lib/hotel/reservations-server.ts`
+- **Lignes** : 433-573
+- **Description** : `updateReservation` accepte n'importe quel `status` (passé par PATCH) et l'applique directement. Pas de vérification que la transition est légale (ex: `checked_out → confirmed` est accepté). Combiné à BUG-03, c'est un bypass complet du workflow. Aussi : `cancelReservation` (lignes 575-632) filtre correctement `in("status", ["pending", "confirmed"])`, mais `updateReservation` non.
+- **Sévérité** : HIGH
+- **Fix recommandé** : Ajouter un guard dans `updateReservation` : si `input.status` est fourni ET différent du statut courant, vérifier que la transition est légale selon une state machine. Rejeter les transitions vers `checked_in` / `checked_out` (forcer l'usage des endpoints dédiés).
+
+## 🟡 MEDIUM (8)
+
+### BUG-11 — Walk-in : check-in automatique peut échouer silencieusement sans UX de récupération
+- **Fichier** : `src/components/hotel/reservation-wizard-dialog.tsx`
+- **Lignes** : 230-256
+- **Description** : Après `POST /api/hotel/reservations` réussi en walk-in, le wizard appelle immédiatement `POST /api/hotel/check-in`. Si ce second appel échoue (race condition, erreur serveur, statut changé), un `toast.warning` s'affiche mais l'utilisateur est quand même redirigé vers `/app/reservations`. Résultat : réservation créée mais NON check-in, chambre NON occupée, sans UI claire pour réessayer.
+- **Sévérité** : MEDIUM
+- **Fix recommandé** : Après l'échec, rediriger vers `/app/check-in` ou `/app/reservations/{id}` pour que l'utilisateur puisse cliquer manuellement sur "Check-in".
+
+### BUG-12 — Payments list : dialog ne réinitialise pas l'état du formulaire à l'ouverture/fermeture
+- **Fichier** : `src/components/hotel/payments-list.tsx`
+- **Lignes** : 280, 371 (Dialog `onOpenChange={setShowForm}` sans reset)
+- **Description** : Quand l'utilisateur annule ou ferme le dialog, `selectedResa`, `amount`, `payMethod`, `reference` ne sont PAS vidés. À la réouverture, les anciennes valeurs réapparaissent. Pas de validation `amount <= balance` côté UI non plus.
+- **Sévérité** : MEDIUM
+- **Fix recommandé** : Ajouter un `onOpenChange={(open) => { setShowForm(open); if (!open) { setSelectedResa(""); setAmount(""); setPayMethod(""); setReference(""); } }}`.
+
+### BUG-13 — Reports `byDay` filtre `monthPay` — données manquantes en début de mois
+- **Fichier** : `src/lib/hotel/reports-server.ts`
+- **Lignes** : 135-145
+- **Description** : La boucle `byDay` filtre `monthPay` (qui est filtré par `payment_date >= startOfMonth`). Si aujourd'hui est le 5 du mois, les 14 derniers jours incluent des jours du mois précédent qui ne sont PAS dans `monthPay` → le chart affiche 0 pour ces jours.
+- **Sévérité** : MEDIUM
+- **Fix recommandé** : Utiliser `yearPay` (filtré depuis `startOfYear`) au lieu de `monthPay`, ou faire une requête dédiée `payment_date >= (today - 14d)`.
+
+### BUG-14 — Check-out dialog : pas de garde-fou si balance > 0 sans paiement ni forceUnpaid
+- **Fichier** : `src/components/hotel/check-out-list.tsx`
+- **Lignes** : 81-90, 248-282, 333-339
+- **Description** : Si `targetBalance > 0`, l'utilisateur peut cliquer "Confirmer le check-out" sans avoir rempli de paiement ni coché "Forcer". Le bouton n'est désactivé que si `paymentAmount > 0 && !paymentMethod`. Le serveur renvoie alors `400 "Solde impayé..."`. Mauvaise UX.
+- **Sévérité** : LOW-MEDIUM
+- **Fix recommandé** : Désactiver le bouton si `targetBalance > 0 && !forceUnpaid && (!paymentAmount || !paymentMethod)`.
+
+### BUG-15 — Printable-invoice : `paid_amount` et `balance_amount` reflètent l'état ACTUEL de la réservation, pas le snapshot à l'émission
+- **Fichier** : `src/lib/hotel/invoices-server.ts`
+- **Lignes** : 91-92, 193-194
+- **Description** : `paid_amount: inv.reservation?.paid_amount ?? null` — la facture affiche le paid_amount de la réservation LIÉE, qui évolue dans le temps. Si on génère une facture le jour J, qu'on encaisse un paiement le jour J+5, et qu'on réimprime la facture le jour J+10, elle affichera le nouveau solde — pas le solde "officiel" à l'émission. Peut être intentionnel (balance "live") ou non (snapshot).
+- **Sévérité** : MEDIUM — décison business à prendre
+- **Fix recommandé** : Soit figer `paid_amount` et `balance_amount` dans la table `invoices` à l'émission (snapshot), soit documenter le comportement live.
+
+### BUG-16 — Reports : 6 requêtes Supabase séquentielles pour `byMonth`
+- **Fichier** : `src/lib/hotel/reports-server.ts`
+- **Lignes** : 148-159
+- **Description** : Boucle `for (let i = 5; i >= 0; i--)` qui fait un `await supabase.from("stay_payments").select()` pour chaque mois. Avec une latence réseau de 100-200ms par requête, cela ajoute 600-1200ms au chargement de la page Reports.
+- **Sévérité** : MEDIUM (perf)
+- **Fix recommandé** : Une seule requête `gte(payment_date, sixMonthsAgo)` + agrégation par mois en JS.
+
+### BUG-17 — `guestsList` dans le wizard n'est pas synchronisé avec la prop `guests`
+- **Fichier** : `src/components/hotel/reservation-wizard-dialog.tsx`
+- **Lignes** : 84-91
+- **Description** : `const [guestsList, setGuestsList] = React.useState<MiniGuest[]>(guests.map(...))` — initialisé une seule fois au montage. Si le parent re-render avec une nouvelle liste `guests` (ex: après `router.refresh()`), `guestsList` reste l'ancienne version. Après création d'un nouveau client via `NewClientForm`, le client est ajouté en local à `guestsList` (OK), mais si l'utilisateur ferme et rouvre le wizard sans refresh, il peut voir des données partiellement périmées.
+- **Sévérité** : LOW-MEDIUM
+- **Fix recommandé** : Utiliser `useEffect` pour synchroniser `guestsList` quand `guests` change, ou utiliser directement `guests` (prop) et un état séparé pour les nouveaux clients créés.
+
+### BUG-18 — Settings : `timezone` est un Input texte libre sans validation IANA
+- **Fichier** : `src/components/hotel/settings-form.tsx`
+- **Lignes** : 206-208
+- **Description** : L'utilisateur peut taper n'importe quoi dans le champ timezone ("Africa/Abidjan", "n'importe quoi", "UTC+3") sans validation. Côté serveur : `z.string().max(50).optional()` — aucune validation de format.
+- **Sévérité** : LOW-MEDIUM
+- **Fix recommandé** : Remplacer par un Select avec une liste de timezones courantes (Africa/Abidjan, Africa/Dakar, UTC, Europe/Paris...), ou valider avec `Intl.supportedValuesOf('timeZone')`.
+
+## 🟢 LOW (4)
+
+### BUG-19 — Wizard : `adults` peut être mis à 0 via l'input, validation côté serveur uniquement
+- **Fichier** : `src/components/hotel/reservation-wizard-dialog.tsx`
+- **Lignes** : 577-585, 163-187 (`handleNext`)
+- **Description** : L'input `adults` a `min={1}` HTML mais pas de validation JS. L'utilisateur peut vider, taper 0, cliquer Suivant — `handleNext` ne valide pas `adults >= 1`. Le serveur renvoie 400 "Au moins 1 adulte". UX dégradée.
+- **Sévérité** : LOW
+- **Fix recommandé** : Ajouter `if (adults < 1) { toast.error("Au moins 1 adulte requis"); return; }` dans `handleNext` step 2.
+
+### BUG-20 — Wizard walk-in : `today`/`tomorrow` calculés au montage, drift minuit
+- **Fichier** : `src/components/hotel/reservation-wizard-dialog.tsx`
+- **Lignes** : 94-98
+- **Description** : `const today = new Date()` est calculé une fois au montage. Si l'utilisateur ouvre le wizard à 23:55 et soumet à 00:05, `checkInDate` sera la date d'hier.
+- **Sévérité** : LOW (edge case)
+- **Fix recommandé** : Recalculer `todayStr` au moment du `handleConfirm` plutôt qu'au montage.
+
+### BUG-21 — Calendar view : classes Tailwind dupliquées (cosmetic)
+- **Fichier** : `src/components/hotel/calendar-view.tsx`
+- **Lignes** : 55, 61
+- **Description** : `text: "text-amber-700 text-amber-700"` et `text: "text-blue-700 text-blue-700"` — duplication de classe. Pas d'impact fonctionnel.
+- **Sévérité** : LOW (cosmetic)
+- **Fix recommandé** : Retirer la duplication.
+
+### BUG-22 — Reservations list : `window.history.replaceState` au lieu de `router.replace` pour nettoyer l'URL
+- **Fichier** : `src/components/hotel/reservations-list.tsx`
+- **Lignes** : 77-84
+- **Description** : Utilise `window.history.replaceState({}, "", url)` pour retirer `?new=1` / `?walkin=1` après ouverture du wizard. Cela modifie l'URL sans notifier le routeur Next.js, qui peut garder un état interne périmé. Pas critique mais inconsistence.
+- **Sévérité** : LOW
+- **Fix recommandé** : Utiliser `router.replace(url)`.
+
+=== SYNTHÈSE DES PROCHAINES ACTIONS (par priorité) ===
+
+1. **CRITICAL — BUG-01 + BUG-02 + BUG-07** : Ajouter un check de disponibilité AVANT le bouton Confirmer dans le wizard, surtout en mode walk-in. Filtrer le dropdown des chambres par disponibilité réelle (status + pas de réservation chevauchante). C'est le bug principal rapporté par l'utilisateur.
+2. **CRITICAL — BUG-03 + BUG-10** : Retirer `status` du schéma PATCH `/api/hotel/reservations/[id]` ou ajouter une state machine de validation. Empêcher le bypass du workflow check-in/check-out.
+3. **CRITICAL — BUG-04** : Recalculer `balance_amount` dans `updateReservation` quand `rate_amount` ou `discount_amount` change.
+4. **HIGH — BUG-05** : Remplacer le bouton "Check-out" de la page détail par un dialog complet (extra charges, payment, force_unpaid) ou rediriger vers `/app/check-out`.
+5. **HIGH — BUG-06** : Utiliser `useSearchParams()` réactif au lieu de `window.location.search` dans le useEffect d'auto-open du wizard.
+6. **HIGH — BUG-08** : Corriger le calcul du taux d'occupation (somme des `nights` au lieu du `count` de réservations).
+7. **HIGH — BUG-09** : Passer `establishmentId` au `checkRoomAvailability` dans l'API route.
+8. **MEDIUM — BUG-11 à BUG-18** : Améliorations UX et perf, à planifier après les CRITICAL.
+

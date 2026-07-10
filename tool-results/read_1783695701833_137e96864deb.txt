@@ -1,0 +1,806 @@
+     1→"use client";
+     2→
+     3→import * as React from "react";
+     4→import { useRouter } from "next/navigation";
+     5→import Link from "next/link";
+     6→import {
+     7→  Calendar as CalendarIcon,
+     8→  ChevronLeft,
+     9→  ChevronRight,
+    10→  Plus,
+    11→  LogIn,
+    12→  LogOut,
+    13→  LayoutGrid,
+    14→  CalendarDays,
+    15→  CalendarRange,
+    16→} from "lucide-react";
+    17→
+    18→import { Button } from "@/components/ui/button";
+    19→import { Badge } from "@/components/ui/badge";
+    20→import { Card, CardContent } from "@/components/ui/card";
+    21→import {
+    22→  Select,
+    23→  SelectContent,
+    24→  SelectItem,
+    25→  SelectTrigger,
+    26→  SelectValue,
+    27→} from "@/components/ui/select";
+    28→import {
+    29→  RESERVATION_STATUS_LABELS,
+    30→  type ReservationStatus,
+    31→} from "@/lib/hotel/reservations";
+    32→import { formatFCFA, cn } from "@/lib/utils";
+    33→import type {
+    34→  CalendarRoom,
+    35→  CalendarReservation,
+    36→} from "@/lib/hotel/calendar-server";
+    37→
+    38→type ViewMode = "day" | "week" | "month" | "planning";
+    39→
+    40→type Props = {
+    41→  rooms: CalendarRoom[];
+    42→  reservations: CalendarReservation[];
+    43→  arrivals: CalendarReservation[];
+    44→  departures: CalendarReservation[];
+    45→  roomTypes: { id: string; name: string }[];
+    46→  initialDate: string; // YYYY-MM-DD
+    47→  canEdit: boolean;
+    48→};
+    49→
+    50→// Couleurs par statut de réservation
+    51→const STATUS_COLORS: Record<string, { bg: string; border: string; text: string; dot: string }> = {
+    52→  pending: {
+    53→    bg: "bg-amber-500/20",
+    54→    border: "border-amber-500/40",
+    55→    text: "text-amber-700 text-amber-700",
+    56→    dot: "bg-amber-500",
+    57→  },
+    58→  confirmed: {
+    59→    bg: "bg-blue-500/20",
+    60→    border: "border-blue-500/40",
+    61→    text: "text-blue-700 text-blue-700",
+    62→    dot: "bg-blue-500",
+    63→  },
+    64→  checked_in: {
+    65→    bg: "bg-emerald-500/20",
+    66→    border: "border-emerald-500/40",
+    67→    text: "text-emerald-700",
+    68→    dot: "bg-emerald-500",
+    69→  },
+    70→  checked_out: {
+    71→    bg: "bg-muted",
+    72→    border: "border-border",
+    73→    text: "text-muted-foreground",
+    74→    dot: "bg-muted-foreground",
+    75→  },
+    76→};
+    77→
+    78→// Couleurs par statut de chambre
+    79→const ROOM_STATUS_COLORS: Record<string, string> = {
+    80→  available: "bg-emerald-500/15 text-emerald-700",
+    81→  reserved: "bg-blue-500/15 text-blue-600",
+    82→  occupied: "bg-primary/15 text-primary",
+    83→  cleaning: "bg-amber-500/15 text-amber-600",
+    84→  maintenance: "bg-destructive/15 text-destructive",
+    85→  inactive: "bg-muted text-muted-foreground",
+    86→};
+    87→
+    88→const ROOM_STATUS_LABELS: Record<string, string> = {
+    89→  available: "Disponible",
+    90→  reserved: "Réservée",
+    91→  occupied: "Occupée",
+    92→  cleaning: "Nettoyage",
+    93→  maintenance: "Maintenance",
+    94→  inactive: "Inactive",
+    95→};
+    96→
+    97→const WEEKDAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+    98→const MONTHS = [
+    99→  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+   100→  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+   101→];
+   102→
+   103→function parseDate(dateStr: string): Date {
+   104→  return new Date(dateStr + "T00:00:00.000Z");
+   105→}
+   106→
+   107→function formatDateISO(d: Date): string {
+   108→  return d.toISOString().split("T")[0];
+   109→}
+   110→
+   111→function getMonday(d: Date): Date {
+   112→  const date = new Date(d);
+   113→  const day = date.getDay();
+   114→  const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Lundi comme premier jour
+   115→  date.setDate(diff);
+   116→  date.setHours(0, 0, 0, 0);
+   117→  return date;
+   118→}
+   119→
+   120→function addDays(d: Date, days: number): Date {
+   121→  const result = new Date(d);
+   122→  result.setDate(result.getDate() + days);
+   123→  return result;
+   124→}
+   125→
+   126→function isSameDay(d1: Date, d2: Date): boolean {
+   127→  return formatDateISO(d1) === formatDateISO(d2);
+   128→}
+   129→
+   130→export function CalendarView({
+   131→  rooms,
+   132→  reservations,
+   133→  arrivals,
+   134→  departures,
+   135→  roomTypes,
+   136→  initialDate,
+   137→  canEdit,
+   138→}: Props) {
+   139→  const router = useRouter();
+   140→  const [viewMode, setViewMode] = React.useState<ViewMode>("week");
+   141→  const [currentDate, setCurrentDate] = React.useState(parseDate(initialDate));
+   142→  const [roomTypeFilter, setRoomTypeFilter] = React.useState("all");
+   143→
+   144→  const today = new Date();
+   145→  today.setHours(0, 0, 0, 0);
+   146→
+   147→  // Filtrer les chambres par type
+   148→  const filteredRooms = React.useMemo(() => {
+   149→    if (roomTypeFilter === "all") return rooms;
+   150→    return rooms.filter((r) => {
+   151→      // On n'a pas room_type_id dans CalendarRoom, on filtre par nom
+   152→      const rt = roomTypes.find((t) => t.id === roomTypeFilter);
+   153→      return rt && r.room_type_name === rt.name;
+   154→    });
+   155→  }, [rooms, roomTypeFilter, roomTypes]);
+   156→
+   157→  // Construire un map des réservations par room_id
+   158→  const reservationsByRoom = React.useMemo(() => {
+   159→    const map = new Map<string, CalendarReservation[]>();
+   160→    reservations.forEach((r) => {
+   161→      if (!map.has(r.room_id)) map.set(r.room_id, []);
+   162→      map.get(r.room_id)!.push(r);
+   163→    });
+   164→    return map;
+   165→  }, [reservations]);
+   166→
+   167→  // Navigation
+   168→  function navigate(direction: "prev" | "next" | "today") {
+   169→    if (direction === "today") {
+   170→      setCurrentDate(today);
+   171→      return;
+   172→    }
+   173→    const multiplier = direction === "next" ? 1 : -1;
+   174→    if (viewMode === "day") {
+   175→      setCurrentDate(addDays(currentDate, multiplier));
+   176→    } else if (viewMode === "week") {
+   177→      setCurrentDate(addDays(currentDate, multiplier * 7));
+   178→    } else if (viewMode === "month") {
+   179→      const d = new Date(currentDate);
+   180→      d.setMonth(d.getMonth() + multiplier);
+   181→      setCurrentDate(d);
+   182→    } else if (viewMode === "planning") {
+   183→      setCurrentDate(addDays(currentDate, multiplier * 7));
+   184→    }
+   185→  }
+   186→
+   187→  // Titre de la période
+   188→  function getPeriodTitle(): string {
+   189→    if (viewMode === "day") {
+   190→      return currentDate.toLocaleDateString("fr-FR", {
+   191→        weekday: "long",
+   192→        day: "numeric",
+   193→        month: "long",
+   194→        year: "numeric",
+   195→      });
+   196→    } else if (viewMode === "week" || viewMode === "planning") {
+   197→      const monday = getMonday(currentDate);
+   198→      const sunday = addDays(monday, 6);
+   199→      return `${monday.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} — ${sunday.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}`;
+   200→    } else {
+   201→      return `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+   202→    }
+   203→  }
+   204→
+   205→  // Obtenir les réservations pour un jour et une chambre spécifiques
+   206→  function getReservationsForDay(roomId: string, date: Date): CalendarReservation[] {
+   207→    const roomResas = reservationsByRoom.get(roomId) ?? [];
+   208→    const dateStr = formatDateISO(date);
+   209→    return roomResas.filter((r) => {
+   210→      const checkIn = r.check_in_date;
+   211→      const checkOut = r.check_out_date;
+   212→      // Le client est dans la chambre si check_in <= date < check_out
+   213→      return checkIn <= dateStr && dateStr < checkOut;
+   214→    });
+   215→  }
+   216→
+   217→  // Vérifier si une date est dans le mois courant (vue mois)
+   218→  function isCurrentMonth(d: Date): boolean {
+   219→    return d.getMonth() === currentDate.getMonth();
+   220→  }
+   221→
+   222→  return (
+   223→    <div className="space-y-4">
+   224→      {/* Toolbar */}
+   225→      <Card>
+   226→        <CardContent className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
+   227→          {/* Navigation */}
+   228→          <div className="flex items-center gap-2">
+   229→            <Button variant="outline" size="icon" onClick={() => navigate("prev")}>
+   230→              <ChevronLeft className="h-4 w-4" />
+   231→            </Button>
+   232→            <Button variant="outline" size="sm" onClick={() => navigate("today")}>
+   233→              Aujourd'hui
+   234→            </Button>
+   235→            <Button variant="outline" size="icon" onClick={() => navigate("next")}>
+   236→              <ChevronRight className="h-4 w-4" />
+   237→            </Button>
+   238→            <h2 className="ml-2 text-sm font-semibold capitalize">{getPeriodTitle()}</h2>
+   239→          </div>
+   240→
+   241→          {/* Sélecteurs */}
+   242→          <div className="flex items-center gap-2">
+   243→            {/* Filtre type de chambre */}
+   244→            <Select value={roomTypeFilter} onValueChange={setRoomTypeFilter}>
+   245→              <SelectTrigger className="w-[160px]">
+   246→                <SelectValue />
+   247→              </SelectTrigger>
+   248→              <SelectContent>
+   249→                <SelectItem value="all">Tous les types</SelectItem>
+   250→                {roomTypes.map((t) => (
+   251→                  <SelectItem key={t.id} value={t.id}>
+   252→                    {t.name}
+   253→                  </SelectItem>
+   254→                ))}
+   255→              </SelectContent>
+   256→            </Select>
+   257→
+   258→            {/* Mode de vue */}
+   259→            <div className="flex rounded-lg border border-border p-0.5">
+   260→              <Button
+   261→                variant={viewMode === "day" ? "default" : "ghost"}
+   262→                size="sm"
+   263→                onClick={() => setViewMode("day")}
+   264→                className="h-8"
+   265→              >
+   266→                <CalendarIcon className="h-4 w-4" />
+   267→              </Button>
+   268→              <Button
+   269→                variant={viewMode === "week" ? "default" : "ghost"}
+   270→                size="sm"
+   271→                onClick={() => setViewMode("week")}
+   272→                className="h-8"
+   273→              >
+   274→                <CalendarRange className="h-4 w-4" />
+   275→              </Button>
+   276→              <Button
+   277→                variant={viewMode === "month" ? "default" : "ghost"}
+   278→                size="sm"
+   279→                onClick={() => setViewMode("month")}
+   280→                className="h-8"
+   281→              >
+   282→                <CalendarDays className="h-4 w-4" />
+   283→              </Button>
+   284→              <Button
+   285→                variant={viewMode === "planning" ? "default" : "ghost"}
+   286→                size="sm"
+   287→                onClick={() => setViewMode("planning")}
+   288→                className="h-8"
+   289→              >
+   290→                <LayoutGrid className="h-4 w-4" />
+   291→              </Button>
+   292→            </div>
+   293→
+   294→            {canEdit && (
+   295→              <Button asChild size="sm">
+   296→                <Link href="/app/reservations?new=1" prefetch>
+   297→                  <Plus className="mr-1 h-4 w-4" />
+   298→                  Réservation
+   299→                </Link>
+   300→              </Button>
+   301→            )}
+   302→          </div>
+   303→        </CardContent>
+   304→      </Card>
+   305→
+   306→      {/* Arrivées / Départs du jour (visible en mode jour et semaine) */}
+   307→      {(viewMode === "day" || viewMode === "week") && (arrivals.length > 0 || departures.length > 0) && (
+   308→        <div className="grid gap-4 sm:grid-cols-2">
+   309→          {arrivals.length > 0 && (
+   310→            <Card>
+   311→              <CardContent className="p-4">
+   312→                <div className="mb-3 flex items-center gap-2">
+   313→                  <LogIn className="h-4 w-4 text-emerald-500" />
+   314→                  <h3 className="text-sm font-semibold">
+   315→                    Arrivées du jour ({arrivals.length})
+   316→                  </h3>
+   317→                </div>
+   318→                <div className="space-y-2">
+   319→                  {arrivals.map((r) => (
+   320→                    <Link
+   321→                      key={r.id}
+   322→                      href={`/app/reservations/${r.id}`}
+   323→                      className="flex items-center justify-between rounded-md border border-border p-2 text-sm transition-colors hover:bg-muted/30"
+   324→                    >
+   325→                      <div>
+   326→                        <p className="font-medium">{r.guest_name}</p>
+   327→                        <p className="text-xs text-muted-foreground">
+   328→                          {r.nights} nuit{r.nights > 1 ? "s" : ""} · {formatFCFA(r.total_amount)}
+   329→                        </p>
+   330→                      </div>
+   331→                      {r.balance_amount > 0 && (
+   332→                        <Badge variant="warning" className="text-xs">
+   333→                          Solde {formatFCFA(r.balance_amount)}
+   334→                        </Badge>
+   335→                      )}
+   336→                    </Link>
+   337→                  ))}
+   338→                </div>
+   339→              </CardContent>
+   340→            </Card>
+   341→          )}
+   342→          {departures.length > 0 && (
+   343→            <Card>
+   344→              <CardContent className="p-4">
+   345→                <div className="mb-3 flex items-center gap-2">
+   346→                  <LogOut className="h-4 w-4 text-blue-500" />
+   347→                  <h3 className="text-sm font-semibold">
+   348→                    Départs du jour ({departures.length})
+   349→                  </h3>
+   350→                </div>
+   351→                <div className="space-y-2">
+   352→                  {departures.map((r) => (
+   353→                    <Link
+   354→                      key={r.id}
+   355→                      href={`/app/reservations/${r.id}`}
+   356→                      className="flex items-center justify-between rounded-md border border-border p-2 text-sm transition-colors hover:bg-muted/30"
+   357→                    >
+   358→                      <div>
+   359→                        <p className="font-medium">{r.guest_name}</p>
+   360→                        <p className="text-xs text-muted-foreground">
+   361→                          {r.nights} nuit{r.nights > 1 ? "s" : ""} · {formatFCFA(r.total_amount)}
+   362→                        </p>
+   363→                      </div>
+   364→                      {r.balance_amount > 0 && (
+   365→                        <Badge variant="destructive" className="text-xs">
+   366→                          Solde {formatFCFA(r.balance_amount)}
+   367→                        </Badge>
+   368→                      )}
+   369→                    </Link>
+   370→                  ))}
+   371→                </div>
+   372→              </CardContent>
+   373→            </Card>
+   374→          )}
+   375→        </div>
+   376→      )}
+   377→
+   378→      {/* Légende */}
+   379→      <div className="flex flex-wrap items-center gap-3 text-xs">
+   380→        <span className="text-muted-foreground">Légende :</span>
+   381→        {Object.entries(STATUS_COLORS).map(([status, colors]) => {
+   382→          const label = RESERVATION_STATUS_LABELS[status as ReservationStatus];
+   383→          if (!label) return null;
+   384→          return (
+   385→            <div key={status} className="flex items-center gap-1.5">
+   386→              <span className={cn("h-3 w-3 rounded", colors.dot)} />
+   387→              <span>{label.label}</span>
+   388→            </div>
+   389→          );
+   390→        })}
+   391→      </div>
+   392→
+   393→      {/* Vue JOUR */}
+   394→      {viewMode === "day" && (
+   395→        <Card>
+   396→          <CardContent className="p-0">
+   397→            {filteredRooms.length === 0 ? (
+   398→              <div className="py-16 text-center text-sm text-muted-foreground">
+   399→                Aucune chambre à afficher
+   400→              </div>
+   401→            ) : (
+   402→              <div className="divide-y divide-border">
+   403→                {filteredRooms.map((room) => {
+   404→                  const dayReservations = getReservationsForDay(room.id, currentDate);
+   405→                  return (
+   406→                    <div
+   407→                      key={room.id}
+   408→                      className="flex items-center gap-3 p-3 hover:bg-muted/20"
+   409→                    >
+   410→                      {/* Numéro chambre + statut */}
+   411→                      <div className="flex w-28 shrink-0 flex-col gap-1">
+   412→                        <span className="font-bold">{room.room_number}</span>
+   413→                        <span
+   414→                          className={cn(
+   415→                            "rounded px-1.5 py-0.5 text-xs font-medium",
+   416→                            ROOM_STATUS_COLORS[room.status]
+   417→                          )}
+   418→                        >
+   419→                          {ROOM_STATUS_LABELS[room.status] ?? room.status}
+   420→                        </span>
+   421→                        {room.room_type_name && (
+   422→                          <span className="text-xs text-muted-foreground">
+   423→                            {room.room_type_name}
+   424→                          </span>
+   425→                        )}
+   426→                      </div>
+   427→
+   428→                      {/* Réservations du jour */}
+   429→                      <div className="flex-1">
+   430→                        {dayReservations.length === 0 ? (
+   431→                          <span className="text-sm text-muted-foreground italic">
+   432→                            Disponible
+   433→                          </span>
+   434→                        ) : (
+   435→                          <div className="space-y-1">
+   436→                            {dayReservations.map((r) => {
+   437→                              const colors = STATUS_COLORS[r.status] ?? STATUS_COLORS.confirmed;
+   438→                              const isCheckInDay = r.check_in_date === formatDateISO(currentDate);
+   439→                              const isCheckOutDay = r.check_out_date === formatDateISO(addDays(currentDate, 1));
+   440→                              return (
+   441→                                <Link
+   442→                                  key={r.id}
+   443→                                  href={`/app/reservations/${r.id}`}
+   444→                                  className={cn(
+   445→                                    "block rounded-md border px-3 py-1.5 text-sm transition-colors hover:opacity-80",
+   446→                                    colors.bg,
+   447→                                    colors.border,
+   448→                                    colors.text
+   449→                                  )}
+   450→                                >
+   451→                                  <div className="flex items-center justify-between">
+   452→                                    <div>
+   453→                                      <span className="font-medium">{r.guest_name}</span>
+   454→                                      {isCheckInDay && (
+   455→                                        <span className="ml-2 text-xs font-normal">← Arrivée</span>
+   456→                                      )}
+   457→                                      {isCheckOutDay && (
+   458→                                        <span className="ml-2 text-xs font-normal">→ Départ demain</span>
+   459→                                      )}
+   460→                                    </div>
+   461→                                    <span className="text-xs">
+   462→                                      {r.check_in_date} → {r.check_out_date}
+   463→                                    </span>
+   464→                                  </div>
+   465→                                  {r.balance_amount > 0 && (
+   466→                                    <p className="text-xs mt-0.5">
+   467→                                      Solde : {formatFCFA(r.balance_amount)}
+   468→                                    </p>
+   469→                                  )}
+   470→                                </Link>
+   471→                              );
+   472→                            })}
+   473→                          </div>
+   474→                        )}
+   475→                      </div>
+   476→                    </div>
+   477→                  );
+   478→                })}
+   479→              </div>
+   480→            )}
+   481→          </CardContent>
+   482→        </Card>
+   483→      )}
+   484→
+   485→      {/* Vue SEMAINE */}
+   486→      {viewMode === "week" && (
+   487→        <Card>
+   488→          <CardContent className="p-0">
+   489→            {filteredRooms.length === 0 ? (
+   490→              <div className="py-16 text-center text-sm text-muted-foreground">
+   491→                Aucune chambre à afficher
+   492→              </div>
+   493→            ) : (
+   494→              <div className="overflow-x-auto">
+   495→                <table className="w-full border-collapse text-sm">
+   496→                  <thead>
+   497→                    <tr className="border-b border-border bg-muted/30">
+   498→                      <th className="sticky left-0 z-10 w-28 border-r border-border bg-muted/30 px-3 py-2 text-left font-medium text-muted-foreground">
+   499→                        Chambre
+   500→                      </th>
+   501→                      {Array.from({ length: 7 }).map((_, i) => {
+   502→                        const day = addDays(getMonday(currentDate), i);
+   503→                        const isToday = isSameDay(day, today);
+   504→                        return (
+   505→                          <th
+   506→                            key={i}
+   507→                            className={cn(
+   508→                              "border-r border-border px-2 py-2 text-center font-medium",
+   509→                              isToday && "bg-primary/10"
+   510→                            )}
+   511→                          >
+   512→                            <div className="text-xs text-muted-foreground">{WEEKDAYS[i]}</div>
+   513→                            <div className={cn("text-sm", isToday && "font-bold text-primary")}>
+   514→                              {day.getDate()}
+   515→                            </div>
+   516→                          </th>
+   517→                        );
+   518→                      })}
+   519→                    </tr>
+   520→                  </thead>
+   521→                  <tbody>
+   522→                    {filteredRooms.map((room) => (
+   523→                      <tr key={room.id} className="border-b border-border/50">
+   524→                        <td className="sticky left-0 z-10 w-28 border-r border-border bg-background px-3 py-1">
+   525→                          <div className="font-bold text-sm">{room.room_number}</div>
+   526→                          <div className="text-xs text-muted-foreground">{room.room_type_name}</div>
+   527→                        </td>
+   528→                        {Array.from({ length: 7 }).map((_, i) => {
+   529→                          const day = addDays(getMonday(currentDate), i);
+   530→                          const dayReservations = getReservationsForDay(room.id, day);
+   531→                          const isToday = isSameDay(day, today);
+   532→                          return (
+   533→                            <td
+   534→                              key={i}
+   535→                              className={cn(
+   536→                                "border-r border-border p-1 align-top",
+   537→                                isToday && "bg-primary/5"
+   538→                              )}
+   539→                            >
+   540→                              {dayReservations.map((r) => {
+   541→                                const colors = STATUS_COLORS[r.status] ?? STATUS_COLORS.confirmed;
+   542→                                const isCheckInDay = r.check_in_date === formatDateISO(day);
+   543→                                return (
+   544→                                  <Link
+   545→                                    key={r.id}
+   546→                                    href={`/app/reservations/${r.id}`}
+   547→                                    className={cn(
+   548→                                      "mb-1 block rounded px-1.5 py-1 text-xs transition-colors hover:opacity-80",
+   549→                                      colors.bg,
+   550→                                      colors.border,
+   551→                                      colors.text
+   552→                                    )}
+   553→                                    title={`${r.guest_name} — ${r.check_in_date} → ${r.check_out_date}`}
+   554→                                  >
+   555→                                    <div className="flex items-center gap-1">
+   556→                                      <span className={cn("h-1.5 w-1.5 rounded-full", colors.dot)} />
+   557→                                      <span className="truncate font-medium">
+   558→                                        {r.guest_name}
+   559→                                      </span>
+   560→                                    </div>
+   561→                                    {isCheckInDay && (
+   562→                                      <span className="text-xs opacity-80">← {formatFCFA(r.total_amount)}</span>
+   563→                                    )}
+   564→                                  </Link>
+   565→                                );
+   566→                              })}
+   567→                            </td>
+   568→                          );
+   569→                        })}
+   570→                      </tr>
+   571→                    ))}
+   572→                  </tbody>
+   573→                </table>
+   574→              </div>
+   575→            )}
+   576→          </CardContent>
+   577→        </Card>
+   578→      )}
+   579→
+   580→      {/* Vue MOIS */}
+   581→      {viewMode === "month" && (
+   582→        <Card>
+   583→          <CardContent className="p-0">
+   584→            <div className="overflow-x-auto">
+   585→              <table className="w-full border-collapse text-sm">
+   586→                <thead>
+   587→                  <tr className="border-b border-border bg-muted/30">
+   588→                    {WEEKDAYS.map((day) => (
+   589→                      <th
+   590→                        key={day}
+   591→                        className="border-r border-border px-2 py-2 text-center font-medium text-muted-foreground"
+   592→                      >
+   593→                        {day}
+   594→                      </th>
+   595→                    ))}
+   596→                  </tr>
+   597→                </thead>
+   598→                <tbody>
+   599→                  {(() => {
+   600→                    const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+   601→                    const startDate = getMonday(firstDay);
+   602→                    const weeks: Date[][] = [];
+   603→                    for (let w = 0; w < 6; w++) {
+   604→                      const week: Date[] = [];
+   605→                      for (let d = 0; d < 7; d++) {
+   606→                        week.push(addDays(startDate, w * 7 + d));
+   607→                      }
+   608→                      weeks.push(week);
+   609→                    }
+   610→                    return weeks.map((week, wi) => (
+   611→                      <tr key={wi} className="border-b border-border/50">
+   612→                        {week.map((day, di) => {
+   613→                          const isToday = isSameDay(day, today);
+   614→                          const inMonth = isCurrentMonth(day);
+   615→                          // Compter les réservations du jour (toutes chambres)
+   616→                          const dayReservations = reservations.filter((r) => {
+   617→                            return r.check_in_date <= formatDateISO(day) && formatDateISO(day) < r.check_out_date;
+   618→                          });
+   619→                          const arrivalsCount = reservations.filter(
+   620→                            (r) => r.check_in_date === formatDateISO(day)
+   621→                          ).length;
+   622→                          const departuresCount = reservations.filter(
+   623→                            (r) => r.check_out_date === formatDateISO(addDays(day, 1))
+   624→                          ).length;
+   625→
+   626→                          return (
+   627→                            <td
+   628→                              key={di}
+   629→                              className={cn(
+   630→                                "border-r border-border p-1 align-top h-24 min-w-[100px]",
+   631→                                !inMonth && "bg-muted/20",
+   632→                                isToday && "bg-primary/5"
+   633→                              )}
+   634→                            >
+   635→                              <div
+   636→                                className={cn(
+   637→                                  "mb-1 text-xs font-medium",
+   638→                                  !inMonth && "text-muted-foreground/50",
+   639→                                  isToday && "text-primary"
+   640→                                )}
+   641→                              >
+   642→                                {day.getDate()}
+   643→                              </div>
+   644→                              <div className="space-y-0.5">
+   645→                                {dayReservations.slice(0, 3).map((r) => {
+   646→                                  const colors = STATUS_COLORS[r.status] ?? STATUS_COLORS.confirmed;
+   647→                                  const room = rooms.find((rm) => rm.id === r.room_id);
+   648→                                  return (
+   649→                                    <Link
+   650→                                      key={r.id}
+   651→                                      href={`/app/reservations/${r.id}`}
+   652→                                      className={cn(
+   653→                                        "block truncate rounded px-1 py-0.5 text-xs transition-colors hover:opacity-80",
+   654→                                        colors.bg,
+   655→                                        colors.text
+   656→                                      )}
+   657→                                      title={`${r.guest_name} — Ch ${room?.room_number}`}
+   658→                                    >
+   659→                                      <span className={cn("mr-1 inline-block h-1.5 w-1.5 rounded-full", colors.dot)} />
+   660→                                      {room?.room_number} · {r.guest_name}
+   661→                                    </Link>
+   662→                                  );
+   663→                                })}
+   664→                                {dayReservations.length > 3 && (
+   665→                                  <p className="text-xs text-muted-foreground">
+   666→                                    +{dayReservations.length - 3} autre{dayReservations.length - 3 > 1 ? "s" : ""}
+   667→                                  </p>
+   668→                                )}
+   669→                                {arrivalsCount > 0 && (
+   670→                                  <p className="text-xs text-emerald-700">
+   671→                                    ← {arrivalsCount} arrivée{arrivalsCount > 1 ? "s" : ""}
+   672→                                  </p>
+   673→                                )}
+   674→                                {departuresCount > 0 && (
+   675→                                  <p className="text-xs text-blue-600">
+   676→                                    → {departuresCount} départ{departuresCount > 1 ? "s" : ""}
+   677→                                  </p>
+   678→                                )}
+   679→                              </div>
+   680→                            </td>
+   681→                          );
+   682→                        })}
+   683→                      </tr>
+   684→                    ));
+   685→                  })()}
+   686→                </tbody>
+   687→              </table>
+   688→            </div>
+   689→          </CardContent>
+   690→        </Card>
+   691→      )}
+   692→
+   693→      {/* Vue PLANNING par chambre (Gantt simplifié) */}
+   694→      {viewMode === "planning" && (
+   695→        <Card>
+   696→          <CardContent className="p-0">
+   697→            {filteredRooms.length === 0 ? (
+   698→              <div className="py-16 text-center text-sm text-muted-foreground">
+   699→                Aucune chambre à afficher
+   700→              </div>
+   701→            ) : (
+   702→              <div className="overflow-x-auto">
+   703→                <table className="w-full border-collapse text-sm">
+   704→                  <thead>
+   705→                    <tr className="border-b border-border bg-muted/30">
+   706→                      <th className="sticky left-0 z-10 w-28 border-r border-border bg-muted/30 px-3 py-2 text-left font-medium text-muted-foreground">
+   707→                        Chambre
+   708→                      </th>
+   709→                      {Array.from({ length: 7 }).map((_, i) => {
+   710→                        const day = addDays(getMonday(currentDate), i);
+   711→                        const isToday = isSameDay(day, today);
+   712→                        return (
+   713→                          <th
+   714→                            key={i}
+   715→                            className={cn(
+   716→                              "border-r border-border px-2 py-2 text-center font-medium min-w-[120px]",
+   717→                              isToday && "bg-primary/10"
+   718→                            )}
+   719→                          >
+   720→                            <div className="text-xs text-muted-foreground">{WEEKDAYS[i]}</div>
+   721→                            <div className={cn("text-sm", isToday && "font-bold text-primary")}>
+   722→                              {day.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}
+   723→                            </div>
+   724→                          </th>
+   725→                        );
+   726→                      })}
+   727→                    </tr>
+   728→                  </thead>
+   729→                  <tbody>
+   730→                    {filteredRooms.map((room) => {
+   731→                      const roomReservations = reservationsByRoom.get(room.id) ?? [];
+   732→                      return (
+   733→                        <tr key={room.id} className="border-b border-border/50 h-16">
+   734→                          <td className="sticky left-0 z-10 w-28 border-r border-border bg-background px-3 py-1">
+   735→                            <div className="font-bold text-sm">{room.room_number}</div>
+   736→                            <div className="text-xs text-muted-foreground">{room.room_type_name}</div>
+   737→                            <span
+   738→                              className={cn(
+   739→                                "mt-0.5 inline-block rounded px-1.5 py-0.5 text-xs font-medium",
+   740→                                ROOM_STATUS_COLORS[room.status]
+   741→                              )}
+   742→                            >
+   743→                              {ROOM_STATUS_LABELS[room.status] ?? room.status}
+   744→                            </span>
+   745→                          </td>
+   746→                          {Array.from({ length: 7 }).map((_, i) => {
+   747→                            const day = addDays(getMonday(currentDate), i);
+   748→                            const dayReservations = getReservationsForDay(room.id, day);
+   749→                            const isToday = isSameDay(day, today);
+   750→                            return (
+   751→                              <td
+   752→                                key={i}
+   753→                                className={cn(
+   754→                                  "border-r border-border p-1 align-top",
+   755→                                  isToday && "bg-primary/5"
+   756→                                )}
+   757→                              >
+   758→                                {dayReservations.map((r) => {
+   759→                                  const colors = STATUS_COLORS[r.status] ?? STATUS_COLORS.confirmed;
+   760→                                  const isCheckInDay = r.check_in_date === formatDateISO(day);
+   761→                                  const isCheckOutTomorrow =
+   762→                                    r.check_out_date === formatDateISO(addDays(day, 1));
+   763→                                  return (
+   764→                                    <Link
+   765→                                      key={r.id}
+   766→                                      href={`/app/reservations/${r.id}`}
+   767→                                      className={cn(
+   768→                                        "mb-1 block rounded-md border px-2 py-1 text-xs transition-colors hover:opacity-80",
+   769→                                        colors.bg,
+   770→                                        colors.border,
+   771→                                        colors.text
+   772→                                      )}
+   773→                                    >
+   774→                                      <div className="font-medium truncate">{r.guest_name}</div>
+   775→                                      <div className="flex items-center justify-between mt-0.5">
+   776→                                        <span className="opacity-80">
+   777→                                          {isCheckInDay && "← "}
+   778→                                          {isCheckOutTomorrow && "→ "}
+   779→                                          {r.nights}n
+   780→                                        </span>
+   781→                                        {r.balance_amount > 0 && (
+   782→                                          <span className="font-medium">
+   783→                                            {formatFCFA(r.balance_amount)}
+   784→                                          </span>
+   785→                                        )}
+   786→                                      </div>
+   787→                                    </Link>
+   788→                                  );
+   789→                                })}
+   790→                              </td>
+   791→                            );
+   792→                          })}
+   793→                        </tr>
+   794→                      );
+   795→                    })}
+   796→                  </tbody>
+   797→                </table>
+   798→              </div>
+   799→            )}
+   800→          </CardContent>
+   801→        </Card>
+   802→      )}
+   803→    </div>
+   804→  );
+   805→}
+   806→

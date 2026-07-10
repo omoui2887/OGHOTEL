@@ -142,7 +142,13 @@ export function ReservationWizardDialog({
     }
   }, [roomId, rooms]);
 
-  const availableRooms = rooms.filter((r) => r.status !== "inactive");
+  // Pour le walk-in, ne montrer que les chambres "available" (pas occupied/reserved/cleaning/maintenance)
+  // Pour une réservation normale, on montre toutes les chambres non-inactives (la disponibilité
+  // sera vérifiée par l'API avant la confirmation).
+  const selectableRooms = isWalkIn
+    ? rooms.filter((r) => r.status === "available")
+    : rooms.filter((r) => r.status !== "inactive");
+
   const filteredGuests = guestSearch
     ? guestsList.filter(
         (g) =>
@@ -160,7 +166,9 @@ export function ReservationWizardDialog({
     ? ["Client", "Chambre"]
     : ["Client", "Détails", "Validation"];
 
-  function handleNext() {
+  const [checkingAvailability, setCheckingAvailability] = React.useState(false);
+
+  async function handleNext() {
     // Validation step 1
     if (step === 1 && !selectedGuest) {
       toast.error("Veuillez sélectionner ou créer un client");
@@ -184,6 +192,38 @@ export function ReservationWizardDialog({
         toast.error("Le tarif par nuit doit être supérieur à 0");
         return;
       }
+
+      // 🔒 Vérifier la disponibilité de la chambre AVANT de passer à l'étape suivante.
+      // C'est le fix du bug principal : l'utilisateur voyait l'erreur "chambre non
+      // disponible" seulement après avoir cliqué "Confirmer". Maintenant on vérifie
+      // au moment de cliquer "Suivant".
+      setCheckingAvailability(true);
+      try {
+        const res = await fetch("/api/hotel/reservations/availability", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            room_id: roomId,
+            check_in_date: checkInDate,
+            check_out_date: checkOutDate,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.available === false) {
+          const conflicts = data.conflicts
+            ?.map((c: any) => `${c.guest_name} (${c.check_in} → ${c.check_out})`)
+            .join(", ");
+          toast.error(
+            `Cette chambre n'est pas disponible pour ces dates. Conflit avec : ${conflicts}`
+          );
+          setCheckingAvailability(false);
+          return;
+        }
+      } catch {
+        // Si l'API de dispo échoue, on laisse passer — la vérification finale
+        // côté serveur (createReservation) rattrapera les vrais conflits.
+      }
+      setCheckingAvailability(false);
     }
     if (step < totalSteps) setStep(step + 1);
   }
@@ -482,7 +522,7 @@ export function ReservationWizardDialog({
                     <SelectValue placeholder="Sélectionnez une chambre" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableRooms.map((r) => (
+                    {selectableRooms.map((r) => (
                       <SelectItem key={r.id} value={r.id}>
                         {r.room_number} — {r.room_type_name ?? "—"} —{" "}
                         {formatFCFA(r.price_per_night)}/nuit
@@ -490,6 +530,13 @@ export function ReservationWizardDialog({
                     ))}
                   </SelectContent>
                 </Select>
+                {selectableRooms.length === 0 && (
+                  <p className="text-xs text-amber-700">
+                    {isWalkIn
+                      ? "Aucune chambre disponible pour un walk-in. Toutes les chambres sont occupées ou en nettoyage/maintenance."
+                      : "Aucune chambre active. Créez d'abord des chambres dans le module Chambres."}
+                  </p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label>Source</Label>
