@@ -104,7 +104,7 @@ export default function HomePage() {
       {/* ----------------------------------------------------------------- */}
       {/* HERO                                                               */}
       {/* ----------------------------------------------------------------- */}
-      <section className="relative overflow-hidden border-b border-white/10">
+      <section className="relative overflow-hidden border-b border-slate-200">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-40"
@@ -123,12 +123,12 @@ export default function HomePage() {
               </span>
 
               <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-5xl lg:text-6xl">
-                <span className="text-white">{HERO_TITLE_WHITE}</span>
+                <span className="text-slate-900">{HERO_TITLE_WHITE}</span>
                 <br />
                 <span className="text-amber-600">{HERO_TITLE_ORANGE}</span>
               </h1>
 
-              <p className="max-w-xl text-lg text-slate-300">
+              <p className="max-w-xl text-lg text-slate-600">
                 {HERO_DESCRIPTION}
               </p>
 
@@ -147,7 +147,7 @@ export default function HomePage() {
                   asChild
                   size="lg"
                   variant="outline"
-                  className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                  className="border-slate-300 bg-transparent text-slate-900 hover:bg-slate-100 hover:text-slate-900"
                 >
                   <Link href="/#produit">
                     <Play className="mr-2 h-4 w-4" />
@@ -163,7 +163,7 @@ export default function HomePage() {
                   return (
                     <li
                       key={point.title}
-                      className="flex items-center gap-2 text-sm text-slate-300"
+                      className="flex items-center gap-2 text-sm text-slate-600"
                     >
                       <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-600/15 text-amber-500">
                         <Icon className="h-4 w-4" />
@@ -181,13 +181,13 @@ export default function HomePage() {
                   return (
                     <div
                       key={stat.label}
-                      className="rounded-xl border border-white/10 bg-white/5 p-4"
+                      className="rounded-xl border border-slate-200 bg-slate-100 p-4"
                     >
                       <Icon className="mb-2 h-5 w-5 text-amber-500" />
-                      <div className="text-2xl font-bold text-white">
+                      <div className="text-2xl font-bold text-slate-900">
                         {stat.value}
                       </div>
-                      <div className="text-sm text-slate-400">{stat.label}</div>
+                      <div className="text-sm text-slate-500">{stat.label}</div>
                     </div>
                   );
                 })}
@@ -196,7 +196,7 @@ export default function HomePage() {
 
             {/* Right — hotel lobby image */}
             <div className="relative">
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-slate-200 shadow-2xl">
                 <Image
                   src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=80"
                   alt="Lobby d'hôtel moderne et lumineux"
@@ -206,16 +206,16 @@ export default function HomePage() {
                   className="object-cover"
                 />
               </div>
-              <div className="absolute -bottom-4 -left-4 hidden rounded-xl border border-amber-600/30 bg-[#0c1e3a]/90 p-4 shadow-lg backdrop-blur sm:block">
+              <div className="absolute -bottom-4 -left-4 hidden rounded-xl border border-amber-600/30 bg-white/90 p-4 shadow-lg backdrop-blur sm:block">
                 <div className="flex items-center gap-2">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-600 text-white">
                     <TrendingUp className="h-4 w-4" />
                   </span>
                   <div>
-                    <div className="text-sm font-semibold text-white">
+                    <div className="text-sm font-semibold text-slate-900">
                       +45% de revenus
                     </div>
-                    <div className="text-xs text-slate-400">
+                    <div className="text-xs text-slate-500">
                       en moyenne dès le 1er mois
                     </div>
                   </div>
@@ -236,10 +236,10 @@ export default function HomePage() {
               <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
               Fonctionnalités
             </span>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight text-white md:text-4xl">
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
               Fonctionnalités Puissantes
             </h2>
-            <p className="mt-4 text-slate-400">
+            <p className="mt-4 text-slate-500">
               Tout ce dont vous avez besoin pour piloter votre établissement, dans
               une interface simple en français et en FCFA.
             </p>
@@ -253,7 +253,7 @@ export default function HomePage() {
               return (
                 <Card
                   key={feature.title}
-                  className="border-white/10 bg-white/5 transition-colors hover:border-amber-600/40 hover:bg-white/[0.07]"
+                  className="border-slate-200 bg-white transition-colors hover:border-amber-600/40 hover:bg-slate-50"
                 >
                   <CardContent className="space-y-4">
                     <div
@@ -261,10 +261,10 @@ export default function HomePage() {
                     >
                       <Icon className="h-6 w-6" />
                     </div>
-                    <h3 className="text-lg font-semibold text-white">
+                    <h3 className="text-lg font-semibold text-slate-900">
                       {feature.title}
                     </h3>
-                    <p className="text-sm text-slate-400">{feature.desc}</p>
+                    <p className="text-sm text-slate-500">{feature.desc}</p>
                   </CardContent>
                 </Card>
               );
@@ -278,7 +278,7 @@ export default function HomePage() {
       {/* ----------------------------------------------------------------- */}
       <section
         id="produit"
-        className="border-y border-white/10 bg-white/[0.02] py-16 md:py-24"
+        className="border-y border-slate-200 bg-slate-50 py-16 md:py-24"
       >
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
@@ -286,10 +286,10 @@ export default function HomePage() {
               <Sparkles className="h-4 w-4 text-amber-500" />
               Produit
             </span>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight text-white md:text-4xl">
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
               Tout ce dont vous avez besoin
             </h2>
-            <p className="mt-4 text-slate-400">
+            <p className="mt-4 text-slate-500">
               Une suite complète pour gérer chaque aspect de votre activité
               hôtelière, du check-in aux rapports financiers.
             </p>
@@ -303,7 +303,7 @@ export default function HomePage() {
               return (
                 <Card
                   key={feature.title}
-                  className="border-white/10 bg-[#0c1e3a]/60 transition-colors hover:border-amber-600/40"
+                  className="border-slate-200 bg-white transition-colors hover:border-amber-600/40"
                 >
                   <CardContent className="space-y-3">
                     <div
@@ -311,10 +311,10 @@ export default function HomePage() {
                     >
                       <Icon className="h-5 w-5" />
                     </div>
-                    <h3 className="text-base font-semibold text-white">
+                    <h3 className="text-base font-semibold text-slate-900">
                       {feature.title}
                     </h3>
-                    <p className="text-sm text-slate-400">{feature.desc}</p>
+                    <p className="text-sm text-slate-500">{feature.desc}</p>
                   </CardContent>
                 </Card>
               );
@@ -330,15 +330,15 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-              <span className="text-white">{RESULTS_SECTION.titleWhite}</span>{" "}
+              <span className="text-slate-900">{RESULTS_SECTION.titleWhite}</span>{" "}
               <span className="text-amber-600">{RESULTS_SECTION.titleOrange}</span>
             </h2>
-            <p className="mt-4 text-slate-400">{RESULTS_SECTION.subtitle}</p>
+            <p className="mt-4 text-slate-500">{RESULTS_SECTION.subtitle}</p>
           </div>
 
           <div className="mt-12 grid items-center gap-8 lg:grid-cols-2">
             {/* Image */}
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-white/10 shadow-xl">
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-slate-200 shadow-xl">
               <Image
                 src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=1200&q=80"
                 alt="Réception d'hôtel avec réceptionniste au travail"
@@ -354,10 +354,10 @@ export default function HomePage() {
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-600/15 text-amber-500">
                   <TrendingUp className="h-7 w-7" />
                 </div>
-                <h3 className="text-2xl font-bold text-white">
+                <h3 className="text-2xl font-bold text-slate-900">
                   {RESULTS_SECTION.cardTitle}
                 </h3>
-                <p className="text-slate-300">{RESULTS_SECTION.cardDesc}</p>
+                <p className="text-slate-600">{RESULTS_SECTION.cardDesc}</p>
                 <Button
                   asChild
                   variant="link"
@@ -379,15 +379,15 @@ export default function HomePage() {
       {/* ----------------------------------------------------------------- */}
       <section
         id="tarifs"
-        className="border-y border-white/10 bg-white/[0.02] py-16 md:py-24"
+        className="border-y border-slate-200 bg-slate-50 py-16 md:py-24"
       >
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-              <span className="text-white">Des tarifs</span>{" "}
+              <span className="text-slate-900">Des tarifs</span>{" "}
               <span className="text-amber-600">adaptés à votre taille</span>
             </h2>
-            <p className="mt-4 text-slate-400">
+            <p className="mt-4 text-slate-500">
               Un paiement annuel simple. Aucun frais caché. Choisissez la formule
               qui correspond à votre activité.
             </p>
@@ -402,16 +402,16 @@ export default function HomePage() {
                   className={
                     isFeatured
                       ? "border-amber-600 bg-gradient-to-b from-amber-600/[0.08] to-transparent shadow-xl shadow-amber-600/10"
-                      : "border-white/10 bg-white/5"
+                      : "border-slate-200 bg-slate-100"
                   }
                 >
                   <CardContent className="flex h-full flex-col gap-5">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h3 className="text-xl font-semibold text-white">
+                        <h3 className="text-xl font-semibold text-slate-900">
                           {plan.name}
                         </h3>
-                        <p className="mt-1 text-xs text-slate-400">
+                        <p className="mt-1 text-xs text-slate-500">
                           {plan.target}
                         </p>
                       </div>
@@ -422,20 +422,20 @@ export default function HomePage() {
                       )}
                     </div>
 
-                    <p className="text-sm text-slate-300">{plan.summary}</p>
+                    <p className="text-sm text-slate-600">{plan.summary}</p>
 
                     <div>
-                      <span className="text-3xl font-bold text-white">
+                      <span className="text-3xl font-bold text-slate-900">
                         {plan.priceLabel}
                       </span>
-                      <span className="text-slate-400"> / {plan.period}</span>
+                      <span className="text-slate-500"> / {plan.period}</span>
                     </div>
 
                     <ul className="flex-1 space-y-2.5">
                       {plan.features.map((feat) => (
                         <li
                           key={feat}
-                          className="flex items-start gap-2 text-sm text-slate-300"
+                          className="flex items-start gap-2 text-sm text-slate-600"
                         >
                           <Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                           <span>{feat}</span>
@@ -448,7 +448,7 @@ export default function HomePage() {
                       className={
                         isFeatured
                           ? "w-full bg-amber-600 text-white hover:bg-amber-700"
-                          : "w-full border-white/20 bg-transparent text-white hover:bg-white/10"
+                          : "w-full border-slate-300 bg-transparent text-slate-900 hover:bg-slate-100"
                       }
                       variant={isFeatured ? "default" : "outline"}
                     >
@@ -473,28 +473,28 @@ export default function HomePage() {
               FAQ
             </span>
             <h2 className="mt-4 text-3xl font-bold tracking-tight md:text-4xl">
-              <span className="text-white">Questions</span>{" "}
+              <span className="text-slate-900">Questions</span>{" "}
               <span className="text-amber-600">fréquentes</span>
             </h2>
-            <p className="mt-4 text-slate-400">
+            <p className="mt-4 text-slate-500">
               Tout ce que vous devez savoir avant de démarrer avec {APP_NAME}.
             </p>
           </div>
 
           <div className="mx-auto mt-12 max-w-3xl">
-            <Card className="border-white/10 bg-white/5">
+            <Card className="border-slate-200 bg-white">
               <CardContent>
                 <Accordion type="single" collapsible className="w-full">
                   {FAQ_ITEMS.map((item, i) => (
                     <AccordionItem
                       key={i}
                       value={`item-${i}`}
-                      className="border-white/10"
+                      className="border-slate-200"
                     >
-                      <AccordionTrigger className="text-left text-base font-medium text-white hover:text-amber-400">
+                      <AccordionTrigger className="text-left text-base font-medium text-slate-900 hover:text-amber-600">
                         {item.q}
                       </AccordionTrigger>
-                      <AccordionContent className="text-sm leading-relaxed text-slate-300">
+                      <AccordionContent className="text-sm leading-relaxed text-slate-600">
                         {item.a}
                       </AccordionContent>
                     </AccordionItem>
@@ -511,7 +511,7 @@ export default function HomePage() {
       {/* ----------------------------------------------------------------- */}
       <section
         id="contact"
-        className="border-t border-white/10 bg-[#0a1929] py-16 md:py-24"
+        className="border-t border-slate-200 bg-slate-50 py-16 md:py-24"
       >
         <div className="container mx-auto px-4">
           <div className="grid items-start gap-10 lg:grid-cols-2">
@@ -522,10 +522,10 @@ export default function HomePage() {
                   <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
                   Démarrez gratuitement
                 </span>
-                <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
+                <h2 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
                   Prêt à digitaliser votre gestion hôtelière ?
                 </h2>
-                <p className="max-w-md text-slate-300">
+                <p className="max-w-md text-slate-600">
                   Laissez-nous vos coordonnées. Notre équipe vous contacte par
                   WhatsApp sous 24h pour organiser une démo et activer votre
                   espace.
@@ -554,7 +554,7 @@ export default function HomePage() {
                   asChild
                   size="lg"
                   variant="outline"
-                  className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                  className="border-slate-300 bg-transparent text-slate-900 hover:bg-slate-100 hover:text-slate-900"
                 >
                   <a href={`mailto:${SUPPORT_EMAIL}`}>
                     <Mail className="mr-2 h-4 w-4" />
@@ -572,7 +572,7 @@ export default function HomePage() {
                 ].map((item) => (
                   <li
                     key={item.text}
-                    className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-200"
+                    className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm text-slate-700"
                   >
                     <item.icon className="h-5 w-5 shrink-0 text-amber-500" />
                     <span>{item.text}</span>
@@ -582,13 +582,13 @@ export default function HomePage() {
             </div>
 
             {/* Right — Lead form */}
-            <Card className="border-white/10 bg-[#0c1e3a]">
+            <Card className="border-slate-200 bg-white">
               <CardContent>
                 <div className="mb-5">
-                  <h3 className="text-xl font-semibold text-white">
+                  <h3 className="text-xl font-semibold text-slate-900">
                     Demandez votre démo gratuite
                   </h3>
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="mt-1 text-sm text-slate-500">
                     Réponse sous 24h, sans engagement.
                   </p>
                 </div>

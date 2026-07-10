@@ -18,12 +18,13 @@ const schema = z.object({
     .email("Email invalide")
     .max(150)
     .optional()
-    .or(z.literal("")),
-  nationality: z.string().max(100).optional().or(z.literal("")),
-  id_type: z.enum(["cni", "passport", "permit", "other"]).optional(),
-  id_number: z.string().max(100).optional().or(z.literal("")),
-  address: z.string().max(300).optional().or(z.literal("")),
-  notes: z.string().max(2000).optional().or(z.literal("")),
+    .or(z.literal(""))
+    .nullable(),
+  nationality: z.string().max(100).optional().or(z.literal("")).nullable(),
+  id_type: z.enum(["cni", "passport", "permit", "other"]).optional().nullable(),
+  id_number: z.string().max(100).optional().or(z.literal("")).nullable(),
+  address: z.string().max(300).optional().or(z.literal("")).nullable(),
+  notes: z.string().max(2000).optional().or(z.literal("")).nullable(),
 });
 
 export async function POST(request: NextRequest) {

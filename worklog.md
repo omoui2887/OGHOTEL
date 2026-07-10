@@ -3265,3 +3265,57 @@ Stage Summary:
 7. **HIGH — BUG-09** : Passer `establishmentId` au `checkRoomAvailability` dans l'API route.
 8. **MEDIUM — BUG-11 à BUG-18** : Améliorations UX et perf, à planifier après les CRITICAL.
 
+
+---
+
+Task ID: WHITE-THEME-LANDING
+Agent: full-stack-developer
+Task: White theme for landing page
+
+Work Log:
+- Read previous worklog (`/home/z/my-project/worklog.md`) and prior agent record `/agent-ctx/FIX-HOTEL-CLEANUP-full-stack-developer.md` for context.
+- `src/components/layout/site-header.tsx` — converted dark navy header to white theme:
+  - Header bar: `bg-[#0c1e3a]/90` → `bg-white/90`, `border-white/10` → `border-black/10`, supports variant `bg-[#0c1e3a]/75` → `bg-white/75`
+  - Brand name + nav links: `text-white` / `text-slate-300` → `text-slate-900` / `text-slate-600`
+  - Desktop ghost buttons (Connexion / Activer mon compte) + mobile menu trigger: `text-slate-200 hover:bg-white/10 hover:text-white` → `text-slate-700 hover:bg-slate-100 hover:text-slate-900`
+  - Mobile Sheet: `border-white/10 bg-[#0c1e3a] text-white` → `border-black/10 bg-white text-slate-900`; internal divider `bg-white/10` → `bg-slate-200`; mobile nav links → `text-slate-600 hover:bg-slate-100 hover:text-slate-900`; activation link → `text-amber-600 hover:bg-slate-100`
+  - **Kept** `bg-amber-600 text-white hover:bg-amber-700` on "Essai Gratuit" buttons (desktop + mobile) and on the OG logo square
+- `src/components/layout/site-footer.tsx` — converted dark navy footer to light slate theme:
+  - Footer surface: `bg-[#0a1929]` → `bg-slate-50`, top border `border-white/10` → `border-black/10`, bottom divider `border-white/10` → `border-slate-200`
+  - All section headings (À propos / Contact / Navigation): `text-white` → `text-slate-900`
+  - All body copy: `text-slate-400` → `text-slate-500`
+  - Brand name: `text-white` → `text-slate-900`
+  - **Kept** amber accents: logo square `bg-amber-600 text-white`, WhatsApp/mail icons `text-amber-500`, link hover `hover:text-amber-500`
+- `src/app/page.tsx` (landing, ~600 lines) — full white-theme conversion:
+  - Bulk `sed` replacements applied (background hexes: `#0c1e3a`→`#ffffff`, `#0a1929`→`#f8fafc`, `#102545`→`#f1f5f9`; text shades: `text-slate-300`→`text-slate-600`, `text-slate-400`→`text-slate-500`, `text-slate-200`→`text-slate-700`; borders: `border-white/10`→`border-slate-200`, `border-white/5`→`border-slate-100`; translucent whites: `bg-white/5`, `bg-white/10`, `bg-white/[0.02]` → `bg-slate-100` / `bg-slate-50`; hovers: `hover:text-white`→`hover:text-slate-900`, `hover:bg-white/10`→`hover:bg-slate-100`)
+  - Selective post-sed cleanup (15+ surgical MultiEdit passes) so `text-white` is preserved ONLY on amber buttons/badges:
+    - H1 hero title → `text-slate-900`
+    - Hero stats value, "+45% de revenus" overlay → `text-slate-900`; overlay card `bg-[#ffffff]/90` → `bg-white/90`
+    - Section titles (Fonctionnalités / Tout ce dont vous avez besoin / Des tarifs / Questions / Prêt à digitaliser...) → `text-slate-900`
+    - Feature card titles (lg + base) → `text-slate-900`
+    - Témoignages card title + plan name + plan price → `text-slate-900`
+    - Lead-form card heading "Demandez votre démo gratuite" → `text-slate-900`
+    - FAQ accordion trigger `text-white hover:text-amber-400` → `text-slate-900 hover:text-amber-600`
+  - Cards converted to white with slate border:
+    - Main feature Card: `bg-slate-100 hover:bg-white/[0.07]` → `bg-white hover:bg-slate-50`
+    - Secondary feature Card: `bg-[#ffffff]/60` → `bg-white`
+    - FAQ Card: `bg-slate-100` → `bg-white`
+    - Contact lead-form Card: `bg-[#ffffff]` → `bg-white`
+  - Outline buttons ("Voir la démo", "Écrire un email", non-featured plan CTA): `border-white/20 bg-transparent text-white hover:bg-slate-100` → `border-slate-300 bg-transparent text-slate-900 hover:bg-slate-100 hover:text-slate-900`
+  - Contact section surface `bg-[#f8fafc]` → `bg-slate-50` (clean Tailwind token instead of raw hex)
+  - **Kept amber accents** everywhere: hero badge pills (`bg-amber-600/10 text-amber-400 border-amber-600/30`), H1 second line `text-amber-600`, hero CTA `bg-amber-600 text-white hover:bg-amber-700`, secondary CTA outline, all icon tints `text-amber-500`, featured plan card `border-amber-600 bg-gradient-to-b from-amber-600/[0.08]`, featured plan Button `bg-amber-600 text-white hover:bg-amber-700`, plan Badge `bg-amber-600 text-white`, results card `bg-gradient-to-br from-amber-600/10`, link button `text-amber-500 hover:text-amber-400`, "Choisir" featured CTA, WhatsApp CTA
+- `src/components/marketing/lead-form.tsx` (surgical follow-up — needed because the parent Contact Card changed from `bg-[#0c1e3a]` to `bg-white`):
+  - Success state container: `border-orange-500/30 bg-orange-500/5` → `border-amber-600/30 bg-amber-600/5`, icon `text-orange-400` → `text-amber-600`, title `text-white` → `text-slate-900`, "Envoyer une autre demande" button `border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white` → `border-slate-300 bg-transparent text-slate-900 hover:bg-slate-100 hover:text-slate-900`
+  - Submit button: `bg-orange-500 text-white hover:bg-orange-600` → `bg-amber-600 text-white hover:bg-amber-700` (unified with the rest of the site's amber-600 accent)
+- Verified clean state via `rg`: no remaining `#0c1e3a` / `#0a1929` / `#102545` / `border-white` occurrences; remaining `text-white` instances are exclusively on `bg-amber-600` buttons/badges (as expected)
+- `bun run lint` → **0 errors, 0 warnings**
+- Dev server (`/home/z/my-project/dev.log`) shows the route compiling and serving `GET / 200` cleanly after each edit, with no runtime errors
+
+Stage Summary:
+- Landing page (`/`), site header, site footer fully migrated from dark navy (#0c1e3a / #0a1929) to a clean WHITE / light-slate theme
+- Color system now: white surfaces (cards), `bg-slate-50` banding for "produit" / "tarifs" / "contact" sections, `bg-slate-100` for hero stat tiles (kept as a subtle contrast tile), `text-slate-900` for all headings, `text-slate-600` / `text-slate-500` for body, `text-slate-700` for emphasis, `border-slate-200` / `border-black/10` for borders
+- Gold/amber accent (`amber-600` for solid fills, `amber-500` for icons, `amber-600/10` + `amber-600/30` for tinted pills) preserved across all CTAs, badges, icons, and the OG logo square — provides the only color pop on the white canvas
+- Buttons that previously used `orange-500` (lead form submit) unified to `amber-600` for a single consistent accent
+- No scope creep outside the 3 listed files + the unavoidable `lead-form.tsx` follow-up (its `text-white` would have been invisible on the new white contact card)
+- No changes to `globals.css` (already light beige `--background: #f8f3e9`); the new white sections layer cleanly on top
+- Lint clean, dev server healthy, ready for user preview via the Preview Panel / "Open in New Tab" button

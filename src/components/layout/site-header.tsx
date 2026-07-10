@@ -21,14 +21,14 @@ export function SiteHeader() {
   React.useEffect(() => setMounted(true), []);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#0c1e3a]/90 backdrop-blur supports-[backdrop-filter]:bg-[#0c1e3a]/75">
+    <header className="sticky top-0 z-40 w-full border-b border-black/10 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" prefetch className="flex items-center gap-2 font-semibold">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-600 text-sm font-bold text-white">
             OG
           </span>
-          <span className="text-lg tracking-tight text-white">{APP_NAME}</span>
+          <span className="text-lg tracking-tight text-slate-900">{APP_NAME}</span>
         </Link>
 
         {/* Nav desktop */}
@@ -37,7 +37,7 @@ export function SiteHeader() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-slate-300 transition-colors hover:text-white"
+              className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
             >
               {link.label}
             </Link>
@@ -46,13 +46,13 @@ export function SiteHeader() {
 
         {/* Actions desktop */}
         <div className="hidden items-center gap-2 md:flex">
-          <Button asChild variant="ghost" size="sm" className="text-slate-200 hover:bg-white/10 hover:text-white">
+          <Button asChild variant="ghost" size="sm" className="text-slate-700 hover:bg-slate-100 hover:text-slate-900">
             <Link href="/activation" prefetch>
               <KeyRound className="mr-1.5 h-4 w-4" />
               Activer mon compte
             </Link>
           </Button>
-          <Button asChild variant="ghost" size="sm" className="text-slate-200 hover:bg-white/10 hover:text-white">
+          <Button asChild variant="ghost" size="sm" className="text-slate-700 hover:bg-slate-100 hover:text-slate-900">
             <Link href="/login" prefetch>Connexion</Link>
           </Button>
           <Button
@@ -76,35 +76,35 @@ export function SiteHeader() {
                   variant="ghost"
                   size="icon"
                   aria-label="Ouvrir le menu"
-                  className="text-slate-200 hover:bg-white/10 hover:text-white"
+                  className="text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 >
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent
                 side="right"
-                className="w-[280px] border-white/10 bg-[#0c1e3a] text-white"
+                className="w-[280px] border-black/10 bg-white text-slate-900"
                 aria-describedby={undefined}
               >
-                <SheetTitle className="text-lg text-white">{APP_NAME}</SheetTitle>
+                <SheetTitle className="text-lg text-slate-900">{APP_NAME}</SheetTitle>
                 <nav className="mt-6 flex flex-col gap-1">
                   {NAV_LINKS.map((link) => (
                     <SheetClose asChild key={link.href}>
                       <Link
                         href={link.href}
                         className={cn(
-                          "rounded-md px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                          "rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
                         )}
                       >
                         {link.label}
                       </Link>
                     </SheetClose>
                   ))}
-                  <div className="my-2 h-px bg-white/10" />
+                  <div className="my-2 h-px bg-slate-200" />
                   <SheetClose asChild>
                     <Link
                       href="/login"
-                      className="rounded-md px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                      className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
                     >
                       Connexion
                     </Link>
@@ -112,7 +112,7 @@ export function SiteHeader() {
                   <SheetClose asChild>
                     <Link
                       href="/activation"
-                      className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-amber-500 transition-colors hover:bg-white/10"
+                      className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-amber-600 transition-colors hover:bg-slate-100"
                     >
                       <KeyRound className="h-4 w-4" />
                       Activer mon compte
@@ -138,7 +138,7 @@ export function SiteHeader() {
               size="icon"
               aria-label="Ouvrir le menu"
               disabled
-              className="text-slate-200"
+              className="text-slate-700"
             >
               <Menu className="h-5 w-5" />
             </Button>

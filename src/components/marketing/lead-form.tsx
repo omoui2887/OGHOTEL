@@ -91,9 +91,9 @@ export function LeadForm() {
 
   if (submitted) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-lg border border-orange-500/30 bg-orange-500/5 p-6 text-center">
-        <CheckCircle2 className="h-10 w-10 text-orange-400" />
-        <h3 className="text-lg font-semibold text-white">
+      <div className="flex flex-col items-center gap-3 rounded-lg border border-amber-600/30 bg-amber-600/5 p-6 text-center">
+        <CheckCircle2 className="h-10 w-10 text-amber-600" />
+        <h3 className="text-lg font-semibold text-slate-900">
           Merci pour votre intérêt
         </h3>
         <p className="text-sm text-muted-foreground">
@@ -102,7 +102,7 @@ export function LeadForm() {
         </p>
         <Button
           variant="outline"
-          className="mt-2 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
+          className="mt-2 border-slate-300 bg-transparent text-slate-900 hover:bg-slate-100 hover:text-slate-900"
           onClick={() => setSubmitted(false)}
         >
           Envoyer une autre demande
@@ -259,7 +259,7 @@ export function LeadForm() {
 
       <Button
         type="submit"
-        className="w-full bg-orange-500 text-white hover:bg-orange-600"
+        className="w-full bg-amber-600 text-white hover:bg-amber-700"
         disabled={isLoading}
       >
         {isLoading ? (

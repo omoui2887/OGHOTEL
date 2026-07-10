@@ -13,7 +13,7 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-white/10 bg-[#0a1929]">
+    <footer className="border-t border-black/10 bg-slate-50">
       <div className="container mx-auto px-4 py-12">
         <div className="grid gap-8 md:grid-cols-4">
           {/* Brand */}
@@ -22,17 +22,17 @@ export function SiteFooter() {
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-600 text-sm font-bold text-white">
                 OG
               </span>
-              <span className="text-lg text-white">{APP_NAME}</span>
+              <span className="text-lg text-slate-900">{APP_NAME}</span>
             </div>
-            <p className="mt-3 max-w-xs text-sm text-slate-400">
+            <p className="mt-3 max-w-xs text-sm text-slate-500">
               {APP_TAGLINE}. La plateforme n°1 de gestion hôtelière en Côte d&apos;Ivoire.
             </p>
           </div>
 
           {/* Spacer / tagline */}
           <div className="md:col-span-1">
-            <h3 className="text-sm font-semibold text-white">À propos</h3>
-            <p className="mt-3 text-sm text-slate-400">
+            <h3 className="text-sm font-semibold text-slate-900">À propos</h3>
+            <p className="mt-3 text-sm text-slate-500">
               SaaS de gestion hôtelière conçu et supporté depuis Abidjan. Chambres,
               réservations, paiements Mobile Money et rapports — en français, en FCFA.
             </p>
@@ -40,8 +40,8 @@ export function SiteFooter() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-sm font-semibold text-white">Contact</h3>
-            <ul className="mt-3 space-y-3 text-sm text-slate-400">
+            <h3 className="text-sm font-semibold text-slate-900">Contact</h3>
+            <ul className="mt-3 space-y-3 text-sm text-slate-500">
               <li>
                 <a
                   href={buildWhatsAppUrl(
@@ -70,8 +70,8 @@ export function SiteFooter() {
 
           {/* Navigation */}
           <div>
-            <h3 className="text-sm font-semibold text-white">Navigation</h3>
-            <ul className="mt-3 space-y-3 text-sm text-slate-400">
+            <h3 className="text-sm font-semibold text-slate-900">Navigation</h3>
+            <ul className="mt-3 space-y-3 text-sm text-slate-500">
               <li>
                 <Link
                   href="/#fonctionnalites"
@@ -110,7 +110,7 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-10 border-t border-white/10 pt-6 text-center text-xs text-slate-500">
+        <div className="mt-10 border-t border-slate-200 pt-6 text-center text-xs text-slate-500">
           © {year} {APP_NAME}. Tous droits réservés. Abidjan, Côte d&apos;Ivoire.
         </div>
       </div>

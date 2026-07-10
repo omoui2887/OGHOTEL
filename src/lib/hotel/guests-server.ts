@@ -196,12 +196,12 @@ export async function createGuest(
   input: {
     full_name: string;
     phone: string;
-    email?: string;
-    nationality?: string;
-    id_type?: string;
-    id_number?: string;
-    address?: string;
-    notes?: string;
+    email?: string | null;
+    nationality?: string | null;
+    id_type?: string | null;
+    id_number?: string | null;
+    address?: string | null;
+    notes?: string | null;
   }
 ): Promise<{ success: boolean; id?: string; error?: string }> {
   const supabase = createSupabaseAdminClient();
