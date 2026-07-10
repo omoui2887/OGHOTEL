@@ -40,8 +40,8 @@ export default function ActivationPage() {
           <ActivationForm />
 
           {/* Aide */}
-          <div className="mt-5 flex items-start gap-3 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3.5">
-            <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <div className="mt-5 flex items-start gap-3 rounded-lg border border-dashed border-[#0c1e3a]/30 bg-[#0c1e3a]/5 p-3.5">
+            <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#0c1e3a]" />
             <div className="text-xs text-muted-foreground">
               <p className="font-medium text-foreground">
                 Besoin d&apos;aide pour obtenir un code ?
@@ -54,14 +54,14 @@ export default function ActivationPage() {
                   href={`https://wa.me/${WHATSAPP_DISPLAY.replace(/[^0-9]/g, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                  className="inline-flex items-center gap-1 font-medium text-[#0c1e3a] hover:underline"
                 >
                   <MessageCircle className="h-3 w-3" />
                   {WHATSAPP_DISPLAY}
                 </a>
                 <a
                   href={`mailto:${SUPPORT_EMAIL}`}
-                  className="font-medium text-primary hover:underline"
+                  className="font-medium text-[#0c1e3a] hover:underline"
                 >
                   {SUPPORT_EMAIL}
                 </a>
@@ -76,7 +76,7 @@ export default function ActivationPage() {
           <Link
             href="/login"
             prefetch
-            className="font-semibold text-primary hover:underline"
+            className="font-semibold text-[#0c1e3a] hover:underline"
           >
             Se connecter
             <ArrowRight className="ml-1 inline h-3.5 w-3.5" />

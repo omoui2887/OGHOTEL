@@ -86,7 +86,7 @@ export function ActivationForm() {
           Code d&apos;activation <span className="text-destructive">*</span>
         </Label>
         <div className="relative">
-          <KeyRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
+          <KeyRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#0c1e3a]" />
           <Input
             id="code"
             placeholder="HTL-XXXX-XXXX-2026"
@@ -110,7 +110,7 @@ export function ActivationForm() {
       {/* Bouton vérifier */}
       <Button
         type="submit"
-        className="w-full bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg shadow-primary/20 transition-all hover:from-primary/90 hover:to-orange-600/90 hover:shadow-xl hover:shadow-primary/30"
+        className="w-full bg-gradient-to-r from-[#0c1e3a] to-[#1a3a5f] text-white shadow-lg shadow-[#0c1e3a]/20 transition-all hover:from-[#0c1e3a]/90 hover:to-[#1a3a5f]/90 hover:shadow-xl hover:shadow-[#0c1e3a]/30"
         size="lg"
         disabled={isLoading || verified}
       >

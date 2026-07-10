@@ -21,11 +21,11 @@ export function SiteHeader() {
   React.useEffect(() => setMounted(true), []);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#0a1929]/90 backdrop-blur supports-[backdrop-filter]:bg-[#0a1929]/75">
+    <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#0c1e3a]/90 backdrop-blur supports-[backdrop-filter]:bg-[#0c1e3a]/75">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" prefetch className="flex items-center gap-2 font-semibold">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-500 text-sm font-bold text-white">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-600 text-sm font-bold text-white">
             OG
           </span>
           <span className="text-lg tracking-tight text-white">{APP_NAME}</span>
@@ -58,7 +58,7 @@ export function SiteHeader() {
           <Button
             asChild
             size="sm"
-            className="bg-orange-500 text-white hover:bg-orange-600"
+            className="bg-amber-600 text-white hover:bg-amber-700"
           >
             <Link href="/#contact">
               Essai Gratuit
@@ -83,7 +83,7 @@ export function SiteHeader() {
               </SheetTrigger>
               <SheetContent
                 side="right"
-                className="w-[280px] border-white/10 bg-[#0a1929] text-white"
+                className="w-[280px] border-white/10 bg-[#0c1e3a] text-white"
                 aria-describedby={undefined}
               >
                 <SheetTitle className="text-lg text-white">{APP_NAME}</SheetTitle>
@@ -112,7 +112,7 @@ export function SiteHeader() {
                   <SheetClose asChild>
                     <Link
                       href="/activation"
-                      className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-orange-400 transition-colors hover:bg-white/10"
+                      className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-amber-500 transition-colors hover:bg-white/10"
                     >
                       <KeyRound className="h-4 w-4" />
                       Activer mon compte
@@ -121,7 +121,7 @@ export function SiteHeader() {
                   <SheetClose asChild>
                     <Button
                       asChild
-                      className="mt-2 bg-orange-500 text-white hover:bg-orange-600"
+                      className="mt-2 bg-amber-600 text-white hover:bg-amber-700"
                     >
                       <Link href="/#contact">
                         Essai Gratuit

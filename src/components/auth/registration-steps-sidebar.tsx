@@ -61,7 +61,7 @@ export function RegistrationStepsSidebar({ currentStep }: { currentStep: Step })
                 className={[
                   "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 transition-all",
                   isActive
-                    ? "bg-primary text-white ring-primary shadow-lg shadow-primary/30"
+                    ? "bg-amber-600 text-white ring-amber-600 shadow-lg shadow-amber-600/30"
                     : isDone
                     ? "bg-white/15 text-white ring-white/20"
                     : "bg-white/5 text-white/40 ring-white/10",
@@ -123,9 +123,9 @@ export function HorizontalStepper({ currentStep }: { currentStep: Step }) {
                 className={[
                   "flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition-all",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-md ring-4 ring-primary/15"
+                    ? "bg-[#0c1e3a] text-white shadow-md ring-4 ring-[#0c1e3a]/15"
                     : isDone
-                    ? "bg-primary/80 text-primary-foreground"
+                    ? "bg-[#0c1e3a]/80 text-white"
                     : "bg-muted text-muted-foreground",
                 ].join(" ")}
               >
@@ -135,9 +135,9 @@ export function HorizontalStepper({ currentStep }: { currentStep: Step }) {
                 className={[
                   "text-xs font-medium transition-colors",
                   isActive
-                    ? "text-primary"
+                    ? "text-[#0c1e3a]"
                     : isDone
-                    ? "text-primary/70"
+                    ? "text-[#0c1e3a]/70"
                     : "text-muted-foreground",
                 ].join(" ")}
               >
@@ -148,7 +148,7 @@ export function HorizontalStepper({ currentStep }: { currentStep: Step }) {
               <div
                 className={[
                   "mx-1 h-0.5 w-12 rounded-full transition-colors sm:w-20",
-                  step.id < currentStep ? "bg-primary/60" : "bg-border",
+                  step.id < currentStep ? "bg-[#0c1e3a]/60" : "bg-border",
                 ].join(" ")}
               />
             )}

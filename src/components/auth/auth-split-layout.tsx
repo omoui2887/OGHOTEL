@@ -27,8 +27,8 @@ export function AuthSplitLayout({
         className={[
           "relative hidden w-[44%] max-w-xl flex-col justify-between overflow-hidden lg:flex",
           sidebarVariant === "orange"
-            ? "bg-gradient-to-br from-primary via-primary to-orange-700 text-white"
-            : "bg-gradient-to-br from-orange-600 via-primary to-orange-800 text-white",
+            ? "bg-gradient-to-br from-[#0c1e3a] via-[#0c1e3a] to-[#102545] text-white"
+            : "bg-gradient-to-br from-[#0c1e3a] via-[#0c1e3a] to-[#102545] text-white",
         ].join(" ")}
       >
         {/* Texture décorative */}
@@ -47,7 +47,7 @@ export function AuthSplitLayout({
         {/* Logo en haut */}
         <div className="relative z-10 p-8 lg:p-10">
           <Link href="/" className="inline-flex items-center gap-2.5">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm ring-1 ring-white/20">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-600/20 backdrop-blur-sm ring-1 ring-amber-600/30">
               <Hotel className="h-5 w-5 text-white" />
             </span>
             <span className="text-xl font-bold tracking-tight text-white">

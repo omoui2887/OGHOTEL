@@ -63,7 +63,7 @@ export default async function LoginPage() {
           <ul className="space-y-5">
             {MARKETING_POINTS.map((p) => (
               <li key={p.title} className="flex items-start gap-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20 backdrop-blur-sm">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-600/20 ring-1 ring-amber-600/30 backdrop-blur-sm">
                   <p.icon className="h-5 w-5 text-white" />
                 </span>
                 <div>
@@ -118,7 +118,7 @@ export default async function LoginPage() {
               <Link
                 href="/activation"
                 prefetch
-                className="font-semibold text-primary hover:underline"
+                className="font-semibold text-[#0c1e3a] hover:underline"
               >
                 Inscrivez-vous
                 <ArrowRight className="ml-1 inline h-3.5 w-3.5" />

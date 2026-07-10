@@ -3009,3 +3009,45 @@ PROCHAINES PASSES (PASSE 2 — FIX) :
 - Fix #8 : Ajouter `import "server-only"` à src/lib/super-admin/stats.ts
 - Fix #9 : canAccessModule sur /app/settings, /app/room-types
 - Fix #10 : Migration vers Upstash Redis pour rate limiting distribué
+
+---
+Task ID: THEME-PROFESSIONAL
+Agent: full-stack-developer
+Task: Professional navy + gold theme for landing/login/activation pages
+
+Work Log:
+- Lu le worklog et les 10 fichiers cibles (page.tsx, site-header.tsx, site-footer.tsx, auth-split-layout.tsx, registration-steps-sidebar.tsx, login-form.tsx, activation-form.tsx, login/page.tsx, activation/page.tsx, register/page.tsx)
+- `src/app/page.tsx` (landing) : remplacements bulk via sed
+  * #0a1929 → #0c1e3a (navy plus profond)
+  * #081626 → #0a1929 (footer/section contact légèrement différenciés)
+  * bg-orange-500 → bg-amber-600, hover:bg-orange-600 → hover:bg-amber-700
+  * text-orange-400 → text-amber-500, text-orange-500 → text-amber-600
+  * text-orange-300 → text-amber-400, fill-orange-400 → fill-amber-500
+  * border-orange-500 → border-amber-600, shadow-orange-500/10 → shadow-amber-600/10
+  * from-orange-500 → from-amber-600, to-orange-600 → to-amber-700
+  * COLOR_CLASSES.orange (clé map) conservée, valeur déjà amber
+- `src/components/layout/site-header.tsx` : #0a1929 → #0c1e3a, bg-orange-500 → bg-amber-600, hover:bg-orange-600 → hover:bg-amber-700, text-orange-400 → text-amber-500
+- `src/components/layout/site-footer.tsx` : #081626 → #0a1929, bg-orange-500 → bg-amber-600, text-orange-400 → text-amber-500, hover:text-orange-400 → hover:text-amber-500
+- `src/components/auth/auth-split-layout.tsx` : les deux variantes "orange" et "navy" utilisent désormais `bg-gradient-to-br from-[#0c1e3a] via-[#0c1e3a] to-[#102545]` (navy profond). Logo icon : bg-white/15 → bg-amber-600/20, ring-white/20 → ring-amber-600/30 (accents dorés)
+- `src/components/auth/registration-steps-sidebar.tsx` :
+  * Sidebar : step active bg-primary → bg-amber-600, ring-primary → ring-amber-600, shadow-primary/30 → shadow-amber-600/30 (text-white conservé)
+  * HorizontalStepper (côté form blanc) : bg-primary → bg-[#0c1e3a], text-primary-foreground → text-white, text-primary → text-[#0c1e3a], bg-primary/80 → bg-[#0c1e3a]/80, bg-primary/60 → bg-[#0c1e3a]/60, ring-primary/15 → ring-[#0c1e3a]/15 (accents navy sur fond blanc)
+- `src/components/auth/login-form.tsx` : bouton submit `from-primary to-orange-600` → `from-[#0c1e3a] to-[#1a3a5f]`, shadow-primary → shadow-[#0c1e3a]. Icônes Mail/Lock et liens : text-primary → text-[#0c1e3a]
+- `src/components/activation/activation-form.tsx` : même changement bouton submit (navy gradient) + icône KeyRound text-primary → text-[#0c1e3a]
+- `src/app/(auth)/login/page.tsx` : sidebar marketing — icônes points forts bg-white/15 → bg-amber-600/20, ring-white/20 → ring-amber-600/30. Lien "Inscrivez-vous" text-primary → text-[#0c1e3a]
+- `src/app/activation/page.tsx` : carte aide border-primary/30 bg-primary/5 → border-[#0c1e3a]/30 bg-[#0c1e3a]/5. Tous les text-primary (HelpCircle, liens WhatsApp/email, lien connexion) → text-[#0c1e3a]
+- `src/app/register/page.tsx` : badge plan border-primary/30 bg-primary/5 → border-[#0c1e3a]/30 bg-[#0c1e3a]/5. Nom plan et liens text-primary → text-[#0c1e3a]
+- Vérifié : `src/app/globals.css` NON touché (thème beige conservé pour dashboard/super-admin)
+- Vérifié : composants hotel et super-admin NON touchés
+- `bun run lint` : 0 erreur
+- Tests HTTP : GET / → 200, GET /login → 200, GET /activation → 200, GET /register → 307 (redirect attendu sans code)
+
+Stage Summary:
+- 3 pages cibles (landing, login, activation) + page register + composants partagés (header, footer, auth-split-layout, registration-steps-sidebar, login-form, activation-form) migrés vers le thème Professional Navy + Gold
+- Palette appliquée :
+  * Landing : navy #0c1e3a (footer/sections #0a1929), accents gold #d97706 (amber-600/700), texte white/slate-300/400
+  * Login/Activation/Register : sidebar navy gradient (#0c1e3a → #102545) avec accents dorés (amber-600/20, amber-600/30) ; form côté blanc avec accents navy (#0c1e3a) + boutons gradient navy (#0c1e3a → #1a3a5f)
+- Thème beige (#f8f3e9 + primary #ff7a00) conservé intact pour /app/* et /super-admin/* via globals.css inchangé
+- Aucune régression : lint 0 erreur, toutes les routes cibles retournent 200 (ou 307 pour /register sans code)
+- Note : la prop `sidebarVariant="orange"|"navy"` est conservée pour compat API, mais les deux variants rendent désormais le même gradient navy — distinction visuelle uniquement sémantique
+

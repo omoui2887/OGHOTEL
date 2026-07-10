@@ -101,10 +101,10 @@ export default async function RegisterPage({
         {/* Carte formulaire */}
         <div className="rounded-2xl border border-border bg-white p-6 shadow-xl shadow-black/5 sm:p-8">
           {/* Badge plan */}
-          <div className="mb-5 flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5">
+          <div className="mb-5 flex items-center justify-between rounded-lg border border-[#0c1e3a]/30 bg-[#0c1e3a]/5 px-4 py-2.5">
             <div>
               <p className="text-xs text-muted-foreground">Formule choisie</p>
-              <p className="text-sm font-semibold text-primary">
+              <p className="text-sm font-semibold text-[#0c1e3a]">
                 {verify.code.plan_name}
               </p>
             </div>
@@ -128,7 +128,7 @@ export default async function RegisterPage({
           <Link
             href="/activation"
             prefetch
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-[#0c1e3a]"
           >
             <ArrowLeft className="h-4 w-4" />
             Utiliser un autre code

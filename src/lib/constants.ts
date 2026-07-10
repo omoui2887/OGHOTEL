@@ -99,7 +99,6 @@ export const PLANS: Plan[] = [
 // FAQ (Image7)
 export const FAQ_ITEMS = [
   { q: "Comment fonctionne l'essai gratuit ?", a: "Vous pouvez tester OGHOTEL gratuitement pendant 14 jours, sans carte bancaire. À l'issue de cette période, vous choisissez la formule qui vous convient. Toutes vos données sont conservées si vous souscrivez un abonnement." },
-  { q: "Est-ce que OGHOTEL fonctionne avec Mobile Money ?", a: "Oui, absolument. OGHOTEL supporte Orange Money, MTN Mobile Money, Moov Money, Wave, les espèces et les virements bancaires. Vous pouvez enregistrer tous les paiements reçus de vos clients, quel que soit le moyen utilisé." },
   { q: "Puis-je gérer plusieurs hôtels depuis un seul compte ?", a: "Oui, avec la formule Premium. Vous gérez plusieurs établissements depuis un tableau de bord centralisé, avec des rapports consolidés. Chaque établissement garde ses propres données, isolées et sécurisées." },
   { q: "Quelle formation est disponible ?", a: "Une formation de prise en main est incluse avec tous les abonnements. Notre équipe basée à Abidjan vous accompagne par WhatsApp et par téléphone. Des tutoriels vidéo et une documentation en français sont également disponibles." },
   { q: "Est-ce que mes données sont sécurisées ?", a: "Oui. Chaque établissement est strictement isolé : vos données ne sont jamais visibles par un autre hôtel. L'accès est protégé par mot de passe, les actions sensibles sont tracées, et des sauvegardes automatiques sont effectuées quotidiennement." },

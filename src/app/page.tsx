@@ -84,7 +84,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 };
 
 const COLOR_CLASSES: Record<string, string> = {
-  orange: "bg-orange-500/15 text-orange-400",
+  orange: "bg-amber-600/15 text-amber-500",
   blue: "bg-blue-500/15 text-blue-400",
   green: "bg-green-500/15 text-green-400",
   pink: "bg-pink-500/15 text-pink-400",
@@ -117,15 +117,15 @@ export default function HomePage() {
           <div className="grid items-center gap-12 lg:grid-cols-2">
             {/* Left */}
             <div className="space-y-7">
-              <span className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-1.5 text-sm font-medium text-orange-300">
-                <Star className="h-4 w-4 fill-orange-400 text-orange-400" />
+              <span className="inline-flex items-center gap-2 rounded-full border border-amber-600/30 bg-amber-600/10 px-4 py-1.5 text-sm font-medium text-amber-400">
+                <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
                 {HERO_BADGE}
               </span>
 
               <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-5xl lg:text-6xl">
                 <span className="text-white">{HERO_TITLE_WHITE}</span>
                 <br />
-                <span className="text-orange-500">{HERO_TITLE_ORANGE}</span>
+                <span className="text-amber-600">{HERO_TITLE_ORANGE}</span>
               </h1>
 
               <p className="max-w-xl text-lg text-slate-300">
@@ -136,7 +136,7 @@ export default function HomePage() {
                 <Button
                   asChild
                   size="lg"
-                  className="bg-orange-500 text-white hover:bg-orange-600"
+                  className="bg-amber-600 text-white hover:bg-amber-700"
                 >
                   <Link href="/#contact">
                     Commencer Gratuitement
@@ -165,7 +165,7 @@ export default function HomePage() {
                       key={point.title}
                       className="flex items-center gap-2 text-sm text-slate-300"
                     >
-                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/15 text-orange-400">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-600/15 text-amber-500">
                         <Icon className="h-4 w-4" />
                       </span>
                       <span className="font-medium">{point.title}</span>
@@ -183,7 +183,7 @@ export default function HomePage() {
                       key={stat.label}
                       className="rounded-xl border border-white/10 bg-white/5 p-4"
                     >
-                      <Icon className="mb-2 h-5 w-5 text-orange-400" />
+                      <Icon className="mb-2 h-5 w-5 text-amber-500" />
                       <div className="text-2xl font-bold text-white">
                         {stat.value}
                       </div>
@@ -206,9 +206,9 @@ export default function HomePage() {
                   className="object-cover"
                 />
               </div>
-              <div className="absolute -bottom-4 -left-4 hidden rounded-xl border border-orange-500/30 bg-[#0a1929]/90 p-4 shadow-lg backdrop-blur sm:block">
+              <div className="absolute -bottom-4 -left-4 hidden rounded-xl border border-amber-600/30 bg-[#0c1e3a]/90 p-4 shadow-lg backdrop-blur sm:block">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500 text-white">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-600 text-white">
                     <TrendingUp className="h-4 w-4" />
                   </span>
                   <div>
@@ -232,8 +232,8 @@ export default function HomePage() {
       <section id="fonctionnalites" className="py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-1.5 text-sm font-medium text-orange-300">
-              <Star className="h-4 w-4 fill-orange-400 text-orange-400" />
+            <span className="inline-flex items-center gap-2 rounded-full border border-amber-600/30 bg-amber-600/10 px-4 py-1.5 text-sm font-medium text-amber-400">
+              <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
               Fonctionnalités
             </span>
             <h2 className="mt-4 text-3xl font-bold tracking-tight text-white md:text-4xl">
@@ -253,7 +253,7 @@ export default function HomePage() {
               return (
                 <Card
                   key={feature.title}
-                  className="border-white/10 bg-white/5 transition-colors hover:border-orange-500/40 hover:bg-white/[0.07]"
+                  className="border-white/10 bg-white/5 transition-colors hover:border-amber-600/40 hover:bg-white/[0.07]"
                 >
                   <CardContent className="space-y-4">
                     <div
@@ -282,8 +282,8 @@ export default function HomePage() {
       >
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-1.5 text-sm font-medium text-orange-300">
-              <Sparkles className="h-4 w-4 text-orange-400" />
+            <span className="inline-flex items-center gap-2 rounded-full border border-amber-600/30 bg-amber-600/10 px-4 py-1.5 text-sm font-medium text-amber-400">
+              <Sparkles className="h-4 w-4 text-amber-500" />
               Produit
             </span>
             <h2 className="mt-4 text-3xl font-bold tracking-tight text-white md:text-4xl">
@@ -303,7 +303,7 @@ export default function HomePage() {
               return (
                 <Card
                   key={feature.title}
-                  className="border-white/10 bg-[#0a1929]/60 transition-colors hover:border-orange-500/40"
+                  className="border-white/10 bg-[#0c1e3a]/60 transition-colors hover:border-amber-600/40"
                 >
                   <CardContent className="space-y-3">
                     <div
@@ -331,7 +331,7 @@ export default function HomePage() {
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
               <span className="text-white">{RESULTS_SECTION.titleWhite}</span>{" "}
-              <span className="text-orange-500">{RESULTS_SECTION.titleOrange}</span>
+              <span className="text-amber-600">{RESULTS_SECTION.titleOrange}</span>
             </h2>
             <p className="mt-4 text-slate-400">{RESULTS_SECTION.subtitle}</p>
           </div>
@@ -349,9 +349,9 @@ export default function HomePage() {
             </div>
 
             {/* Card */}
-            <Card className="border-orange-500/30 bg-gradient-to-br from-orange-500/10 to-transparent">
+            <Card className="border-amber-600/30 bg-gradient-to-br from-amber-600/10 to-transparent">
               <CardContent className="space-y-5">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-500/15 text-orange-400">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-600/15 text-amber-500">
                   <TrendingUp className="h-7 w-7" />
                 </div>
                 <h3 className="text-2xl font-bold text-white">
@@ -361,7 +361,7 @@ export default function HomePage() {
                 <Button
                   asChild
                   variant="link"
-                  className="h-auto p-0 text-orange-400 hover:text-orange-300"
+                  className="h-auto p-0 text-amber-500 hover:text-amber-400"
                 >
                   <Link href="/#contact">
                     {RESULTS_SECTION.cardCta}
@@ -385,7 +385,7 @@ export default function HomePage() {
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
               <span className="text-white">Des tarifs</span>{" "}
-              <span className="text-orange-500">adaptés à votre taille</span>
+              <span className="text-amber-600">adaptés à votre taille</span>
             </h2>
             <p className="mt-4 text-slate-400">
               Un paiement annuel simple. Aucun frais caché. Choisissez la formule
@@ -401,7 +401,7 @@ export default function HomePage() {
                   key={plan.id}
                   className={
                     isFeatured
-                      ? "border-orange-500 bg-gradient-to-b from-orange-500/[0.08] to-transparent shadow-xl shadow-orange-500/10"
+                      ? "border-amber-600 bg-gradient-to-b from-amber-600/[0.08] to-transparent shadow-xl shadow-amber-600/10"
                       : "border-white/10 bg-white/5"
                   }
                 >
@@ -416,7 +416,7 @@ export default function HomePage() {
                         </p>
                       </div>
                       {plan.badge && (
-                        <Badge className="bg-orange-500 text-white hover:bg-orange-500">
+                        <Badge className="bg-amber-600 text-white hover:bg-amber-600">
                           {plan.badge}
                         </Badge>
                       )}
@@ -437,7 +437,7 @@ export default function HomePage() {
                           key={feat}
                           className="flex items-start gap-2 text-sm text-slate-300"
                         >
-                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-orange-400" />
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                           <span>{feat}</span>
                         </li>
                       ))}
@@ -447,7 +447,7 @@ export default function HomePage() {
                       asChild
                       className={
                         isFeatured
-                          ? "w-full bg-orange-500 text-white hover:bg-orange-600"
+                          ? "w-full bg-amber-600 text-white hover:bg-amber-700"
                           : "w-full border-white/20 bg-transparent text-white hover:bg-white/10"
                       }
                       variant={isFeatured ? "default" : "outline"}
@@ -468,13 +468,13 @@ export default function HomePage() {
       <section id="faq" className="py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-1.5 text-sm font-medium text-orange-300">
-              <HelpCircle className="h-4 w-4 text-orange-400" />
+            <span className="inline-flex items-center gap-2 rounded-full border border-amber-600/30 bg-amber-600/10 px-4 py-1.5 text-sm font-medium text-amber-400">
+              <HelpCircle className="h-4 w-4 text-amber-500" />
               FAQ
             </span>
             <h2 className="mt-4 text-3xl font-bold tracking-tight md:text-4xl">
               <span className="text-white">Questions</span>{" "}
-              <span className="text-orange-500">fréquentes</span>
+              <span className="text-amber-600">fréquentes</span>
             </h2>
             <p className="mt-4 text-slate-400">
               Tout ce que vous devez savoir avant de démarrer avec {APP_NAME}.
@@ -491,7 +491,7 @@ export default function HomePage() {
                       value={`item-${i}`}
                       className="border-white/10"
                     >
-                      <AccordionTrigger className="text-left text-base font-medium text-white hover:text-orange-300">
+                      <AccordionTrigger className="text-left text-base font-medium text-white hover:text-amber-400">
                         {item.q}
                       </AccordionTrigger>
                       <AccordionContent className="text-sm leading-relaxed text-slate-300">
@@ -511,15 +511,15 @@ export default function HomePage() {
       {/* ----------------------------------------------------------------- */}
       <section
         id="contact"
-        className="border-t border-white/10 bg-[#081626] py-16 md:py-24"
+        className="border-t border-white/10 bg-[#0a1929] py-16 md:py-24"
       >
         <div className="container mx-auto px-4">
           <div className="grid items-start gap-10 lg:grid-cols-2">
             {/* Left — CTA + benefits */}
             <div className="space-y-7">
               <div className="space-y-3">
-                <span className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-1.5 text-sm font-medium text-orange-300">
-                  <Star className="h-4 w-4 fill-orange-400 text-orange-400" />
+                <span className="inline-flex items-center gap-2 rounded-full border border-amber-600/30 bg-amber-600/10 px-4 py-1.5 text-sm font-medium text-amber-400">
+                  <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
                   Démarrez gratuitement
                 </span>
                 <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
@@ -536,7 +536,7 @@ export default function HomePage() {
                 <Button
                   asChild
                   size="lg"
-                  className="bg-orange-500 text-white hover:bg-orange-600"
+                  className="bg-amber-600 text-white hover:bg-amber-700"
                 >
                   <a
                     href={buildWhatsAppUrl(
@@ -574,7 +574,7 @@ export default function HomePage() {
                     key={item.text}
                     className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-200"
                   >
-                    <item.icon className="h-5 w-5 shrink-0 text-orange-400" />
+                    <item.icon className="h-5 w-5 shrink-0 text-amber-500" />
                     <span>{item.text}</span>
                   </li>
                 ))}
@@ -582,7 +582,7 @@ export default function HomePage() {
             </div>
 
             {/* Right — Lead form */}
-            <Card className="border-white/10 bg-[#0a1929]">
+            <Card className="border-white/10 bg-[#0c1e3a]">
               <CardContent>
                 <div className="mb-5">
                   <h3 className="text-xl font-semibold text-white">

@@ -89,7 +89,7 @@ export function LoginForm() {
           Adresse e-mail
         </Label>
         <div className="relative">
-          <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
+          <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#0c1e3a]" />
           <Input
             id="email"
             type="email"
@@ -117,7 +117,7 @@ export function LoginForm() {
           </Label>
           <button
             type="button"
-            className="text-xs text-muted-foreground transition-colors hover:text-primary"
+            className="text-xs text-muted-foreground transition-colors hover:text-[#0c1e3a]"
             onClick={() =>
               toast.info(
                 "Contactez l'administrateur pour réinitialiser votre mot de passe."
@@ -128,7 +128,7 @@ export function LoginForm() {
           </button>
         </div>
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
+          <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#0c1e3a]" />
           <Input
             id="password"
             type={showPassword ? "text" : "password"}
@@ -174,7 +174,7 @@ export function LoginForm() {
       {/* Bouton connexion */}
       <Button
         type="submit"
-        className="w-full bg-gradient-to-r from-primary to-orange-600 text-white shadow-lg shadow-primary/20 transition-all hover:from-primary/90 hover:to-orange-600/90 hover:shadow-xl hover:shadow-primary/30"
+        className="w-full bg-gradient-to-r from-[#0c1e3a] to-[#1a3a5f] text-white shadow-lg shadow-[#0c1e3a]/20 transition-all hover:from-[#0c1e3a]/90 hover:to-[#1a3a5f]/90 hover:shadow-xl hover:shadow-[#0c1e3a]/30"
         size="lg"
         disabled={isLoading}
       >
