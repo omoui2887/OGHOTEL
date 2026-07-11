@@ -3426,3 +3426,36 @@ Stage Summary:
 - Visual language consistent across all 7 components: navy `#0B1F3A`/`#07172B` dark sections, ivory `#F8F6F0` light sections, gold `#D4A843` accents/CTAs/badges, green `#16A34A` for success/support indicators, `font-serif italic` for premium title accents, `font-mono` for all prices, generous touch targets (h-12 buttons, p-8 cards), mobile-first responsive grids that stack to single column on small screens.
 
 ---
+
+Task ID: LANDING-ANIMATIONS
+Agent: full-stack-developer
+Task: Add scroll reveal + staggered entrances + hover effects + ambient motion to landing page
+
+Work Log:
+- Read `src/app/page.tsx` (677→696 lines), `src/components/landing/Reveal.tsx`, `src/hooks/use-scroll-reveal.ts`, `src/components/layout/site-header.tsx`, `src/app/globals.css`, `src/components/ui/card.tsx` before editing.
+- Modified `src/app/page.tsx`:
+  - Added `import { Reveal } from "@/components/landing/Reveal";` (server component imports client component — valid Next.js pattern).
+  - Hero section: wrapped left content column in `<Reveal direction="up" delay={0}>`, wrapped right image column in `<Reveal direction="scale" delay={200}>`, added `animate-float` class to the "+45% de revenus" floating badge.
+  - Features section (MAIN_FEATURES): added `index` to `.map()` callback, wrapped each Card in `<Reveal key={...} delay={index * 80} className="h-full">`, added `card-hover-lift h-full` to Card className.
+  - Product section (SECONDARY_FEATURES): wrapped the entire `<div className="container ...">` content in a single `<Reveal direction="up">`, added `card-hover-lift h-full` to each Card className.
+  - Testimonials section: wrapped each of the 4 hardcoded testimonial Cards in `<Reveal delay={0|100|200|300} className="h-full">`, added `card-hover-lift h-full` to each Card className.
+  - Pricing section (PLANS): added `index` to `.map()` callback, wrapped each Card in `<Reveal key={...} delay={index * 120} className="h-full">`, added `card-hover-lift h-full` to both branches (featured/non-featured) of the dynamic Card className.
+  - FAQ section: wrapped the `<div className="mx-auto mt-12 max-w-3xl">` container (holding the Accordion Card) in `<Reveal direction="up">`.
+  - Contact section: wrapped the right-column Lead form Card in `<Reveal direction="up">`.
+- Modified `src/components/layout/site-header.tsx`:
+  - Added `link-underline` class to desktop nav links (`NAV_LINKS.map` inside the `hidden md:flex` nav) for animated underline on hover. Mobile nav links left untouched.
+- Modified `src/app/globals.css`:
+  - Appended a new "SCROLL REVEAL & MICRO-INTERACTIONS" block at end of file containing: `@keyframes float` + `.animate-float`, `@keyframes pulse-glow` + `.animate-pulse-glow`, `@keyframes shimmer`, `.card-hover-lift` (translateY -4px + soft shadow on hover), `.link-underline` (animated underline via `::after` width transition), and a `@media (prefers-reduced-motion: reduce)` block that disables ambient animations and transitions for accessibility.
+- Ran `bun run lint` → 0 errors, 0 warnings.
+- Ran `npx tsc --noEmit` → 0 errors.
+- Dev log shows clean compilation: `GET / 200` responses, no runtime errors.
+
+Stage Summary:
+- Landing page now has scroll-triggered reveal animations on all major sections (hero, features, product, testimonials, pricing, FAQ, contact form) with staggered entrance delays for grouped cards.
+- Ambient motion: the hero "+45% de revenus" badge gently floats (3s loop), respecting `prefers-reduced-motion`.
+- Hover micro-interactions: all feature, secondary-feature, testimonial, and pricing cards lift 4px with a soft shadow on hover (`.card-hover-lift`). Desktop navbar links show an animated underline on hover (`.link-underline`).
+- Layout preserved: `h-full` added to Reveal wrappers and Cards inside grids so cards still stretch to equal row heights despite the extra wrapping div — no visual regression in grid alignment.
+- All existing content/copy and functionality (links, LeadForm, Accordion, WhatsApp CTAs, image alt text) left unchanged; only animation/hover classes and Reveal wrappers were added.
+- Accessibility: `prefers-reduced-motion: reduce` disables float, pulse-glow, and card-hover transitions. The `useScrollReveal` hook also short-circuits to "revealed" state under reduced-motion preference, so content is never hidden.
+
+---

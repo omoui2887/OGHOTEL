@@ -30,6 +30,7 @@ import {
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { LeadForm } from "@/components/marketing/lead-form";
+import { Reveal } from "@/components/landing/Reveal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -116,6 +117,7 @@ export default function HomePage() {
         <div className="container relative mx-auto px-4 py-16 md:py-24">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             {/* Left */}
+            <Reveal direction="up" delay={0}>
             <div className="space-y-7">
               <span className="inline-flex items-center gap-2 rounded-full border border-amber-600/30 bg-amber-600/10 px-4 py-1.5 text-sm font-medium text-amber-400">
                 <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
@@ -193,8 +195,10 @@ export default function HomePage() {
                 })}
               </div>
             </div>
+            </Reveal>
 
             {/* Right — hotel lobby image */}
+            <Reveal direction="scale" delay={200}>
             <div className="relative">
               <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-slate-200 shadow-2xl">
                 <Image
@@ -206,7 +210,7 @@ export default function HomePage() {
                   className="object-cover"
                 />
               </div>
-              <div className="absolute -bottom-4 -left-4 hidden rounded-xl border border-amber-600/30 bg-white/90 p-4 shadow-lg backdrop-blur sm:block">
+              <div className="absolute -bottom-4 -left-4 hidden animate-float rounded-xl border border-amber-600/30 bg-white/90 p-4 shadow-lg backdrop-blur sm:block">
                 <div className="flex items-center gap-2">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-600 text-white">
                     <TrendingUp className="h-4 w-4" />
@@ -222,6 +226,7 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+            </Reveal>
           </div>
         </div>
       </section>
@@ -246,27 +251,26 @@ export default function HomePage() {
           </div>
 
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {MAIN_FEATURES.map((feature) => {
+            {MAIN_FEATURES.map((feature, index) => {
               const Icon = ICON_MAP[feature.icon] ?? Sparkles;
               const colorClass =
                 COLOR_CLASSES[feature.color] ?? COLOR_CLASSES.orange;
               return (
-                <Card
-                  key={feature.title}
-                  className="border-slate-200 bg-white transition-colors hover:border-amber-600/40 hover:bg-slate-50"
-                >
-                  <CardContent className="space-y-4">
-                    <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-xl ${colorClass}`}
-                    >
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-slate-900">
-                      {feature.title}
-                    </h3>
-                    <p className="text-sm text-slate-500">{feature.desc}</p>
-                  </CardContent>
-                </Card>
+                <Reveal key={feature.title} delay={index * 80} className="h-full">
+                  <Card className="border-slate-200 bg-white transition-colors hover:border-amber-600/40 hover:bg-slate-50 card-hover-lift h-full">
+                    <CardContent className="space-y-4">
+                      <div
+                        className={`flex h-12 w-12 items-center justify-center rounded-xl ${colorClass}`}
+                      >
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-slate-900">
+                        {feature.title}
+                      </h3>
+                      <p className="text-sm text-slate-500">{feature.desc}</p>
+                    </CardContent>
+                  </Card>
+                </Reveal>
               );
             })}
           </div>
@@ -280,6 +284,7 @@ export default function HomePage() {
         id="produit"
         className="border-y border-slate-200 bg-slate-50 py-16 md:py-24"
       >
+        <Reveal direction="up">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-amber-600/30 bg-amber-600/10 px-4 py-1.5 text-sm font-medium text-amber-400">
@@ -303,7 +308,7 @@ export default function HomePage() {
               return (
                 <Card
                   key={feature.title}
-                  className="border-slate-200 bg-white transition-colors hover:border-amber-600/40"
+                  className="border-slate-200 bg-white transition-colors hover:border-amber-600/40 card-hover-lift h-full"
                 >
                   <CardContent className="space-y-3">
                     <div
@@ -321,6 +326,7 @@ export default function HomePage() {
             })}
           </div>
         </div>
+        </Reveal>
       </section>
 
       {/* ----------------------------------------------------------------- */}
@@ -351,7 +357,8 @@ export default function HomePage() {
 
           <div className="mt-12 grid gap-6 md:grid-cols-2">
             {/* Témoignage 1 */}
-            <Card className="border-slate-200 bg-white shadow-lg">
+            <Reveal delay={0} className="h-full">
+            <Card className="border-slate-200 bg-white shadow-lg card-hover-lift h-full">
               <CardContent className="space-y-4 p-6">
                 <div className="flex gap-1">
                   {[...Array(5)].map((_, i) => (
@@ -372,9 +379,11 @@ export default function HomePage() {
                 </div>
               </CardContent>
             </Card>
+            </Reveal>
 
             {/* Témoignage 2 */}
-            <Card className="border-slate-200 bg-white shadow-lg">
+            <Reveal delay={100} className="h-full">
+            <Card className="border-slate-200 bg-white shadow-lg card-hover-lift h-full">
               <CardContent className="space-y-4 p-6">
                 <div className="flex gap-1">
                   {[...Array(5)].map((_, i) => (
@@ -395,9 +404,11 @@ export default function HomePage() {
                 </div>
               </CardContent>
             </Card>
+            </Reveal>
 
             {/* Témoignage 3 */}
-            <Card className="border-slate-200 bg-white shadow-lg">
+            <Reveal delay={200} className="h-full">
+            <Card className="border-slate-200 bg-white shadow-lg card-hover-lift h-full">
               <CardContent className="space-y-4 p-6">
                 <div className="flex gap-1">
                   {[...Array(5)].map((_, i) => (
@@ -418,9 +429,11 @@ export default function HomePage() {
                 </div>
               </CardContent>
             </Card>
+            </Reveal>
 
             {/* Témoignage 4 */}
-            <Card className="border-slate-200 bg-white shadow-lg">
+            <Reveal delay={300} className="h-full">
+            <Card className="border-slate-200 bg-white shadow-lg card-hover-lift h-full">
               <CardContent className="space-y-4 p-6">
                 <div className="flex gap-1">
                   {[...Array(5)].map((_, i) => (
@@ -441,6 +454,7 @@ export default function HomePage() {
                 </div>
               </CardContent>
             </Card>
+            </Reveal>
           </div>
         </div>
       </section>
@@ -465,15 +479,15 @@ export default function HomePage() {
           </div>
 
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
-            {PLANS.map((plan) => {
+            {PLANS.map((plan, index) => {
               const isFeatured = !!plan.highlighted;
               return (
+                <Reveal key={plan.id} delay={index * 120} className="h-full">
                 <Card
-                  key={plan.id}
                   className={
                     isFeatured
-                      ? "border-amber-600 bg-gradient-to-b from-amber-600/[0.08] to-transparent shadow-xl shadow-amber-600/10"
-                      : "border-slate-200 bg-slate-100"
+                      ? "border-amber-600 bg-gradient-to-b from-amber-600/[0.08] to-transparent shadow-xl shadow-amber-600/10 card-hover-lift h-full"
+                      : "border-slate-200 bg-slate-100 card-hover-lift h-full"
                   }
                 >
                   <CardContent className="flex h-full flex-col gap-5">
@@ -527,6 +541,7 @@ export default function HomePage() {
                     </Button>
                   </CardContent>
                 </Card>
+                </Reveal>
               );
             })}
           </div>
@@ -552,6 +567,7 @@ export default function HomePage() {
             </p>
           </div>
 
+          <Reveal direction="up">
           <div className="mx-auto mt-12 max-w-3xl">
             <Card className="border-slate-200 bg-white">
               <CardContent>
@@ -574,6 +590,7 @@ export default function HomePage() {
               </CardContent>
             </Card>
           </div>
+          </Reveal>
         </div>
       </section>
 
@@ -653,6 +670,7 @@ export default function HomePage() {
             </div>
 
             {/* Right — Lead form */}
+            <Reveal direction="up">
             <Card className="border-slate-200 bg-white">
               <CardContent>
                 <div className="mb-5">
@@ -666,6 +684,7 @@ export default function HomePage() {
                 <LeadForm />
               </CardContent>
             </Card>
+            </Reveal>
           </div>
         </div>
       </section>
