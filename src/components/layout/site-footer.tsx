@@ -14,7 +14,7 @@ export function SiteFooter() {
 
   return (
     <footer className="border-t border-black/10 bg-slate-50">
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto py-12">
         <div className="grid gap-8 md:grid-cols-4">
           {/* Brand */}
           <div className="md:col-span-1">

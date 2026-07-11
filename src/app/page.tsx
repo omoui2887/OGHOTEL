@@ -114,7 +114,7 @@ export default function HomePage() {
               "radial-gradient(ellipse 60% 50% at 70% 0%, rgba(255,107,53,0.18), transparent 70%)",
           }}
         />
-        <div className="container relative mx-auto px-4 py-16 md:py-24">
+        <div className="container relative mx-auto py-16 md:py-24">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             {/* Left */}
             <Reveal direction="up" delay={0}>
@@ -235,7 +235,7 @@ export default function HomePage() {
       {/* FONCTIONNALITÉS (MAIN)                                             */}
       {/* ----------------------------------------------------------------- */}
       <section id="fonctionnalites" className="py-16 md:py-24">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto">
           <div className="mx-auto max-w-2xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-amber-600/30 bg-amber-600/10 px-4 py-1.5 text-sm font-medium text-amber-400">
               <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
@@ -285,7 +285,7 @@ export default function HomePage() {
         className="border-y border-slate-200 bg-slate-50 py-16 md:py-24"
       >
         <Reveal direction="up">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto">
           <div className="mx-auto max-w-2xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-amber-600/30 bg-amber-600/10 px-4 py-1.5 text-sm font-medium text-amber-400">
               <Sparkles className="h-4 w-4 text-amber-500" />
@@ -344,7 +344,7 @@ export default function HomePage() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-white via-white/30 to-transparent" />
         </div>
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
               <span className="text-slate-900">Ce que nos clients</span>{" "}
@@ -466,7 +466,7 @@ export default function HomePage() {
         id="tarifs"
         className="border-y border-slate-200 bg-slate-50 py-16 md:py-24"
       >
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
               <span className="text-slate-900">Des tarifs</span>{" "}
@@ -552,7 +552,7 @@ export default function HomePage() {
       {/* FAQ                                                               */}
       {/* ----------------------------------------------------------------- */}
       <section id="faq" className="py-16 md:py-24">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto">
           <div className="mx-auto max-w-2xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-amber-600/30 bg-amber-600/10 px-4 py-1.5 text-sm font-medium text-amber-400">
               <HelpCircle className="h-4 w-4 text-amber-500" />
@@ -601,7 +601,7 @@ export default function HomePage() {
         id="contact"
         className="border-t border-slate-200 bg-slate-50 py-16 md:py-24"
       >
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto">
           <div className="grid items-start gap-10 lg:grid-cols-2">
             {/* Left — CTA + benefits */}
             <div className="space-y-7">
