@@ -93,7 +93,7 @@ export function PricingSection() {
             à votre structure
           </h2>
           <p className="mt-4 text-base text-slate-600 md:text-lg">
-            Un paiement annuel clair, en FCFA. Aucun frais caché. Choisissez la
+            Un paiement mensuel clair, en FCFA. Aucun frais caché. Choisissez la
             formule qui correspond à la taille de votre établissement.
           </p>
         </div>
@@ -153,7 +153,7 @@ export function PricingSection() {
                     <span className="text-sm text-slate-500">/an</span>
                   </div>
                   <p className="mt-2 text-xs text-slate-400">
-                    Paiement annuel · Activation immédiate
+                    Paiement mensuel · Activation immédiate
                   </p>
                 </div>
 

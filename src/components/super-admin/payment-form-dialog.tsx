@@ -238,7 +238,7 @@ export function PaymentFormDialog({
               <SelectContent>
                 {plans.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
-                    {p.name} — {new Intl.NumberFormat("fr-FR").format(p.price_fcfa)} FCFA/an
+                    {p.name} — {new Intl.NumberFormat("fr-FR").format(p.price_fcfa)} FCFA/mois
                   </SelectItem>
                 ))}
               </SelectContent>

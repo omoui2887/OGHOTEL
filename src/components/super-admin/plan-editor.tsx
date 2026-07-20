@@ -138,7 +138,7 @@ export function PlanEditor({ plan }: PlanEditorProps) {
      {/* Prix */}
      <div className="space-y-2">
       <Label htmlFor={`price-${plan.id}`}>
-       Prix annuel (FCFA) <span className="text-destructive">*</span>
+       Prix mensuel (FCFA) <span className="text-destructive">*</span>
       </Label>
       <div className="relative">
        <Input
@@ -151,7 +151,7 @@ export function PlanEditor({ plan }: PlanEditorProps) {
         className="pr-16"
        />
        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-        FCFA/an
+        FCFA/mois
        </span>
       </div>
       <p className="text-xs text-muted-foreground">

@@ -473,7 +473,7 @@ export default function HomePage() {
               <span className="text-amber-600">adaptés à votre taille</span>
             </h2>
             <p className="mt-4 text-slate-500">
-              Un paiement annuel simple. Aucun frais caché. Choisissez la formule
+              Un paiement mensuel simple. Aucun frais caché. Choisissez la formule
               qui correspond à votre activité.
             </p>
           </div>
