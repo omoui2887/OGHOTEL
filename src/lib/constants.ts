@@ -91,9 +91,9 @@ export type Plan = {
 };
 
 export const PLANS: Plan[] = [
-  { id: "essentiel", name: "Essentiel", priceFcfa: 2500, priceLabel: "2 500 FCFA", period: "mois", target: "Petite résidence, auberge, petit hôtel", summary: "L'essentiel pour digitaliser la gestion de votre établissement.", features: ["1 établissement","1 utilisateur Admin","Chambres & réservations","Clients hébergés","Paiements & facturation simple","Statistiques de base"] },
-  { id: "privilege", name: "Privilège", priceFcfa: 4200, priceLabel: "4 200 FCFA", period: "mois", target: "Hôtel ou résidence de taille moyenne", highlighted: true, badge: "Le plus choisi", summary: "La formule complète pour piloter toute votre activité hôtelière.", features: ["Tout Essentiel","Jusqu'à 3 comptes personnel","Dépenses, ménage, maintenance","Rapports avancés","Exports CSV / PDF","Support prioritaire"] },
-  { id: "premium", name: "Premium", priceFcfa: 6250, priceLabel: "6 250 FCFA", period: "mois", target: "Groupe, grande résidence, multi-sites", summary: "Pour les groupes et multi-sites, sans limite d'utilisateurs.", features: ["Tout Privilège","Multi-établissements","Utilisateurs illimités","Exports comptables avancés","Assistance dédiée"] },
+  { id: "essentiel", name: "Essentiel", priceFcfa: 30000, priceLabel: "30 000 FCFA", period: "mois", target: "Petite résidence, auberge, petit hôtel", summary: "L'essentiel pour digitaliser la gestion de votre établissement.", features: ["1 établissement","1 utilisateur Admin","Chambres & réservations","Clients hébergés","Paiements & facturation simple","Statistiques de base"] },
+  { id: "privilege", name: "Privilège", priceFcfa: 50000, priceLabel: "50 000 FCFA", period: "mois", target: "Hôtel ou résidence de taille moyenne", highlighted: true, badge: "Le plus choisi", summary: "La formule complète pour piloter toute votre activité hôtelière.", features: ["Tout Essentiel","Jusqu'à 3 comptes personnel","Dépenses, ménage, maintenance","Rapports avancés","Exports CSV / PDF","Support prioritaire"] },
+  { id: "premium", name: "Premium", priceFcfa: 75000, priceLabel: "75 000 FCFA", period: "mois", target: "Groupe, grande résidence, multi-sites", summary: "Pour les groupes et multi-sites, sans limite d'utilisateurs.", features: ["Tout Privilège","Multi-établissements","Utilisateurs illimités","Exports comptables avancés","Assistance dédiée"] },
 ];
 
 // FAQ (Image7)
@@ -112,8 +112,8 @@ export const BUSINESS_TYPES = [
 ] as const;
 
 export const DESIRED_PLAN_OPTIONS = [
-  { value: "essentiel", label: "Essentiel — 2 500 FCFA/mois" },
-  { value: "privilege", label: "Privilège — 4 200 FCFA/mois" },
-  { value: "premium", label: "Premium — 6 250 FCFA/mois" },
+  { value: "essentiel", label: "Essentiel — 30 000 FCFA/mois" },
+  { value: "privilege", label: "Privilège — 50 000 FCFA/mois" },
+  { value: "premium", label: "Premium — 75 000 FCFA/mois" },
   { value: "indecis", label: "Je ne sais pas encore" },
 ] as const;

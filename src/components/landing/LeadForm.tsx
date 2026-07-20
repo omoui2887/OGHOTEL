@@ -36,9 +36,9 @@ const BUSINESS_TYPE_OPTIONS = [
 ] as const;
 
 const PLAN_OPTIONS = [
-  { value: "ESSENTIEL", label: "ESSENTIEL — 2 500 FCFA/mois" },
-  { value: "PRIVILEGE", label: "PRIVILEGE — 4 200 FCFA/mois" },
-  { value: "PREMIUM", label: "PREMIUM — 6 250 FCFA/mois" },
+  { value: "ESSENTIEL", label: "ESSENTIEL — 30 000 FCFA/mois" },
+  { value: "PRIVILEGE", label: "PRIVILEGE — 50 000 FCFA/mois" },
+  { value: "PREMIUM", label: "PREMIUM — 75 000 FCFA/mois" },
 ] as const;
 
 /** Map form plan values (uppercase) to API expected values (lowercase). */
